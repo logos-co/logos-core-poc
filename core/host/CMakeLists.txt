@@ -29,6 +29,19 @@ target_include_directories(logos_core PRIVATE
     ${Qt${QT_VERSION_MAJOR}_INCLUDE_DIRS}
 )
 
+# Set RPATH settings for the library
+if(APPLE)
+    set_target_properties(logos_core PROPERTIES
+        INSTALL_RPATH "@loader_path"
+        INSTALL_NAME_DIR "@rpath"
+        BUILD_WITH_INSTALL_NAME_DIR TRUE
+        BUILD_WITH_INSTALL_RPATH TRUE)
+else()
+    set_target_properties(logos_core PROPERTIES
+        INSTALL_RPATH "$ORIGIN"
+        BUILD_WITH_INSTALL_RPATH TRUE)
+endif()
+
 # Create the host application
 add_executable(logoscore ${HOST_SOURCES})
 
@@ -40,4 +53,15 @@ target_include_directories(logoscore PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/..
     ${Qt${QT_VERSION_MAJOR}_INCLUDE_DIRS}
-) 
+)
+
+# Set RPATH settings for the executable
+if(APPLE)
+    set_target_properties(logoscore PROPERTIES
+        INSTALL_RPATH "@loader_path/../lib"
+        BUILD_WITH_INSTALL_RPATH TRUE)
+else()
+    set_target_properties(logoscore PROPERTIES
+        INSTALL_RPATH "$ORIGIN/../lib"
+        BUILD_WITH_INSTALL_RPATH TRUE)
+endif() 
