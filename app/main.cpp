@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
     std::cout << "Logos Core initialized successfully!" << std::endl;
 
     // Set the plugins directory
-    QString pluginsDir = QDir::cleanPath(QDir::currentPath() + "/bin/plugins");
+    QString pluginsDir = QDir::cleanPath(QCoreApplication::applicationDirPath() + "/bin/plugins");
     std::cout << "Setting plugins directory to: " << pluginsDir.toStdString() << std::endl;
     logos_core_set_plugins_dir(pluginsDir.toUtf8().constData());
 
