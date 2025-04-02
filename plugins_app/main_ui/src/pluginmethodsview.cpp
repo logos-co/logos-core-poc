@@ -293,6 +293,26 @@ void PluginMethodsView::onGenerateInterfaceButtonClicked()
         return;
     }
     
+    // Print methods to console for debugging
+    qDebug() << "Methods for plugin" << m_pluginName << ":";
+    for (const QJsonValue& methodValue : methods) {
+        QJsonObject methodObj = methodValue.toObject();
+        QString name = methodObj["name"].toString();
+        QJsonArray params = methodObj["parameters"].toArray();
+        
+        qDebug() << " - \"" << name << "(" << (params.isEmpty() ? "" : "...") << ")\"";
+        if (!params.isEmpty()) {
+            qDebug() << "   Parameters:";
+            for (int i = 0; i < params.size(); ++i) {
+                QJsonObject paramObj = params[i].toObject();
+                QString paramType = paramObj["type"].toString();
+                QString paramName = paramObj["name"].toString();
+                QString paramDesc = paramObj["description"].toString();
+                qDebug() << "  - Parameter" << i << ":" << paramType << "(" << paramDesc << ")";
+            }
+        }
+    }
+    
     // Generate interface file content
     QString interfaceName = m_pluginName + "Interface";
     QString guardName = interfaceName.toUpper() + "_H";
@@ -307,7 +327,8 @@ void PluginMethodsView::onGenerateInterfaceButtonClicked()
     
     stream << "#include <QtCore/QObject>\n";
     stream << "#include <QtPlugin>\n";
-    stream << "#include <QString>\n\n";
+    stream << "#include <QString>\n";
+    stream << "#include <functional>\n\n";
     
     // Add PluginInterface definition with an ifdef check
     stream << "#ifndef PLUGIN_INTERFACE_H\n";
@@ -331,36 +352,87 @@ void PluginMethodsView::onGenerateInterfaceButtonClicked()
     
     stream << "#endif // PLUGIN_INTERFACE_H\n\n";
     
-    // Add callback type definitions if there are any
-    QSet<QString> callbackTypes;
+    // Extract callback types from all method parameters
+    QMap<QString, QString> callbackDefinitions;
+    
+    // First, gather all parameter information for each method
     for (const QJsonValue& methodValue : methods) {
         QJsonObject methodObj = methodValue.toObject();
-        QString name = methodObj["name"].toString();
         QJsonArray params = methodObj["parameters"].toArray();
         
         for (const QJsonValue& paramValue : params) {
             QJsonObject paramObj = paramValue.toObject();
             QString paramType = paramObj["type"].toString();
+            QString paramDesc = paramObj["description"].toString();
             
-            // Check if parameter type looks like a callback (contains "Callback" or "std::function")
+            // Check if parameter type looks like a callback
             if (paramType.contains("Callback") || paramType.contains("std::function")) {
-                // Extract the callback type if not already defined
-                if (!callbackTypes.contains(paramType)) {
-                    callbackTypes.insert(paramType);
+                QString callbackSignature;
+                
+                // If the description contains std::function, extract the full signature
+                if (paramDesc.contains("std::function<")) {
+                    QRegularExpression re("std::function<([^>]+)>");
+                    QRegularExpressionMatch match = re.match(paramDesc);
+                    if (match.hasMatch()) {
+                        callbackSignature = match.captured(1);
+                    }
+                }
+                
+                // If we still don't have a signature and the description has parentheses
+                // it might be in format "Type (std::function<void(bool, QString)>)"
+                if (callbackSignature.isEmpty() && paramDesc.contains("std::function")) {
+                    int startPos = paramDesc.indexOf("std::function<");
+                    if (startPos >= 0) {
+                        int endPos = paramDesc.indexOf(">", startPos);
+                        if (endPos > startPos) {
+                            callbackSignature = paramDesc.mid(startPos + 14, endPos - startPos - 14);
+                        }
+                    }
+                }
+                
+                // Extract directly from parentheses if the signature contains parameter types
+                if (callbackSignature.isEmpty() && paramDesc.contains("(")) {
+                    int openParenPos = paramDesc.indexOf("(");
+                    int closeParenPos = paramDesc.lastIndexOf(")");
+                    if (openParenPos >= 0 && closeParenPos > openParenPos) {
+                        // Get everything inside the parentheses
+                        QString paramsStr = paramDesc.mid(openParenPos + 1, closeParenPos - openParenPos - 1);
+                        
+                        // Check if the parameters string has common C++ types
+                        if (paramsStr.contains("bool") || paramsStr.contains("int") || 
+                            paramsStr.contains("QString") || paramsStr.contains("string") ||
+                            paramsStr.contains("const") || paramsStr.contains("&")) {
+                            callbackSignature = "void(" + paramsStr + ")";
+                        }
+                    }
+                }
+                
+                // Last resort: default to void()
+                if (callbackSignature.isEmpty()) {
+                    callbackSignature = "void()";
+                }
+                
+                // Store the callback type and its signature
+                if (paramType.contains("std::function")) {
+                    // If the type itself is std::function, create a name for it
+                    QString callbackName = paramObj["name"].toString();
+                    callbackName = callbackName.at(0).toUpper() + callbackName.mid(1) + "Callback";
+                    callbackDefinitions[callbackName] = paramType;
+                } else {
+                    // It's a named callback type
+                    callbackDefinitions[paramType] = "std::function<" + callbackSignature + ">";
                 }
             }
         }
     }
     
     // Add callback type definitions if any found
-    if (!callbackTypes.isEmpty()) {
+    if (!callbackDefinitions.isEmpty()) {
         stream << "// Callback type definitions\n";
-        for (const QString& callbackType : callbackTypes) {
-            // If the type is already fully qualified (contains std::function), use it directly
-            if (callbackType.contains("std::function")) {
-                QString typeName = callbackType.split(" ").first();
-                stream << "using " << typeName << " = " << callbackType << ";\n";
-            }
+        QMapIterator<QString, QString> i(callbackDefinitions);
+        while (i.hasNext()) {
+            i.next();
+            stream << "using " << i.key() << " = " << i.value() << ";\n";
         }
         stream << "\n";
     }
