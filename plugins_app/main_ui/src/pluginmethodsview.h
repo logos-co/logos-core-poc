@@ -22,6 +22,7 @@ signals:
 private slots:
     void onBackButtonClicked();
     void onMethodItemDoubleClicked(QTreeWidgetItem* item, int column);
+    void onGenerateInterfaceButtonClicked();
 
 private:
     void setupUi();
@@ -33,4 +34,5 @@ private:
     QLabel* m_titleLabel;
     QTreeWidget* m_methodsTree;
     QPushButton* m_backButton;
+    QPushButton* m_generateInterfaceButton;
 }; 
