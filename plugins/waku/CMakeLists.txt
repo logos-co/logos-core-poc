@@ -83,6 +83,19 @@ if(APPLE)
         COMMENT "Updating library paths for macOS"
     )
 else()
+
+    # TODO:
+    # this NEEDS to use patch-elf to do equivalent to install_name_tool
+    # it will work for now, but will have issues with relative paths
+
+    # First, copy libwaku.so to the plugins directory
+    add_custom_command(TARGET waku PRE_LINK
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${LIBWAKU_PATH}
+        ${CMAKE_BINARY_DIR}/plugins/libwaku.so
+        COMMENT "Copying libwaku.so to plugins directory"
+    )
+
     # Linux specific settings
     set_target_properties(waku PROPERTIES
         INSTALL_RPATH "$ORIGIN"

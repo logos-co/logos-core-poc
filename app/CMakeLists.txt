@@ -13,6 +13,8 @@ set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 if(APPLE)
     set(CMAKE_INSTALL_RPATH "@executable_path/../lib")
+else()
+    set(CMAKE_INSTALL_RPATH "\$ORIGIN/../lib:\$ORIGIN/lib")
 endif()
 
 find_package(Qt6 COMPONENTS Widgets REQUIRED)
@@ -51,15 +53,36 @@ target_link_libraries(LogosApp PRIVATE
 )
 
 # Copy the core library to the app's lib directory and fix its install name
-add_custom_command(TARGET LogosApp POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/lib
-    COMMAND ${CMAKE_COMMAND} -E copy ${LOGOS_CORE_DIR}/build/lib/liblogos_core.dylib ${CMAKE_CURRENT_BINARY_DIR}/lib/
-    COMMAND install_name_tool -id @rpath/liblogos_core.dylib ${CMAKE_CURRENT_BINARY_DIR}/lib/liblogos_core.dylib
-    # Add additional rpath entries for flexibility when moving the binary
-    COMMAND install_name_tool -add_rpath "@executable_path/lib" ${CMAKE_CURRENT_BINARY_DIR}/LogosApp
-    COMMAND install_name_tool -add_rpath "@loader_path/lib" ${CMAKE_CURRENT_BINARY_DIR}/LogosApp
-    COMMENT "Copying logos_core library and fixing installation paths"
-)
+if(APPLE)
+    add_custom_command(TARGET LogosApp POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/lib
+        COMMAND ${CMAKE_COMMAND} -E copy ${LOGOS_CORE_DIR}/build/lib/liblogos_core.dylib ${CMAKE_CURRENT_BINARY_DIR}/lib/
+        COMMAND install_name_tool -id @rpath/liblogos_core.dylib ${CMAKE_CURRENT_BINARY_DIR}/lib/liblogos_core.dylib
+        # Add additional rpath entries for flexibility when moving the binary
+        COMMAND install_name_tool -add_rpath "@executable_path/lib" ${CMAKE_CURRENT_BINARY_DIR}/LogosApp
+        COMMAND install_name_tool -add_rpath "@loader_path/lib" ${CMAKE_CURRENT_BINARY_DIR}/LogosApp
+        COMMENT "Copying logos_core library and fixing installation paths"
+    )
+elseif(UNIX AND NOT APPLE)
+    add_custom_command(TARGET LogosApp POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/lib
+        COMMAND ${CMAKE_COMMAND} -E copy ${LOGOS_CORE_DIR}/build/lib/liblogos_core.so ${CMAKE_CURRENT_BINARY_DIR}/lib/
+    )
+
+    # For Linux, CMake's RPATH settings above should handle most needs
+    # Check if patchelf is available as an alternative for more complex cases
+    find_program(PATCHELF_PROGRAM patchelf)
+    if(PATCHELF_PROGRAM)
+        add_custom_command(TARGET LogosApp POST_BUILD
+            # Properly escape $ORIGIN for shell command
+            COMMAND ${PATCHELF_PROGRAM} --set-rpath "\$ORIGIN/lib:\$ORIGIN/../lib:${CMAKE_CURRENT_BINARY_DIR}/lib" ${CMAKE_CURRENT_BINARY_DIR}/LogosApp
+            COMMENT "Setting RPATH with patchelf for Linux"
+        )
+    else()
+        message(STATUS "patchelf not found - using CMake's built-in RPATH settings for Linux")
+    endif()
+endif()
+
 
 # Create bin/plugins directory in build folder
 add_custom_command(TARGET LogosApp POST_BUILD

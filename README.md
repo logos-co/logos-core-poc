@@ -23,3 +23,12 @@ Build Core only:
 ```bash
 ./run_core.sh build
 ```
+
+## Requirements
+
+- QT 6.4
+- CMake
+
+For some plugins
+- Rust
+- protobuf

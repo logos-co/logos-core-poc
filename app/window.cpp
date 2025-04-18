@@ -20,8 +20,18 @@ Window::~Window()
 
 void Window::setupUi()
 {
-    // Try to load the main_ui plugin from the plugins directory
-    QString pluginPath = QCoreApplication::applicationDirPath() + "/plugins/main_ui.dylib";
+    // Determine the appropriate plugin extension based on the platform
+    QString pluginExtension;
+    #if defined(Q_OS_WIN)
+        pluginExtension = ".dll";
+    #elif defined(Q_OS_MAC)
+        pluginExtension = ".dylib";
+    #else // Linux and other Unix-like systems
+        pluginExtension = ".so";
+    #endif
+
+    // Load the main_ui plugin with the appropriate extension
+    QString pluginPath = QCoreApplication::applicationDirPath() + "/plugins/main_ui" + pluginExtension;
     QPluginLoader loader(pluginPath);
 
     QWidget* mainContent = nullptr;
@@ -41,6 +51,7 @@ void Window::setupUi()
     } else {
         qWarning() << "================================================";
         qWarning() << "Failed to load main UI plugin from:" << pluginPath;
+        qWarning() << "Error:" << loader.errorString();
         qWarning() << "================================================";
         // Fallback: show a message when plugin is not found
         QWidget* fallbackWidget = new QWidget(this);
