@@ -100,8 +100,8 @@ ChatWidget::ChatWidget(QWidget* parent)
     messageInput->setEnabled(false);
     sendButton->setEnabled(false);
     
-    // Auto-initialize Waku
-    initWaku();
+    // Use QTimer to initialize Waku asynchronously after constructor finishes
+    QTimer::singleShot(1, this, &ChatWidget::initWaku);
 }
 
 ChatWidget::~ChatWidget() {
