@@ -54,7 +54,7 @@ LOGOS_CORE_EXPORT char* logos_core_get_plugin_methods(const char* plugin_name);
 // Call a method on a plugin with JSON-formatted parameters
 // Returns a JSON string with the result, must be freed by the caller
 // params_json format: [{"name":"paramName","type":"paramType","value":paramValue}, ...]
-LOGOS_CORE_EXPORT char* logos_core_call_plugin_method(const char* plugin_name, const char* method_name, const char* params_json);
+LOGOS_CORE_EXPORT char* logos_core_call_plugin_method(const char* plugin_name, const char* method_name, const char* params_json, const char* return_type_hint);
 
 #ifdef __cplusplus
 }

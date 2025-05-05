@@ -559,7 +559,7 @@ char* logos_core_get_plugin_methods(const char* plugin_name)
 }
 
 // Implementation of the function to call a plugin method with parameters
-char* logos_core_call_plugin_method(const char* plugin_name, const char* method_name, const char* params_json)
+char* logos_core_call_plugin_method(const char* plugin_name, const char* method_name, const char* params_json, const char* return_type_hint)
 {
     if (!plugin_name || !method_name) {
         qWarning() << "Cannot call plugin method: plugin_name or method_name is null";
@@ -568,7 +568,12 @@ char* logos_core_call_plugin_method(const char* plugin_name, const char* method_
 
     QString name = QString::fromUtf8(plugin_name);
     QString methodName = QString::fromUtf8(method_name);
+    QString returnTypeHint = return_type_hint ? QString::fromUtf8(return_type_hint) : QString();
+    
     qDebug() << "Attempting to call method" << methodName << "on plugin:" << name;
+    if (!returnTypeHint.isEmpty()) {
+        qDebug() << "Using provided return type hint:" << returnTypeHint;
+    }
 
     // Get the plugin from the registry (convert to registry key format)
     QString registryKey = name.toLower().replace(" ", "_");
@@ -720,7 +725,13 @@ char* logos_core_call_plugin_method(const char* plugin_name, const char* method_
     QGenericReturnArgument returnArg;
     
     QString returnType = QString::fromUtf8(method.typeName());
-    qDebug() << "Return type:" << returnType;
+    qDebug() << "Method's declared return type:" << returnType;
+    
+    // If a return type hint was provided, use it instead
+    if (!returnTypeHint.isEmpty()) {
+        qDebug() << "Using provided return type hint instead:" << returnTypeHint;
+        returnType = returnTypeHint;
+    }
     
     // Set up the return value based on type
     if (returnType == "void" || returnType.isEmpty()) {

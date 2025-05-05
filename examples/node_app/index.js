@@ -17,7 +17,7 @@ const LogosCore = ffi.Library(libPath, {
   'logos_core_load_plugin': ['int', ['string']],
   'logos_core_get_loaded_plugins': ['pointer', []],
   'logos_core_get_plugin_methods': ['pointer', ['string']],
-  'logos_core_call_plugin_method': ['pointer', ['string', 'string', 'string']],
+  'logos_core_call_plugin_method': ['pointer', ['string', 'string', 'string', 'string']],
   'free': ['void', ['pointer']]
 });
 
@@ -122,7 +122,7 @@ const calculatorParams = JSON.stringify([
     "value": 7
   }
 ]);
-const resultPtr = LogosCore.logos_core_call_plugin_method('calculator', 'add', calculatorParams);
+const resultPtr = LogosCore.logos_core_call_plugin_method('calculator', 'add', calculatorParams, 'int');
 if (!resultPtr.isNull()) {
   // Convert the returned pointer to a string and parse it as JSON
   const resultJsonStr = ref.readCString(resultPtr);
