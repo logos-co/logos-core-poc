@@ -2,3 +2,4 @@
 .DS_Store
 plugins/waku/lib/libwaku.so
 .vscode/**
+**/node_modules/**

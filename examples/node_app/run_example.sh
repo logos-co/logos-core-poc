@@ -6,11 +6,16 @@ set -e  # Exit on error
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$SCRIPT_DIR"
 
-# Check if core is built
-if [ ! -d "../../core/build" ]; then
-  echo "Error: Logos Core library needs to be built first"
-  echo "Please run: cd ../../ && ./run_core.sh build"
-  exit 1
+# Check if core library exists
+if [ "$(uname)" = "Darwin" ]; then
+  LIB_PATH="../../core/build/lib/liblogos_core.dylib"
+else
+  LIB_PATH="../../core/build/lib/liblogos_core.so"
+fi
+
+if [ ! -f "$LIB_PATH" ]; then
+  echo "Warning: liblogos_core library not found at $LIB_PATH"
+  echo "The script will continue but may fail if the library isn't in the expected location."
 fi
 
 # Install dependencies if node_modules doesn't exist

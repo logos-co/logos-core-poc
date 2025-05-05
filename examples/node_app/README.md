@@ -1,51 +1,41 @@
 # Logos Core - Node.js Example
 
-This example demonstrates how to use the `liblogos_core` library from Node.js using the FFI (Foreign Function Interface) approach.
+A simple Node.js hello world example that uses the liblogos_core library.
 
 ## Prerequisites
 
-- Node.js (v14 or newer recommended)
-- npm
-- Built liblogos_core library (must be built first)
+- Node.js
+- liblogos_core library (must be already built)
 
 ## Setup
 
-1. Make sure you've built the Logos Core library first:
-   ```
-   cd ../../
-   ./run_core.sh build
-   ```
-
-2. Install the Node.js dependencies:
+1. Install dependencies:
    ```
    npm install
    ```
 
 ## Running the Example
 
-To run the example:
+Run the example with:
 
 ```
 npm start
 ```
 
+Or use the provided script:
+
+```
+./run_example.sh
+```
+
 ## How it Works
 
-This example uses [ffi-napi](https://github.com/node-ffi-napi/node-ffi-napi) to create bindings to the C functions exported by the `liblogos_core` library. It demonstrates:
+This example uses ffi-napi to create bindings to the liblogos_core library. It performs these basic steps:
 
-1. Loading the library
-2. Initializing the Logos Core
-3. Setting the plugins directory
-4. Starting the Logos Core
-5. Cleaning up resources
+1. Load the liblogos_core library
+2. Initialize the Logos Core
+3. Set the plugins directory 
+4. Start the Logos Core
+5. Clean up when the application is terminated
 
-## Troubleshooting
-
-If you encounter an error like "Library not found", make sure:
-- You've built the Logos Core library successfully
-- The path to the library is correct (currently set to `../../core/build/lib/liblogos_core.[so|dylib|dll]`)
-
-For other FFI-related issues, you might need to install additional dependencies:
-- On Ubuntu/Debian: `sudo apt-get install libffi-dev`
-- On macOS: The required libraries should be included with macOS
-- On Windows: Make sure you have the appropriate Visual Studio build tools installed 
+The example assumes that the liblogos_core library has already been built and is available in the `../../core/build/lib` directory. 

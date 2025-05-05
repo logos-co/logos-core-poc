@@ -1,38 +1,23 @@
 const ffi = require('ffi-napi');
 const path = require('path');
-const fs = require('fs');
 
-// Determine library file extension based on platform
-const libExtension = process.platform === 'darwin' ? '.dylib' : 
-                    (process.platform === 'win32' ? '.dll' : '.so');
+// Simple hello world example that uses liblogos_core
+console.log('Hello from Node.js!');
 
-// Construct path to the liblogos_core library
-// This assumes the library is in ../../core/build/lib relative to this script
+// Assuming the .so/.dylib is already built and available
+const libExtension = process.platform === 'darwin' ? '.dylib' : '.so';
 const libPath = path.resolve(__dirname, '../../core/build/lib', `liblogos_core${libExtension}`);
 
-console.log(`Looking for liblogos_core at: ${libPath}`);
-
-// Check if the library exists
-if (!fs.existsSync(libPath)) {
-  console.error(`Error: Library not found at ${libPath}`);
-  console.error('Please make sure to build the logos_core library first.');
-  process.exit(1);
-}
-
-// Define the logos_core library interface
+// Define the interface to liblogos_core
 const LogosCore = ffi.Library(libPath, {
   'logos_core_init': ['void', ['int', 'pointer']],
   'logos_core_set_plugins_dir': ['void', ['string']],
   'logos_core_start': ['void', []],
-  'logos_core_cleanup': ['void', []],
-  'logos_core_get_loaded_plugins': ['pointer', []]
+  'logos_core_cleanup': ['void', []]
 });
 
-console.log('Hello from Node.js!');
-console.log('Initializing logos_core...');
-
 // Initialize logos_core
-// Since we can't directly pass argv, we'll pass null for now
+console.log('Initializing logos_core...');
 LogosCore.logos_core_init(0, null);
 
 // Set plugins directory
@@ -45,13 +30,17 @@ console.log('Starting logos_core...');
 LogosCore.logos_core_start();
 
 console.log('Logos Core initialized successfully!');
+console.log('Hello World from Logos Core Node.js example!');
 
-// Note: In a real application, you would keep the process running
-// and call logos_core_cleanup() when done
+// Keep the process alive for demonstration purposes
+const intervalId = setInterval(() => {
+  console.log('Application running...');
+}, 2000);
 
-// For this simple example, we'll just wait a bit and then clean up
-//setTimeout(() => {
-//  console.log('Cleaning up logos_core...');
-//  LogosCore.logos_core_cleanup();
-//  console.log('Done!');
-//}, 2000); 
+// Clean up on Ctrl+C
+process.on('SIGINT', () => {
+  clearInterval(intervalId);
+  console.log('\nCleaning up...');
+  LogosCore.logos_core_cleanup();
+  process.exit(0);
+}); 
