@@ -1,0 +1,13 @@
+{
+  "name": "logos-core-node-example",
+  "version": "1.0.0",
+  "description": "A simple Node.js example using liblogos_core",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "ffi-napi": "^4.0.3",
+    "ref-napi": "^3.0.3"
+  }
+} 
