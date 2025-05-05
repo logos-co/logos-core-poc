@@ -17,6 +17,7 @@ const LogosCore = ffi.Library(libPath, {
   'logos_core_load_plugin': ['int', ['string']],
   'logos_core_get_loaded_plugins': ['pointer', []],
   'logos_core_get_plugin_methods': ['pointer', ['string']],
+  'logos_core_call_plugin_method': ['int', ['string', 'string', 'string']],
   'free': ['void', ['pointer']]
 });
 
@@ -38,6 +39,7 @@ console.log('Hello World from Logos Core Node.js example!');
 
 LogosCore.logos_core_load_plugin('waku');
 LogosCore.logos_core_load_plugin('chat');
+LogosCore.logos_core_load_plugin('calculator');
 
 console.log("\n\n\n\n\n\n\n")
 
@@ -105,6 +107,24 @@ if (!pluginsPtr.isNull()) {
 }
 
 console.log('Logos library created with these plugins:', Object.keys(logoscore));
+
+// Call calculator plugin's add method
+console.log('\n\nCalling calculator plugin add method:');
+const calculatorParams = JSON.stringify([
+  {
+    "name": "a",
+    "type": "int",
+    "value": 5
+  },
+  {
+    "name": "b",
+    "type": "int",
+    "value": 7
+  }
+]);
+const result = LogosCore.logos_core_call_plugin_method('Simple Calculator Plugin', 'add', calculatorParams);
+console.log(`Result of calculator.add(5, 7): ${result === 1 ? 'Call successful' : 'Call failed'}`);
+// Note: The actual return value isn't accessible directly without additional FFI work
 
 // Keep the process alive for demonstration purposes
 const intervalId = setInterval(() => {

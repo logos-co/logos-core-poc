@@ -556,4 +556,153 @@ char* logos_core_get_plugin_methods(const char* plugin_name)
     strcpy(result, jsonData.constData());
 
     return result;
+}
+
+// Implementation of the function to call a plugin method with parameters
+int logos_core_call_plugin_method(const char* plugin_name, const char* method_name, const char* params_json)
+{
+    if (!plugin_name || !method_name) {
+        qWarning() << "Cannot call plugin method: plugin_name or method_name is null";
+        return 0;
+    }
+
+    QString name = QString::fromUtf8(plugin_name);
+    QString methodName = QString::fromUtf8(method_name);
+    qDebug() << "Attempting to call method" << methodName << "on plugin:" << name;
+
+    // Get the plugin from the registry (convert to registry key format)
+    QString registryKey = name.toLower().replace(" ", "_");
+    QObject* plugin = PluginRegistry::getPlugin<QObject>(registryKey);
+    
+    if (!plugin) {
+        qWarning() << "Plugin not found in registry:" << name << "with key" << registryKey;
+        return 0;
+    }
+
+    // Parse the JSON parameters
+    QJsonParseError jsonError;
+    QJsonDocument paramsDoc = QJsonDocument::fromJson(params_json ? QByteArray(params_json) : QByteArray("[]"), &jsonError);
+    
+    if (jsonError.error != QJsonParseError::NoError) {
+        qWarning() << "Failed to parse parameters JSON:" << jsonError.errorString();
+        return 0;
+    }
+    
+    if (!paramsDoc.isArray()) {
+        qWarning() << "Parameters JSON must be an array";
+        return 0;
+    }
+    
+    QJsonArray paramsArray = paramsDoc.array();
+    
+    // Get the meta-object for the plugin to find the method
+    const QMetaObject* metaObj = plugin->metaObject();
+    
+    // Find the method in the meta-object system
+    // We need to build a signature to find the method
+    QString methodSignature = methodName + "(";
+    QStringList paramTypes;
+    
+    for (int i = 0; i < paramsArray.size(); ++i) {
+        QJsonObject paramObj = paramsArray[i].toObject();
+        QString paramType = paramObj["type"].toString();
+        paramTypes.append(paramType);
+    }
+    
+    methodSignature += paramTypes.join(",") + ")";
+    qDebug() << "Looking for method with signature:" << methodSignature;
+    
+    // Find the method by name and signature
+    int methodIndex = -1;
+    for (int i = 0; i < metaObj->methodCount(); ++i) {
+        QMetaMethod method = metaObj->method(i);
+        QString signature = QString::fromUtf8(method.methodSignature());
+        qDebug() << "Checking method:" << signature;
+        
+        if (signature.startsWith(methodName + "(")) {
+            // Found a method with the right name
+            methodIndex = i;
+            break;
+        }
+    }
+    
+    if (methodIndex == -1) {
+        qWarning() << "Method not found:" << methodName;
+        return 0;
+    }
+    
+    QMetaMethod method = metaObj->method(methodIndex);
+    
+    // Validate parameter count
+    if (method.parameterCount() != paramsArray.size()) {
+        qWarning() << "Parameter count mismatch. Method expects" << method.parameterCount() 
+                   << "but" << paramsArray.size() << "were provided";
+        return 0;
+    }
+    
+    // Create QGenericArgument array for the parameters
+    QGenericArgument args[10] = { QGenericArgument() }; // Max 10 arguments
+    
+    // This vector holds our converted values so they stay in scope during the call
+    QVector<QVariant> argValues;
+    argValues.resize(paramsArray.size());
+    
+    // Process each parameter
+    for (int i = 0; i < paramsArray.size() && i < 10; ++i) {
+        QJsonObject paramObj = paramsArray[i].toObject();
+        QString paramName = paramObj["name"].toString();
+        QString paramType = paramObj["type"].toString();
+        QJsonValue paramValue = paramObj["value"];
+        
+        qDebug() << "Processing parameter" << i << ":" << paramName << "of type" << paramType;
+        
+        // Convert JSON value to QVariant based on the type
+        QVariant variant;
+        
+        if (paramType == "QString" || paramType == "std::string" || paramType == "string") {
+            variant = paramValue.toString();
+        } 
+        else if (paramType == "int" || paramType == "qint32" || paramType == "int32_t") {
+            variant = paramValue.toInt();
+        }
+        else if (paramType == "double" || paramType == "qreal" || paramType == "float") {
+            variant = paramValue.toDouble();
+        }
+        else if (paramType == "bool") {
+            variant = paramValue.toBool();
+        }
+        else if (paramType == "QJsonObject" || paramType == "QVariantMap") {
+            variant = paramValue.toObject().toVariantMap();
+        }
+        else if (paramType == "QJsonArray" || paramType == "QVariantList") {
+            variant = paramValue.toArray().toVariantList();
+        }
+        else {
+            qWarning() << "Unsupported parameter type:" << paramType;
+            return 0;
+        }
+        
+        // Store the converted value
+        argValues[i] = variant;
+        
+        // Create the QGenericArgument
+        args[i] = QGenericArgument(paramType.toUtf8().constData(), argValues[i].data());
+    }
+    
+    // Attempt to invoke the method
+    bool success = QMetaObject::invokeMethod(
+        plugin, 
+        methodName.toUtf8().constData(),
+        Qt::DirectConnection,
+        args[0], args[1], args[2], args[3], args[4], 
+        args[5], args[6], args[7], args[8], args[9]
+    );
+    
+    if (!success) {
+        qWarning() << "Failed to invoke method:" << methodName;
+        return 0;
+    }
+    
+    qDebug() << "Successfully called method:" << methodName << "on plugin:" << name;
+    return 1;
 } 
