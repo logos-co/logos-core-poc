@@ -472,4 +472,88 @@ char* logos_core_process_plugin(const char* plugin_path)
     strcpy(result, utf8Data.constData());
 
     return result;
+}
+
+// Implementation of the function to get a plugin's methods
+char* logos_core_get_plugin_methods(const char* plugin_name)
+{
+    if (!plugin_name) {
+        qWarning() << "Cannot get plugin methods: name is null";
+        return nullptr;
+    }
+
+    QString name = QString::fromUtf8(plugin_name);
+    qDebug() << "Getting methods for plugin:" << name;
+
+    // Create a JSON array to store method information
+    QJsonArray methodsArray;
+
+    // Get the plugin from the registry (convert to registry key format)
+    QString registryKey = name.toLower().replace(" ", "_");
+    QObject* plugin = PluginRegistry::getPlugin<QObject>(registryKey);
+    
+    if (!plugin) {
+        qWarning() << "Plugin not found in registry:" << name << "with key" << registryKey;
+        // Return empty JSON array
+        QJsonDocument emptyDoc(methodsArray);
+        QByteArray jsonData = emptyDoc.toJson(QJsonDocument::Compact);
+        char* result = new char[jsonData.size() + 1];
+        strcpy(result, jsonData.constData());
+        return result;
+    }
+
+    // Use QMetaObject for runtime introspection
+    const QMetaObject* metaObject = plugin->metaObject();
+
+    // Iterate through methods and add to the JSON array
+    for (int i = 0; i < metaObject->methodCount(); ++i) {
+        QMetaMethod method = metaObject->method(i);
+
+        // Skip methods from QObject and other base classes
+        if (method.enclosingMetaObject() != metaObject) {
+            continue;
+        }
+
+        // Create a JSON object for each method
+        QJsonObject methodObj;
+        methodObj["signature"] = QString::fromUtf8(method.methodSignature());
+        methodObj["name"] = QString::fromUtf8(method.name());
+        methodObj["returnType"] = QString::fromUtf8(method.typeName());
+
+        // Check if the method is invokable via QMetaObject::invokeMethod
+        methodObj["isInvokable"] = method.isValid() && (method.methodType() == QMetaMethod::Method || 
+                                  method.methodType() == QMetaMethod::Slot);
+
+        // Add parameter information if available
+        if (method.parameterCount() > 0) {
+            QJsonArray params;
+            for (int p = 0; p < method.parameterCount(); ++p) {
+                QJsonObject paramObj;
+                paramObj["type"] = QString::fromUtf8(method.parameterTypeName(p));
+
+                // Try to get parameter name if available
+                QByteArrayList paramNames = method.parameterNames();
+                if (p < paramNames.size() && !paramNames.at(p).isEmpty()) {
+                    paramObj["name"] = QString::fromUtf8(paramNames.at(p));
+                } else {
+                    paramObj["name"] = "param" + QString::number(p);
+                }
+
+                params.append(paramObj);
+            }
+            methodObj["parameters"] = params;
+        }
+
+        methodsArray.append(methodObj);
+    }
+
+    // Convert JSON array to string
+    QJsonDocument doc(methodsArray);
+    QByteArray jsonData = doc.toJson(QJsonDocument::Compact);
+    
+    // Convert to C string that must be freed by the caller
+    char* result = new char[jsonData.size() + 1];
+    strcpy(result, jsonData.constData());
+
+    return result;
 } 

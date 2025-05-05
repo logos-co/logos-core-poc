@@ -47,6 +47,10 @@ LOGOS_CORE_EXPORT int logos_core_unload_plugin(const char* plugin_name);
 // Returns the plugin name if successful, NULL if failed
 LOGOS_CORE_EXPORT char* logos_core_process_plugin(const char* plugin_path);
 
+// Get the list of methods for a specific plugin
+// Returns a JSON string that must be freed by the caller
+LOGOS_CORE_EXPORT char* logos_core_get_plugin_methods(const char* plugin_name);
+
 #ifdef __cplusplus
 }
 #endif
