@@ -84,6 +84,20 @@ if (!pluginsPtr.isNull()) {
         // Parse the methods JSON
         const methods = JSON.parse(methodsString);
         
+        // Filter out duplicate methods, keeping the one with most parameters
+        const methodMap = new Map();
+        methods.forEach(method => {
+            const existingMethod = methodMap.get(method.name);
+            if (!existingMethod || 
+                (method.parameters?.length || 0) > (existingMethod.parameters?.length || 0)) {
+                methodMap.set(method.name, method);
+            }
+        });
+        // Replace methods array with filtered unique methods
+        methods.splice(0, methods.length, ...methodMap.values());
+
+        console.log(JSON.stringify(methods));
+
         // Create wrapper functions for each method
         methods.forEach(method => {
           console.log(`Creating wrapper for ${pluginName}.${method.name}`);
@@ -115,6 +129,8 @@ if (!pluginsPtr.isNull()) {
             
             // Convert params to JSON
             const paramsJson = JSON.stringify(params);
+
+            console.log("paramsJson:", paramsJson);
             
             // Determine return type (use the method's return type)
             const returnType = method.returnType || 'void';
