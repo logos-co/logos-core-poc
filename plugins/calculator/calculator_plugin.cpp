@@ -3,7 +3,7 @@
 
 CalculatorPlugin::CalculatorPlugin(QObject *parent)
     : QObject(parent)
-    , m_name("Simple Calculator Plugin")
+    , m_name("calculator")
     , m_version("1.0.0")
     , m_timer(new QTimer(this))
 {

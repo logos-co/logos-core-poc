@@ -559,11 +559,11 @@ char* logos_core_get_plugin_methods(const char* plugin_name)
 }
 
 // Implementation of the function to call a plugin method with parameters
-int logos_core_call_plugin_method(const char* plugin_name, const char* method_name, const char* params_json)
+char* logos_core_call_plugin_method(const char* plugin_name, const char* method_name, const char* params_json)
 {
     if (!plugin_name || !method_name) {
         qWarning() << "Cannot call plugin method: plugin_name or method_name is null";
-        return 0;
+        return nullptr;
     }
 
     QString name = QString::fromUtf8(plugin_name);
@@ -576,7 +576,7 @@ int logos_core_call_plugin_method(const char* plugin_name, const char* method_na
     
     if (!plugin) {
         qWarning() << "Plugin not found in registry:" << name << "with key" << registryKey;
-        return 0;
+        return nullptr;
     }
 
     // Parse the JSON parameters
@@ -585,12 +585,12 @@ int logos_core_call_plugin_method(const char* plugin_name, const char* method_na
     
     if (jsonError.error != QJsonParseError::NoError) {
         qWarning() << "Failed to parse parameters JSON:" << jsonError.errorString();
-        return 0;
+        return nullptr;
     }
     
     if (!paramsDoc.isArray()) {
         qWarning() << "Parameters JSON must be an array";
-        return 0;
+        return nullptr;
     }
     
     QJsonArray paramsArray = paramsDoc.array();
@@ -628,7 +628,7 @@ int logos_core_call_plugin_method(const char* plugin_name, const char* method_na
     
     if (methodIndex == -1) {
         qWarning() << "Method not found:" << methodName;
-        return 0;
+        return nullptr;
     }
     
     QMetaMethod method = metaObj->method(methodIndex);
@@ -637,7 +637,7 @@ int logos_core_call_plugin_method(const char* plugin_name, const char* method_na
     if (method.parameterCount() != paramsArray.size()) {
         qWarning() << "Parameter count mismatch. Method expects" << method.parameterCount() 
                    << "but" << paramsArray.size() << "were provided";
-        return 0;
+        return nullptr;
     }
     
     // Create QGenericArgument array for the parameters
@@ -646,6 +646,9 @@ int logos_core_call_plugin_method(const char* plugin_name, const char* method_na
     // This vector holds our converted values so they stay in scope during the call
     QVector<QVariant> argValues;
     argValues.resize(paramsArray.size());
+    
+    // Track pointers that need to be freed
+    QVector<void*> pointersToFree;
     
     // Process each parameter
     for (int i = 0; i < paramsArray.size() && i < 10; ++i) {
@@ -663,13 +666,18 @@ int logos_core_call_plugin_method(const char* plugin_name, const char* method_na
             variant = paramValue.toString();
         } 
         else if (paramType == "int" || paramType == "qint32" || paramType == "int32_t") {
-            variant = paramValue.toInt();
+            // Make sure we explicitly convert to int and set the correct type
+            variant = QVariant(paramValue.toInt());
+            // Force the variant to be recognized as an int
+            variant.convert(QMetaType::Int);
         }
         else if (paramType == "double" || paramType == "qreal" || paramType == "float") {
-            variant = paramValue.toDouble();
+            variant = QVariant(paramValue.toDouble());
+            variant.convert(QMetaType::Double);
         }
         else if (paramType == "bool") {
-            variant = paramValue.toBool();
+            variant = QVariant(paramValue.toBool());
+            variant.convert(QMetaType::Bool);
         }
         else if (paramType == "QJsonObject" || paramType == "QVariantMap") {
             variant = paramValue.toObject().toVariantMap();
@@ -679,30 +687,143 @@ int logos_core_call_plugin_method(const char* plugin_name, const char* method_na
         }
         else {
             qWarning() << "Unsupported parameter type:" << paramType;
-            return 0;
+            return nullptr;
         }
+        
+        qDebug() << "Parameter value type in QVariant:" << variant.typeName();
         
         // Store the converted value
         argValues[i] = variant;
         
         // Create the QGenericArgument
-        args[i] = QGenericArgument(paramType.toUtf8().constData(), argValues[i].data());
+        if (paramType == "int") {
+            // For int type, we need to make sure it's handled correctly
+            int *intPtr = new int(argValues[i].toInt());
+            pointersToFree.append(intPtr);
+            args[i] = QGenericArgument("int", intPtr);
+        } else if (paramType == "double" || paramType == "qreal" || paramType == "float") {
+            double *doublePtr = new double(argValues[i].toDouble());
+            pointersToFree.append(doublePtr);
+            args[i] = QGenericArgument(paramType.toUtf8().constData(), doublePtr);
+        } else if (paramType == "bool") {
+            bool *boolPtr = new bool(argValues[i].toBool());
+            pointersToFree.append(boolPtr);
+            args[i] = QGenericArgument("bool", boolPtr);
+        } else {
+            // For other types, use the variant data directly
+            args[i] = QGenericArgument(QMetaType::typeName(argValues[i].userType()), argValues[i].data());
+        }
+    }
+    
+    // Prepare return value storage based on the method's return type
+    QVariant returnValue;
+    QGenericReturnArgument returnArg;
+    
+    QString returnType = QString::fromUtf8(method.typeName());
+    qDebug() << "Return type:" << returnType;
+    
+    // Set up the return value based on type
+    if (returnType == "void" || returnType.isEmpty()) {
+        // No return value needed
+        returnArg = QGenericReturnArgument();
+    } 
+    else if (returnType == "int") {
+        int* result = new int(0);
+        pointersToFree.append(result);
+        returnArg = QGenericReturnArgument("int", result);
+    }
+    else if (returnType == "bool") {
+        bool* result = new bool(false);
+        pointersToFree.append(result);
+        returnArg = QGenericReturnArgument("bool", result);
+    }
+    else if (returnType == "double" || returnType == "float" || returnType == "qreal") {
+        double* result = new double(0.0);
+        pointersToFree.append(result);
+        returnArg = QGenericReturnArgument(returnType.toUtf8().constData(), result);
+    }
+    else if (returnType == "QString") {
+        QString* result = new QString();
+        pointersToFree.append(result);
+        returnArg = QGenericReturnArgument("QString", result);
+    }
+    else {
+        qWarning() << "Unsupported return type:" << returnType;
+        
+        // Free allocated memory before returning
+        for (void* ptr : pointersToFree) {
+            delete ptr;
+        }
+        
+        return nullptr;
     }
     
     // Attempt to invoke the method
-    bool success = QMetaObject::invokeMethod(
-        plugin, 
-        methodName.toUtf8().constData(),
-        Qt::DirectConnection,
-        args[0], args[1], args[2], args[3], args[4], 
-        args[5], args[6], args[7], args[8], args[9]
-    );
+    bool success = false;
     
-    if (!success) {
-        qWarning() << "Failed to invoke method:" << methodName;
-        return 0;
+    if (returnType == "void" || returnType.isEmpty()) {
+        success = QMetaObject::invokeMethod(
+            plugin, 
+            methodName.toUtf8().constData(),
+            Qt::DirectConnection,
+            args[0], args[1], args[2], args[3], args[4], 
+            args[5], args[6], args[7], args[8], args[9]
+        );
+    } else {
+        success = QMetaObject::invokeMethod(
+            plugin, 
+            methodName.toUtf8().constData(),
+            Qt::DirectConnection,
+            returnArg,
+            args[0], args[1], args[2], args[3], args[4], 
+            args[5], args[6], args[7], args[8], args[9]
+        );
     }
     
-    qDebug() << "Successfully called method:" << methodName << "on plugin:" << name;
-    return 1;
+    // Prepare result JSON
+    QJsonObject resultJson;
+    resultJson["success"] = success;
+    
+    if (success) {
+        resultJson["message"] = "Method called successfully";
+        
+        // Extract return value if method returned something
+        if (returnType != "void" && !returnType.isEmpty()) {
+            if (returnType == "int") {
+                resultJson["returnValue"] = *static_cast<int*>(returnArg.data());
+            }
+            else if (returnType == "bool") {
+                resultJson["returnValue"] = *static_cast<bool*>(returnArg.data());
+            }
+            else if (returnType == "double" || returnType == "float" || returnType == "qreal") {
+                resultJson["returnValue"] = *static_cast<double*>(returnArg.data());
+            }
+            else if (returnType == "QString") {
+                resultJson["returnValue"] = *static_cast<QString*>(returnArg.data());
+            }
+        }
+    } else {
+        resultJson["message"] = "Failed to invoke method";
+    }
+    
+    // Free allocated memory
+    for (void* ptr : pointersToFree) {
+        delete ptr;
+    }
+    
+    // Convert result to JSON string
+    QJsonDocument resultDoc(resultJson);
+    QByteArray resultBytes = resultDoc.toJson(QJsonDocument::Compact);
+    
+    // Create a C string to return
+    char* resultStr = new char[resultBytes.size() + 1];
+    strcpy(resultStr, resultBytes.constData());
+    
+    if (success) {
+        qDebug() << "Successfully called method:" << methodName << "on plugin:" << name;
+    } else {
+        qDebug() << "Failed to call method:" << methodName << "on plugin:" << name;
+    }
+    
+    return resultStr;
 } 

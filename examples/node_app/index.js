@@ -17,7 +17,7 @@ const LogosCore = ffi.Library(libPath, {
   'logos_core_load_plugin': ['int', ['string']],
   'logos_core_get_loaded_plugins': ['pointer', []],
   'logos_core_get_plugin_methods': ['pointer', ['string']],
-  'logos_core_call_plugin_method': ['int', ['string', 'string', 'string']],
+  'logos_core_call_plugin_method': ['pointer', ['string', 'string', 'string']],
   'free': ['void', ['pointer']]
 });
 
@@ -122,9 +122,24 @@ const calculatorParams = JSON.stringify([
     "value": 7
   }
 ]);
-const result = LogosCore.logos_core_call_plugin_method('Simple Calculator Plugin', 'add', calculatorParams);
-console.log(`Result of calculator.add(5, 7): ${result === 1 ? 'Call successful' : 'Call failed'}`);
-// Note: The actual return value isn't accessible directly without additional FFI work
+const resultPtr = LogosCore.logos_core_call_plugin_method('calculator', 'add', calculatorParams);
+if (!resultPtr.isNull()) {
+  // Convert the returned pointer to a string and parse it as JSON
+  const resultJsonStr = ref.readCString(resultPtr);
+  const resultObj = JSON.parse(resultJsonStr);
+  
+  console.log('Call successful:', resultObj.success);
+  console.log('Message:', resultObj.message);
+  
+  if (resultObj.success && resultObj.hasOwnProperty('returnValue')) {
+    console.log(`Result of calculator.add(5, 7) = ${resultObj.returnValue}`);
+  }
+  
+  // Free the memory allocated by C++
+  LogosCore.free(resultPtr);
+} else {
+  console.log('Call failed: null pointer returned');
+}
 
 // Keep the process alive for demonstration purposes
 const intervalId = setInterval(() => {
