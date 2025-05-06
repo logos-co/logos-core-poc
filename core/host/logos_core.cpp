@@ -559,7 +559,7 @@ char* logos_core_get_plugin_methods(const char* plugin_name)
 }
 
 // Implementation of the function to call a plugin method with parameters
-char* logos_core_call_plugin_method(const char* plugin_name, const char* method_name, const char* params_json, const char* return_type_hint)
+char* logos_core_call_plugin_method(const char* plugin_name, const char* method_name, const char* params_json, const char* return_type_hint, void* callback)
 {
     if (!plugin_name || !method_name) {
         qWarning() << "Cannot call plugin method: plugin_name or method_name is null";
@@ -573,6 +573,14 @@ char* logos_core_call_plugin_method(const char* plugin_name, const char* method_
     qDebug() << "Attempting to call method" << methodName << "on plugin:" << name;
     if (!returnTypeHint.isEmpty()) {
         qDebug() << "Using provided return type hint:" << returnTypeHint;
+    }
+
+    // Capture the external callback if provided
+    typedef void (*ExternalCallbackFn)(bool, const char*);
+    ExternalCallbackFn externalCallback = (ExternalCallbackFn)callback;
+    
+    if (externalCallback) {
+        qDebug() << "External callback provided for method call";
     }
 
     // Get the plugin from the registry (convert to registry key format)
@@ -663,6 +671,69 @@ char* logos_core_call_plugin_method(const char* plugin_name, const char* method_
         QJsonValue paramValue = paramObj["value"];
         
         qDebug() << "Processing parameter" << i << ":" << paramName << "of type" << paramType;
+        
+        // Special handling for callback parameters
+        if (paramName == "callback" || paramType.contains("Callback") || 
+            (paramType.contains("std::function") && paramType.contains("void"))) {
+            qDebug() << "  Detected callback parameter, creating callback from provided function";
+            
+            // Different types of callbacks need different handling
+            if (paramType.contains("void(bool,") || 
+                paramType.contains("std::function<void(bool,") ||
+                paramType.contains("WakuInitCallback")) {
+                
+                // If we have an external callback, use it
+                if (externalCallback) {
+                    // Create a specialized callback for the common callback pattern
+                    auto callback = new std::function<void(bool, const QString&)>(
+                        [externalCallback](bool success, const QString &message) {
+                            qDebug() << "Forwarding callback to external function with success:" 
+                                    << success << "message:" << message;
+                            // Convert QString to C string for the external callback
+                            QByteArray messageBytes = message.toUtf8();
+                            externalCallback(success, messageBytes.constData());
+                        }
+                    );
+                    
+                    // Add to list of pointers to free later
+                    pointersToFree.append(callback);
+                    
+                    // Create the QGenericArgument with the appropriate type
+                    // Use the exact type name from the method to ensure exact match
+                    if (paramType.contains("WakuInitCallback")) {
+                        args[i] = QGenericArgument("WakuInitCallback", callback);
+                    } else {
+                        args[i] = QGenericArgument(paramType.toUtf8().constData(), callback);
+                    }
+                } else {
+                    // No external callback, create a generic logging callback
+                    auto callback = new std::function<void(bool, const QString&)>(
+                        [](bool success, const QString &message) {
+                            qDebug() << "Callback called with success:" << success 
+                                    << "message:" << message;
+                        }
+                    );
+                    
+                    // Add to list of pointers to free later
+                    pointersToFree.append(callback);
+                    
+                    // Create the QGenericArgument with the appropriate type
+                    args[i] = QGenericArgument(paramType.toUtf8().constData(), callback);
+                }
+            } else {
+                // Generic fallback for other callback types
+                qWarning() << "  Unknown callback type:" << paramType << ", cannot create a generic callback";
+                
+                // Free allocated memory before returning
+                for (void* ptr : pointersToFree) {
+                    delete ptr;
+                }
+                
+                return nullptr;
+            }
+            
+            continue;
+        }
         
         // Convert JSON value to QVariant based on the type
         QVariant variant;

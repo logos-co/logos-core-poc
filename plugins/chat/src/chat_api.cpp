@@ -1,5 +1,6 @@
 #include "chat_api.h"
 #include <unordered_set> // Add for storing message hashes
+#include <QObject> // For QMetaObject and Q_ARG
 
 // Constants
 const std::string TOY_CHAT_CONTENT_TOPIC = "/toy-chat/2/huilong/proto";
@@ -405,13 +406,16 @@ void* initAndStart(const std::string& relayTopic, MessageCallback messageCallbac
     }
     
     std::cout << "Found Waku Plugin, initializing" << std::endl;
-    // Call initWaku on the plugin
-    wakuPlugin->initWaku(
-        QString::fromStdString(configStr), 
-        [](bool success, const QString &message) {
-            std::cout << "Waku Plugin init result: " << (success ? "Success" : "Failed") << " - " << message.toStdString() << std::endl;
-        }
-    );
+    // Call initWaku on the plugin using QMetaObject::invokeMethod
+    // * wakuPlugin = PluginRegistry::getPlugin<WakuInterface>("waku");
+    QObject* the_plugin = PluginRegistry::getPlugin<QObject>("waku");
+    QMetaObject::invokeMethod(the_plugin, 
+                             "initWaku",
+                             Qt::DirectConnection,
+                             Q_ARG(QString, QString::fromStdString(configStr)),
+                             Q_ARG(std::function<void(bool, const QString&)>, [](bool success, const QString &message) {
+                                 std::cout << "Waku Plugin init result: " << (success ? "Success" : "Failed") << " - " << message.toStdString() << std::endl;
+                             }));
 
     std::this_thread::sleep_for(std::chrono::seconds(3));
 
