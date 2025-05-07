@@ -33,6 +33,14 @@ int main(int argc, char *argv[])
     core.start();
     std::cout << "Logos Core started successfully!" << std::endl;
 
+    // Load package_manager plugin by default
+    bool loaded = core.loadPlugin("package_manager");
+    if (loaded) {
+        qInfo() << "package_manager plugin loaded by default.";
+    } else {
+        qWarning() << "Failed to load package_manager plugin by default.";
+    }
+
     // Print loaded plugins initially
     QStringList plugins = core.getLoadedPlugins();
     if (plugins.isEmpty()) {

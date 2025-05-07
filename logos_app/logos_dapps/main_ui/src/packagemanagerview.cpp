@@ -549,9 +549,16 @@ void PackageManagerView::onApplyClicked()
         return;
     }
 
+    // Get the package_manager plugin
+    QObject* packageManagerPlugin = PluginRegistry::getPlugin<QObject>("package_manager");
     // Get the core_manager plugin
     QObject* coreManagerPlugin = PluginRegistry::getPlugin<QObject>("core_manager");
 
+    if (!packageManagerPlugin) {
+        m_detailsTextEdit->setText("Error: package_manager plugin not found. Cannot process plugins.");
+        qDebug() << "package_manager plugin not found";
+        return;
+    }
     if (!coreManagerPlugin) {
         m_detailsTextEdit->setText("Error: core_manager plugin not found. Cannot process plugins.");
         qDebug() << "core_manager plugin not found";
@@ -608,7 +615,7 @@ void PackageManagerView::onApplyClicked()
         // Regular installation process for non-UI plugins
         bool installSuccess = false;
         QMetaObject::invokeMethod(
-            coreManagerPlugin,
+            packageManagerPlugin,
             "installPlugin",
             Qt::DirectConnection,
             Q_RETURN_ARG(bool, installSuccess),
@@ -617,24 +624,23 @@ void PackageManagerView::onApplyClicked()
 
         if (!installSuccess) {
             failedPlugins << packageName + " (installation failed)";
-            continue;
         }
 
         // Then process the plugin to load it
-        QString pluginName;
-        bool success = QMetaObject::invokeMethod(
-            coreManagerPlugin,
-            "processPlugin",
-            Qt::DirectConnection,
-            Q_RETURN_ARG(QString, pluginName),
-            Q_ARG(QString, filePath)
-        );
+        //QString pluginName;
+        //bool success = QMetaObject::invokeMethod(
+        //    coreManagerPlugin,
+        //    "processPlugin",
+        //    Qt::DirectConnection,
+        //    Q_RETURN_ARG(QString, pluginName),
+        //    Q_ARG(QString, filePath)
+        //);
 
-        if (success) {
-            successfulPlugins << packageName + " (" + pluginName + ")";
-        } else {
-            failedPlugins << packageName + " (processing failed)";
-        }
+        //if (success) {
+        //    successfulPlugins << packageName + " (" + pluginName + ")";
+        //} else {
+        //    failedPlugins << packageName + " (processing failed)";
+        //}
     }
 
     // Display the results

@@ -73,4 +73,18 @@ find modules/build/modules -type f \( -name "*.dylib" -o -name "*.so" -o -name "
     cp "$plugin" "logos_app/app/build/packages/"
 done
 
+# Copy package_manager plugin to the build modules directory
+OS_EXT="so"
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  OS_EXT="dylib"
+elif [[ "$OSTYPE" == "msys"* || "$OSTYPE" == "win32"* ]]; then
+  OS_EXT="dll"
+fi
+
+PACKAGE_MANAGER_LIB="modules/build/modules/package_manager_plugin.${OS_EXT}"
+BUILD_MODULES_DIR="logos_app/app/build/bin/plugins/"
+
+echo "Copying package_manager plugin to the build modules directory..."
+cp "$PACKAGE_MANAGER_LIB" "$BUILD_MODULES_DIR"
+
 echo "Modules built successfully." 

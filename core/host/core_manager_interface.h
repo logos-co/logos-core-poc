@@ -15,6 +15,7 @@ public:
     virtual void start() = 0;
     virtual void cleanup() = 0;
     virtual QStringList getLoadedPlugins() = 0;
+    virtual bool loadPlugin(const QString& pluginName) = 0;
 };
 
 #endif // CORE_MANAGER_INTERFACE_H 
