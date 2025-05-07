@@ -5,7 +5,7 @@
 #include <QString>
 #include <QStringList>
 #include <QJsonArray>
-#include "../interface.h"
+#include "../../interface.h"
 
 class CoreManagerPlugin : public QObject, public PluginInterface {
     Q_OBJECT
