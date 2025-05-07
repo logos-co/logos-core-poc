@@ -4,7 +4,7 @@
 set -e
 
 echo "Building core..."
-./run_core.sh build
+./scripts/run_core.sh build
 
 echo "Building and running Logos Core POC application..."
 
@@ -33,8 +33,8 @@ mkdir -p bin/modules
 if [ "$1" = "all" ]; then
     cd ../../..
     echo "Building modules first..."
-    ./build_core_modules.sh
-    ./build_app_plugins.sh
+    ./scripts/build_core_modules.sh
+    ./scripts/build_app_plugins.sh
     cd logos_app/app/build
 fi
 
