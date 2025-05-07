@@ -68,3 +68,7 @@ For some plugins
  ┣ 📄 scripts/run_app.sh               # Script to build and run the application
  ┣ 📄 scripts/run_core.sh              # Script to build and run the core
 ```
+
+## Documentation
+
+- [How to Create a New Module for Logos Core](https://github.com/logos-co/logos-core-poc/wiki/How-to-create-a-Logos-Module)
