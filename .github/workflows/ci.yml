@@ -20,5 +20,5 @@ jobs:
         docker build -t logos-core-builder .
     - name: Build Logos Core
       run: |
-        docker run --name=logos-core-all logos-core-builder ./run_core.sh build
+        docker run --name=logos-core-all logos-core-builder ./scripts/run_core.sh build
         docker logs -f logos-core-all

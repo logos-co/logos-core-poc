@@ -9,19 +9,19 @@ git submodule update --init --recursive
 Build & run all:
 
 ```bash
-./run_app.sh all
+./scripts/run_app.sh all
 ```
 
 For core & modules:
 
 ```bash
-./run_core.sh all
+./scripts/run_core.sh all
 ```
 
 Build Core only:
 
 ```bash
-./run_core.sh build
+./scripts/run_core.sh build
 ```
 
 Build Container:
@@ -65,6 +65,7 @@ For some plugins
  ┣ 📂 modules/                 # Modules for Logos Core
  ┃ ┗ 📂 waku/                  # Waku Module
  ┃
- ┣ 📄 run_app.sh               # Script to build and run the application
- ┣ 📄 run_core.sh              # Script to build and run the core
+ ┣ 📂 scripts/                 # Scripts
+ ┣ 📄 scripts/run_app.sh               # Script to build and run the application
+ ┣ 📄 scripts/run_core.sh              # Script to build and run the core
 ```
