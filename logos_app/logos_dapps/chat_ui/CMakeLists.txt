@@ -38,7 +38,7 @@ add_library(chat_ui SHARED ${SOURCES})
 target_include_directories(chat_ui PRIVATE 
     ${CMAKE_CURRENT_SOURCE_DIR}/../../..
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../core
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/host
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/src
 )
 
 # Link libraries

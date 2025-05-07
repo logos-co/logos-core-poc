@@ -5,7 +5,7 @@
 #include <QDebug>
 #include <QCoreApplication>
 #include <QMessageBox>
-#include "../../core/plugin_registry.h"
+#include "../../../core/plugin_registry.h"
 
 WakuUIWidget::WakuUIWidget(QWidget* parent) : QWidget(parent), wakuPlugin(nullptr) {
     // Create UI elements

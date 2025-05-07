@@ -18,7 +18,7 @@ find_library(LOGOS_CORE_LIBRARY logos_core PATHS ${CMAKE_SOURCE_DIR}/../core/bui
 message(STATUS "Found logos_core library: ${LOGOS_CORE_LIBRARY}")
 
 # Add include directories for logos_core
-include_directories(${CMAKE_SOURCE_DIR}/../core/host)
+include_directories(${CMAKE_SOURCE_DIR}/../core/src)
 include_directories(${CMAKE_SOURCE_DIR}/../core)
 
 # Add subdirectories

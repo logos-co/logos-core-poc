@@ -3,7 +3,7 @@
 #include <QDebug>
 
 // Include logos_core header
-#include "../../core/host/logos_core.h"
+#include "../../core/src/logos_core.h"
 
 // External C functions from logos_core
 extern "C" {

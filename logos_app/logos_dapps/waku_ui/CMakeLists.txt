@@ -36,7 +36,7 @@ add_library(waku_ui SHARED ${SOURCES})
 target_include_directories(waku_ui PRIVATE 
     ${CMAKE_CURRENT_SOURCE_DIR}/../../..
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../core
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/host
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/src
 )
 
 target_link_libraries(waku_ui 

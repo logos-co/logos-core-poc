@@ -14,7 +14,7 @@ target_link_libraries(custom_app PRIVATE ${LOGOS_CORE_LIBRARY} Qt${QT_VERSION_MA
 # Include directories for the custom application
 target_include_directories(custom_app PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../core/host
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../core/src
     ${CMAKE_CURRENT_SOURCE_DIR}/../../core
     ${Qt${QT_VERSION_MAJOR}_INCLUDE_DIRS}
 ) 
