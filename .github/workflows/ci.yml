@@ -1,0 +1,24 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+jobs:
+  prep:
+    runs-on: ubuntu-latest
+    permissions: 
+        pull-requests: read
+    steps:
+    - uses: actions/checkout@v4
+      name: Checkout code
+      id: checkout
+    - name: Build Image
+      run: |
+        docker build -t logos-core-builder .
+    - name: Build Logos Core
+      run: |
+        docker run --name=logos-core-all logos-core-builder ./run_core.sh build
+        docker logs -f logos-core-all

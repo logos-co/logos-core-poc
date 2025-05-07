@@ -1,3 +1,7 @@
 {
-    "cmake.sourceDirectory": "/home/petty/Github/logos-co/logos-core-poc/app"
+    "cmake.sourceDirectory": "/home/petty/Github/logos-co/logos-core-poc/app",
+    "files.associations": {
+        "qcoreapplication": "cpp",
+        "qdebug": "cpp"
+    }
 }
