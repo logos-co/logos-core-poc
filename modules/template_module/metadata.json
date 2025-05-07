@@ -1,0 +1,13 @@
+{
+  "name": "template_module",
+  "version": "1.0.0",
+  "description": "Template module",
+  "author": "Logos Core Team",
+  "type": "core",
+  "category": "template",
+  "main": "template_module_plugin",
+  "dependencies": [],
+  "capabilities": [
+    "plugin_installation"
+  ]
+} 

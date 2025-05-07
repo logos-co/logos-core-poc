@@ -30,5 +30,6 @@ endif()
 # Add subdirectories for each plugin
 add_subdirectory(calculator)
 add_subdirectory(hello_world)
-add_subdirectory(waku) 
-add_subdirectory(chat) 
+add_subdirectory(waku)
+add_subdirectory(chat)
+add_subdirectory(template_module)
