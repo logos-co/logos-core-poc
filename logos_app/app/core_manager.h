@@ -33,6 +33,8 @@ public:
     CoreManager(const CoreManager&) = delete;
     void operator=(const CoreManager&) = delete;
 
+    bool loadPlugin(const QString& pluginName);
+
 private:
     // Private constructor for singleton pattern
     CoreManager() = default;

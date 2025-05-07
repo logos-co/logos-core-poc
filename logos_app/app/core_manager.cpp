@@ -11,6 +11,7 @@ extern "C" {
     void logos_core_start();
     void logos_core_cleanup();
     char** logos_core_get_loaded_plugins();
+    int logos_core_load_plugin(const char* plugin_name);
 }
 
 // Implementation of the custom deleter
@@ -67,4 +68,10 @@ QStringList CoreManager::convertPluginsToStringList(char** plugins) {
     }
     
     return pluginList;
+}
+
+bool CoreManager::loadPlugin(const QString& pluginName) {
+    qDebug() << "CoreManager: Loading plugin:" << pluginName;
+    int result = logos_core_load_plugin(pluginName.toUtf8().constData());
+    return result == 1;
 } 
