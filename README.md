@@ -55,7 +55,6 @@ For some plugins
 ```
 📦 logos-core-poc
  ┣ 📂 core/                    # Logos Core Library
- ┃ ┗ 📄 ...                    # Core components and utilities
  ┃
  ┣ 📂 logos_app/               # Application Layer
  ┃ ┣ 📂 app/                   # Logos App POC
