@@ -12,7 +12,7 @@
 
 PackageManagerPlugin::PackageManagerPlugin()
 {
-    qDebug() << "hello world";
+    qDebug() << "PackageManagerPlugin created";
 }
 
 PackageManagerPlugin::~PackageManagerPlugin() {}
@@ -151,4 +151,61 @@ bool PackageManagerPlugin::installPlugin(const QString& pluginPath)
     }
     qDebug() << "Successfully processed installed plugin:" << pluginName;
     return true;
+}
+
+QJsonArray PackageManagerPlugin::getPackages() {
+    QJsonArray packagesArray;
+
+    // Get the application directory path
+    QString appDir = QCoreApplication::applicationDirPath();
+    QDir packagesDir(appDir + "/packages");
+
+    // Check if the packages directory exists
+    if (!packagesDir.exists()) {
+        qDebug() << "Packages directory not found at:" << packagesDir.absolutePath();
+        return packagesArray;
+    }
+
+    // Get all plugin files (*.so, *.dll, *.dylib) from the packages directory
+    QStringList nameFilters;
+#ifdef Q_OS_WIN
+    nameFilters << "*.dll";
+#elif defined(Q_OS_MAC)
+    nameFilters << "*.dylib";
+#else
+    nameFilters << "*.so";
+#endif
+    QStringList pluginFiles = packagesDir.entryList(nameFilters, QDir::Files);
+
+    for (const QString& fileName : pluginFiles) {
+        QString filePath = packagesDir.absoluteFilePath(fileName);
+        QPluginLoader loader(filePath);
+        QJsonObject metadata = loader.metaData();
+        if (metadata.isEmpty()) {
+            qDebug() << "Failed to load metadata from:" << filePath;
+            continue;
+        }
+        QJsonObject root = metadata.value("MetaData").toObject();
+        QString name = root.value("name").toString(fileName);
+        QString version = root.value("version").toString("1.0.0");
+        QString description = root.value("description").toString("Qt Plugin");
+        QString category = root.value("category").toString("Uncategorized");
+        QString type = root.value("type").toString("Plugin");
+        QJsonArray depsArray = root.value("dependencies").toArray();
+        QJsonArray dependencies;
+        for (const QJsonValue& dep : depsArray) {
+            dependencies.append(dep.toString());
+        }
+        QJsonObject packageObj;
+        packageObj["name"] = name;
+        packageObj["installedVersion"] = version;
+        packageObj["latestVersion"] = version;
+        packageObj["description"] = description;
+        packageObj["category"] = category;
+        packageObj["type"] = type;
+        packageObj["path"] = filePath;
+        packageObj["dependencies"] = dependencies;
+        packagesArray.append(packageObj);
+    }
+    return packagesArray;
 }

@@ -381,130 +381,85 @@ void PackageManagerView::scanPackagesFolder()
 {
     // Clear existing packages
     clearPackageList();
-    
-    // Get the application directory path
-    QString appDir = QCoreApplication::applicationDirPath();
-    
-    // Find the packages directory
-    QDir packagesDir(appDir + "/packages");
-    
-    // Check if the packages directory exists
-    if (!packagesDir.exists()) {
-        qDebug("Packages directory not found at: %s", qPrintable(packagesDir.absolutePath()));
-        // Add some fallback packages for UI demonstration
+
+    // Get the package_manager plugin
+    QObject* packageManagerPlugin = PluginRegistry::getPlugin<QObject>("package_manager");
+    if (!packageManagerPlugin) {
+        qDebug() << "package_manager plugin not found";
         addFallbackPackages();
         return;
     }
-    
-    // Get all plugin files (*.so, *.dll, *.dylib) from the packages directory
-    QStringList nameFilters;
-    #ifdef Q_OS_WIN
-        nameFilters << "*.dll";
-    #elif defined(Q_OS_MAC)
-        nameFilters << "*.dylib";
-    #else
-        nameFilters << "*.so";
-    #endif
-    
-    QStringList pluginFiles = packagesDir.entryList(nameFilters, QDir::Files);
-    
-    // No plugins found
-    if (pluginFiles.isEmpty()) {
-        qDebug("No plugin files found in packages directory");
-        // Add some fallback packages for UI demonstration
+
+    QJsonArray packagesArray;
+    QMetaObject::invokeMethod(
+        packageManagerPlugin,
+        "getPackages",
+        Qt::DirectConnection,
+        Q_RETURN_ARG(QJsonArray, packagesArray)
+    );
+
+    if (packagesArray.isEmpty()) {
         addFallbackPackages();
         return;
     }
-    
+
     // Set to store unique categories
     QSet<QString> categories;
-    
-    // Process each plugin file to extract metadata
+
+    // Process each package from the array
     int loadedCount = 0;
-    for (const QString& fileName : pluginFiles) {
-        QString filePath = packagesDir.absoluteFilePath(fileName);
-        
-        // Attempt to load the plugin to extract metadata
-        QPluginLoader loader(filePath);
-        QJsonObject metadata = loader.metaData();
-        
-        if (metadata.isEmpty()) {
-            qDebug("Failed to load metadata from: %s", qPrintable(filePath));
-            continue;
-        }
-        
-        // Extract information from metadata
-        QJsonObject root = metadata.value("MetaData").toObject();
-        
-        // Get plugin name from metadata (or fall back to filename if not found)
-        QString name = root.value("name").toString();
-        if (name.isEmpty()) {
-            name = fileName;
-        }
-        
-        QString version = root.value("version").toString("1.0.0");
-        QString description = root.value("description").toString("Qt Plugin");
-        
-        // Get plugin category
-        QString category = root.value("category").toString("Uncategorized");
+    for (const QJsonValue& value : packagesArray) {
+        QJsonObject obj = value.toObject();
+        QString name = obj.value("name").toString();
+        QString installedVersion = obj.value("installedVersion").toString();
+        QString latestVersion = obj.value("latestVersion").toString();
+        QString description = obj.value("description").toString();
+        QString type = obj.value("type").toString();
+        QString category = obj.value("category").toString();
         categories.insert(category);
-        
-        // Get plugin type
-        QString type = root.value("type").toString("Plugin");
-        
-        // Get plugin dependencies
-        QStringList dependencies;
-        QJsonArray depsArray = root.value("dependencies").toArray();
-        for (const QJsonValue& dep : depsArray) {
-            dependencies.append(dep.toString());
-        }
-        
+
         // Store package info
         PackageInfo info;
         info.name = name;
-        info.installedVersion = version;
-        info.latestVersion = version;  // In a real app, this might be different from installed version
+        info.installedVersion = installedVersion;
+        info.latestVersion = latestVersion;
         info.description = description;
-        info.path = filePath;
+        info.path = obj.value("path").toString();
         info.isLoaded = false;
         info.category = category;
         info.type = type;
+        // Dependencies
+        QStringList dependencies;
+        QJsonArray depsArray = obj.value("dependencies").toArray();
+        for (const QJsonValue& dep : depsArray) {
+            dependencies.append(dep.toString());
+        }
         info.dependencies = dependencies;
-        
         m_packages[name] = info;
-        
-        // Add to UI
-        addPackage(name, version, version, type, description);
-        
+        addPackage(name, installedVersion, latestVersion, type, description);
         loadedCount++;
     }
-    
+
     // Add the categories to the sidebar
-    // Convert set to list for sorting
     QStringList sortedCategories;
     for (const QString& category : categories) {
         sortedCategories.append(category);
     }
-    // Sort the categories alphabetically
     std::sort(sortedCategories.begin(), sortedCategories.end());
-    // Add sorted categories to the list
     for (const QString& category : sortedCategories) {
-        // Capitalize only the first letter
         if (!category.isEmpty()) {
             QString capitalizedCategory = category;
             capitalizedCategory[0] = capitalizedCategory[0].toUpper();
             m_categoryList->addItem(capitalizedCategory);
         }
     }
-    
-    qDebug("Loaded %d packages from packages directory", loadedCount);
-    
-    // If no packages were loaded, add fallback packages
+
+    qDebug("Loaded %d packages from package_manager", loadedCount);
+
     if (loadedCount == 0) {
         addFallbackPackages();
     }
-    
-    // Initialize dependency processing flag
+
     m_isProcessingDependencies = false;
 }
 
