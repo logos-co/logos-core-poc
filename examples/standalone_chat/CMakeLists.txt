@@ -29,8 +29,6 @@ add_executable(standalone_chat
     main.cpp
     mainwindow.cpp
     mainwindow.h
-    core_manager.cpp
-    core_manager.h
 )
 
 # Link against the correct Qt version and the core library

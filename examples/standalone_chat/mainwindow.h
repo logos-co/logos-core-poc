@@ -13,7 +13,6 @@ public:
 
 private:
     void setupUi();
-    void loadChatUiPlugin();
 };
 
 #endif // MAINWINDOW_H 
