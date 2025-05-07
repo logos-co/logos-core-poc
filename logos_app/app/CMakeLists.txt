@@ -36,8 +36,6 @@ set(PROJECT_SOURCES
     main.cpp
     window.h
     window.cpp
-    core_manager.h
-    core_manager.cpp
     interfaces/IComponent.h
     resources.qrc
 )

@@ -6,7 +6,6 @@
 #include <QLabel>
 #include <QVBoxLayout>
 #include <QDir>
-#include <IComponent.h>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -20,65 +19,30 @@ MainWindow::~MainWindow()
 
 void MainWindow::setupUi()
 {
-    // Set window properties
-    setWindowTitle("Standalone Chat App");
-    resize(800, 600);
-    
-    // Load the chat_ui plugin
-    loadChatUiPlugin();
-}
+    // Determine the appropriate plugin extension based on the platform
+    QString pluginExtension;
+    #if defined(Q_OS_WIN)
+        pluginExtension = ".dll";
+    #elif defined(Q_OS_MAC)
+        pluginExtension = ".dylib";
+    #else // Linux and other Unix-like systems
+        pluginExtension = ".so";
+    #endif
 
-void MainWindow::loadChatUiPlugin()
-{
-    // Determine the appropriate extension based on the platform
-#ifdef Q_OS_MAC
-    QString extension = ".dylib";
-#else
-    QString extension = ".so";
-#endif
-
-    // Try to load the chat_ui plugin from the bin directory
-    QString pluginPath = QCoreApplication::applicationDirPath() + "/chat_ui" + extension;
-    qDebug() << "Attempting to load chat UI plugin from:" << pluginPath;
-    
+    // Load the chat_ui plugin with the appropriate extension
+    QString pluginPath = QCoreApplication::applicationDirPath() + "/chat_ui" + pluginExtension;
     QPluginLoader loader(pluginPath);
+
     QWidget* chatWidget = nullptr;
 
     if (loader.load()) {
-        QObject* pluginInstance = loader.instance();
-        qDebug() << "Plugin loaded, instance created:" << (pluginInstance != nullptr);
-        
-        if (pluginInstance) {
-            // Method 1: Try to cast to IComponent interface
-            IComponent* component = qobject_cast<IComponent*>(pluginInstance);
-            if (component) {
-                qDebug() << "Successfully cast plugin to IComponent";
-                chatWidget = component->createWidget();
-                if (chatWidget) {
-                    qDebug() << "Successfully created widget using component interface";
-                } else {
-                    qDebug() << "Component->createWidget() returned nullptr";
-                }
-            } else {
-                qDebug() << "Failed to cast plugin to IComponent";
-                
-                // Method 2: Try using QMetaObject::invokeMethod as fallback
-                qDebug() << "Trying QMetaObject::invokeMethod as fallback";
-                bool invoked = QMetaObject::invokeMethod(pluginInstance, "createWidget",
-                                         Qt::DirectConnection,
-                                         Q_RETURN_ARG(QWidget*, chatWidget));
-                
-                if (invoked) {
-                    qDebug() << "QMetaObject::invokeMethod succeeded, widget created:" << (chatWidget != nullptr);
-                } else {
-                    qDebug() << "QMetaObject::invokeMethod failed to call createWidget()";
-                }
-            }
-        } else {
-            qWarning() << "Failed to get plugin instance:" << loader.errorString();
+        QObject* plugin = loader.instance();
+        if (plugin) {
+            // Try to create the chat widget using the plugin's createWidget method
+            QMetaObject::invokeMethod(plugin, "createWidget",
+                                    Qt::DirectConnection,
+                                    Q_RETURN_ARG(QWidget*, chatWidget));
         }
-    } else {
-        qWarning() << "Failed to load chat UI plugin:" << loader.errorString();
     }
 
     if (chatWidget) {
@@ -86,6 +50,7 @@ void MainWindow::loadChatUiPlugin()
     } else {
         qWarning() << "================================================";
         qWarning() << "Failed to load chat UI plugin from:" << pluginPath;
+        qWarning() << "Error:" << loader.errorString();
         qWarning() << "================================================";
         
         // Fallback: show a message when plugin is not found
@@ -101,4 +66,8 @@ void MainWindow::loadChatUiPlugin()
         layout->addWidget(messageLabel);
         setCentralWidget(fallbackWidget);
     }
+
+    // Set window title and size
+    setWindowTitle("Standalone Chat App");
+    resize(800, 600);
 } 

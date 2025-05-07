@@ -13,7 +13,7 @@
 #include <QHash>
 #include "../interface.h"
 #include "../plugin_registry.h"
-#include "core_manager.h"
+#include "core_manager/core_manager.h"
 
 // Declare QObject* as a metatype so it can be stored in QVariant
 Q_DECLARE_METATYPE(QObject*)

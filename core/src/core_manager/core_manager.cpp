@@ -8,7 +8,7 @@
 #include <QJsonArray>
 #include <QFileInfo>
 #include <QFile>
-#include "../plugin_registry.h"
+#include "../../plugin_registry.h"
 #include "logos_core.h"
 
 CoreManagerPlugin::CoreManagerPlugin() {

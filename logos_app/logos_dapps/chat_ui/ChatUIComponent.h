@@ -9,6 +9,6 @@ class ChatUIComponent : public QObject, public IComponent {
     Q_PLUGIN_METADATA(IID IComponent_iid FILE "metadata.json")
 
 public:
-    QWidget* createWidget() override;
+    Q_INVOKABLE QWidget* createWidget() override;
     void destroyWidget(QWidget* widget) override;
 }; 

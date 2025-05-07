@@ -17,7 +17,7 @@ endif()
 # Include directories for the project
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/../../core
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../core/host
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../core/src
     ${CMAKE_CURRENT_SOURCE_DIR}/../../logos_app/app/interfaces
 )
 
@@ -29,8 +29,6 @@ add_executable(standalone_chat
     main.cpp
     mainwindow.cpp
     mainwindow.h
-    core_manager.cpp
-    core_manager.h
 )
 
 # Link against the correct Qt version and the core library
