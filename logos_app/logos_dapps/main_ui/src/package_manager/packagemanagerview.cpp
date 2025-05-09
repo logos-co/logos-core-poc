@@ -1,5 +1,5 @@
 #include "packagemanagerview.h"
-#include "mainwindow.h"
+#include "../mainwindow.h"
 #include <QFont>
 #include <QHeaderView>
 #include <QIcon>

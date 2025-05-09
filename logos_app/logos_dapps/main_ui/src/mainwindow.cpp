@@ -11,7 +11,7 @@
 #include "modulesview.h"
 #include "dashboardview.h"
 #include "coremoduleview.h"
-#include "packagemanagerview.h"
+#include "package_manager/packagemanagerview.h"
 #include "modulesgenericview.h"
 #include "core/plugin_registry.h"
 

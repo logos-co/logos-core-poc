@@ -28,8 +28,8 @@
       "src/coremoduleview.h",
       "src/pluginmethodsview.cpp",
       "src/pluginmethodsview.h",
-      "src/packagemanagerview.cpp",
-      "src/packagemanagerview.h",
+      "src/package_manager/packagemanagerview.cpp",
+      "src/package_manager/packagemanagerview.h",
       "src/main_ui_resources.qrc"
     ]
   },

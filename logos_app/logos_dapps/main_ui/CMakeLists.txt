@@ -34,7 +34,7 @@ set(SOURCES
     src/dashboardview.cpp
     src/coremoduleview.cpp
     src/pluginmethodsview.cpp
-    src/packagemanagerview.cpp
+    src/package_manager/packagemanagerview.cpp
     src/main_ui_resources.qrc
 )
 
