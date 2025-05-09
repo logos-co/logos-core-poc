@@ -27,8 +27,8 @@ set(SOURCES
     src/main_ui_plugin.cpp
     src/mainwindow.cpp
     src/sidebarbutton.cpp
-    src/mdichild.cpp
-    src/mdiview.cpp
+    src/app_loader/mdichild.cpp
+    src/app_loader/mdiview.cpp
     src/modules_loader/modulesview.cpp
     src/modules_loader/modulesgenericview.cpp
     src/dashboard/dashboardview.cpp

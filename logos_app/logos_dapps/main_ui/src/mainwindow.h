@@ -7,7 +7,7 @@
 #include <QStackedWidget>
 #include <QVector>
 #include "sidebarbutton.h"
-#include "mdiview.h"
+#include "app_loader/mdiview.h"
 
 class ModulesGenericView;
 

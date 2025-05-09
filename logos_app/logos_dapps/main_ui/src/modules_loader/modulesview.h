@@ -11,7 +11,7 @@
 #include <QStringList>
 #include <QDebug>
 #include <IComponent.h>
-#include "mdiview.h"
+#include "../app_loader/mdiview.h"
 #include <QLabel>
 
 class MainWindow;
