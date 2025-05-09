@@ -62,6 +62,9 @@ For some plugins
  ┃   ┗ 📂 chat_ui/             # Simple Chat App
  ┃
  ┣ 📂 modules/                 # Modules for Logos Core
+ ┃ ┗ 📂 chat/                  # POC Chat API, interacts with Waku Module
+ ┃ ┗ 📂 package_manager/       # Package Manager Module
+ ┃ ┗ 📂 template_module/       # Example Module
  ┃ ┗ 📂 waku/                  # Waku Module
  ┃
  ┣ 📂 scripts/                 # Scripts
