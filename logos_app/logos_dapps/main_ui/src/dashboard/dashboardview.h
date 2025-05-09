@@ -21,4 +21,4 @@ private:
     QLabel *m_contentLabel;
 };
 
-#endif // DASHBOARDVIEW_H 
+#endif // DASHBOARDVIEW_H

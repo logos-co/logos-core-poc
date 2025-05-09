@@ -1,6 +1,6 @@
 #include "modulesgenericview.h"
 #include <QFont>
-#include "mainwindow.h"
+#include "../mainwindow.h"
 #include "modulesview.h"
 #include "coremoduleview.h"
 #include <QDebug>

@@ -8,11 +8,11 @@
 #include <QStatusBar>
 #include <QLabel>
 #include <QDebug>
-#include "modulesview.h"
-#include "dashboardview.h"
-#include "coremoduleview.h"
+#include "modules_loader/modulesview.h"
+#include "dashboard/dashboardview.h"
+#include "modules_loader/coremoduleview.h"
 #include "package_manager/packagemanagerview.h"
-#include "modulesgenericview.h"
+#include "modules_loader/modulesgenericview.h"
 #include "core/plugin_registry.h"
 
 MainWindow::MainWindow(QWidget *parent)

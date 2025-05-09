@@ -9,7 +9,7 @@
 #include <QStackedWidget>
 #include <QFileDialog>
 #include <QMessageBox>
-#include "core/plugin_registry.h"
+#include "../core/plugin_registry.h"
 #include "pluginmethodsview.h"
 #include <QJsonArray>
 #include <QJsonObject>

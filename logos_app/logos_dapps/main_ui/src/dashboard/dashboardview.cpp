@@ -42,4 +42,4 @@ void DashboardView::setupUi()
 
     m_layout->addWidget(m_title);
     m_layout->addWidget(m_contentLabel);
-} 
+}

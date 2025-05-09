@@ -29,11 +29,11 @@ set(SOURCES
     src/sidebarbutton.cpp
     src/mdichild.cpp
     src/mdiview.cpp
-    src/modulesview.cpp
-    src/modulesgenericview.cpp
-    src/dashboardview.cpp
-    src/coremoduleview.cpp
-    src/pluginmethodsview.cpp
+    src/modules_loader/modulesview.cpp
+    src/modules_loader/modulesgenericview.cpp
+    src/dashboard/dashboardview.cpp
+    src/modules_loader/coremoduleview.cpp
+    src/modules_loader/pluginmethodsview.cpp
     src/package_manager/packagemanagerview.cpp
     src/main_ui_resources.qrc
 )

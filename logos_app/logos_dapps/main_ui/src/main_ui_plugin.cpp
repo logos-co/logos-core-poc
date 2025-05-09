@@ -1,6 +1,6 @@
 #include "main_ui_plugin.h"
 #include "mainwindow.h"
-#include "coremoduleview.h"
+#include "modules_loader/coremoduleview.h"
 #include <QDebug>
 
 MainUIPlugin::MainUIPlugin(QObject* parent)

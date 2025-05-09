@@ -5,7 +5,7 @@
 #include <QTreeWidgetItem>
 #include <QDebug>
 #include <QMessageBox>
-#include "core/plugin_registry.h"
+#include "../core/plugin_registry.h"
 
 PluginMethodsView::PluginMethodsView(const QString& pluginName, QWidget* parent)
     : QWidget(parent)
