@@ -82,7 +82,7 @@ elif [[ "$OSTYPE" == "msys"* || "$OSTYPE" == "win32"* ]]; then
 fi
 
 PACKAGE_MANAGER_LIB="modules/build/modules/package_manager_plugin.${OS_EXT}"
-BUILD_MODULES_DIR="logos_app/app/build/bin/plugins/"
+BUILD_MODULES_DIR="logos_app/app/build/bin/modules/"
 
 echo "Copying package_manager plugin to the build modules directory..."
 cp "$PACKAGE_MANAGER_LIB" "$BUILD_MODULES_DIR"

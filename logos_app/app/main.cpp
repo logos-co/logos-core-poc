@@ -16,6 +16,7 @@ extern "C" {
     void logos_core_cleanup();
     char** logos_core_get_loaded_plugins();
     int logos_core_load_plugin(const char* plugin_name);
+    char* logos_core_process_plugin(const char* plugin_path);
 }
 
 // Helper function to convert C-style array to QStringList
@@ -35,7 +36,7 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
 
     // Set the plugins directory
-    QString pluginsDir = QDir::cleanPath(QCoreApplication::applicationDirPath() + "/bin/plugins");
+    QString pluginsDir = QDir::cleanPath(QCoreApplication::applicationDirPath() + "/bin/modules");
     std::cout << "Setting plugins directory to: " << pluginsDir.toStdString() << std::endl;
     logos_core_set_plugins_dir(pluginsDir.toUtf8().constData());
 
@@ -43,8 +44,20 @@ int main(int argc, char *argv[])
     logos_core_start();
     std::cout << "Logos Core started successfully!" << std::endl;
 
-    // Load package_manager plugin by default
-    bool loaded = core.loadPlugin("package_manager");
+    // TODO: this should be refactored
+    QString pluginExtension;
+#if defined(Q_OS_MAC)
+    pluginExtension = ".dylib";
+#elif defined(Q_OS_WIN)
+    pluginExtension = ".dll";
+#else // Linux and others
+    pluginExtension = ".so";
+#endif
+
+    QString pluginPath = pluginsDir + "/package_manager_plugin" + pluginExtension;
+    logos_core_process_plugin(pluginPath.toUtf8().constData());
+    bool loaded = logos_core_load_plugin("package_manager");
+
     if (loaded) {
         qInfo() << "package_manager plugin loaded by default.";
     } else {
