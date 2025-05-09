@@ -14,6 +14,10 @@
 #include "../interface.h"
 #include "../plugin_registry.h"
 #include "core_manager.h"
+#include <QLibrary>
+#include <QList>
+#include <QMetaType>
+#include <QTime>
 
 // Declare QObject* as a metatype so it can be stored in QVariant
 Q_DECLARE_METATYPE(QObject*)
@@ -908,4 +912,12 @@ char* logos_core_call_plugin_method(const char* plugin_name, const char* method_
     }
     
     return resultStr;
+}
+
+/**
+ * Get a plugin by name from the registry
+ */
+void* logos_core_get_plugin(const char* plugin_name) {
+    QString name(plugin_name);
+    return PluginRegistry::getPlugin<QObject>(name);
 } 

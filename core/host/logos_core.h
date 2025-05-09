@@ -57,6 +57,10 @@ LOGOS_CORE_EXPORT char* logos_core_get_plugin_methods(const char* plugin_name);
 // callback is an optional function that will be called when the operation completes (for async operations)
 LOGOS_CORE_EXPORT char* logos_core_call_plugin_method(const char* plugin_name, const char* method_name, const char* params_json, const char* return_type_hint, void* callback);
 
+// Get a plugin by name from the registry
+// Returns the plugin pointer or NULL if not found
+LOGOS_CORE_EXPORT void* logos_core_get_plugin(const char* plugin_name);
+
 #ifdef __cplusplus
 }
 #endif

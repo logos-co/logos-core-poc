@@ -1,5 +1,7 @@
 const ffi = require('ffi-napi');
 const ref = require('ref-napi');
+const StructType = require('ref-struct-di')(ref);
+const ArrayType = require('ref-array-di')(ref);
 const path = require('path');
 
 // Simple hello world example that uses liblogos_core
@@ -22,6 +24,7 @@ const LogosCore = ffi.Library(libPath, {
   'logos_core_get_loaded_plugins': ['pointer', []],
   'logos_core_get_plugin_methods': ['pointer', ['string']],
   'logos_core_call_plugin_method': ['pointer', ['string', 'string', 'string', 'string', WakuCallbackType]],
+  'logos_core_get_plugin': ['pointer', ['string']],
   'free': ['void', ['pointer']]
 });
 
@@ -44,75 +47,43 @@ console.log('Hello World from Logos Core Node.js example!');
 LogosCore.logos_core_load_plugin('waku');
 LogosCore.logos_core_load_plugin('chat');
 LogosCore.logos_core_load_plugin('calculator');
+// Alternative approach using the getPlugin function - advanced FFI for Qt objects
+console.log("\n\n\n\n=== Using getPlugin with advanced FFI setup ===");
 
-console.log("\n\n\n\n\n\n\n")
-
-// Call the waku plugin's initWaku method
-console.log('Calling waku plugin initWaku method...');
-
-// Create a JavaScript callback function
-const wakuInitCallback = WakuCallbackType.toPointer((success, message) => {
-  console.log('Waku initialization callback from JS:');
-  console.log('  Success:', success);
-  console.log('  Message:', message);
-});
-
-// Create the configuration string
-const wakuConfig = {
-  host: "0.0.0.0",
-  tcpPort: 60010,
-  key: null,
-  clusterId: 16,
-  relay: true,
-  relayTopics: ["/waku/2/rs/16/32"],
-  shards: [1, 32, 64, 128, 256],
-  maxMessageSize: "1024KiB",
-  dnsDiscovery: true,
-  dnsDiscoveryUrl: "enrtree://AMOJVZX4V6EXP7NTJPMAYJYST2QP6AJXYW76IU6VGJS7UVSNDYZG4@boot.prod.status.nodes.status.im",
-  discv5Discovery: false,
-  discv5EnrAutoUpdate: false,
-  logLevel: "INFO",
-  keepAlive: true
-};
-
-// Create the parameters array for the method call
-const initWakuParams = [
-  {
-    name: "cfg",
-    type: "QString",
-    value: JSON.stringify(wakuConfig)
-  },
-  {
-    name: "callback",
-    type: "WakuInitCallback",
-    value: null  // This won't be used directly, but is needed to match the method signature
-  }
-];
-
-// Call the method with our JavaScript callback
-const resultPtr = LogosCore.logos_core_call_plugin_method(
-  "waku",                            // plugin name
-  "initWaku",                        // method name
-  JSON.stringify(initWakuParams),    // parameters as JSON
-  "void",                            // return type hint
-  wakuInitCallback                   // JavaScript callback
-);
-
-// Check if the call was successful
-if (resultPtr) {
-  const resultString = resultPtr.readCString();
-  const result = JSON.parse(resultString);
+try {
+  // Get the calculator plugin pointer
+  const calculatorPtr = LogosCore.logos_core_get_plugin("calculator");
   
-  console.log('Result of initWaku call:', result);
+  // Define the CalculatorInterface virtual method table structure (vtable)
+  // In C++ classes with virtual methods, the first bytes of the object contain a pointer to the vtable
+  // We need to create bindings for the methods we want to call
+
+  // Create a function pointer type for the add method
+  // Virtual method layout: first entry is destructor, then virtual methods in order
+  // CalculatorInterface inherits from PluginInterface, so we need to account for those virtual methods too
   
-  // Free the memory allocated for the result
-  LogosCore.free(resultPtr);
-} else {
-  console.error('Failed to call initWaku method');
+  // Assuming PluginInterface has some virtual methods before CalculatorInterface methods
+  // This is an approximation, you might need to adjust offsets based on actual class hierarchy
+  
+  // Get the actual vtable pointer (first field in the object)
+  const vtablePtr = ref.readPointer(calculatorPtr, 0);
+  
+  // Define the add method function pointer (offset in vtable depends on inheritance hierarchy)
+  // This is an educated guess - you may need to adjust based on actual vtable layout
+  // Usually for a simple inheritance: destructor (0), then PluginInterface methods, then CalculatorInterface methods
+  const calculatorAddFn = ffi.ForeignFunction(
+    ref.readPointer(vtablePtr, 14 * ref.sizeof.pointer), // Offset: position in vtable (adjust based on actual class)
+    'int',  // Return type
+    ['pointer', 'int', 'int'] // Arguments: this pointer, a, b
+  );
+  
+  // Call the add method with values 2 and 3
+  const result = calculatorAddFn(calculatorPtr, 2, 3);
+  console.log(`Calculator add(2, 3) result: ${result}`);
+  
+} catch (err) {
+  console.error('Error in direct plugin method calling:', err);
 }
-
-// Wait a few seconds for the callback to execute
-console.log('Waiting for callback to execute...');
 
 // Keep the process alive for demonstration purposes
 const intervalId = setInterval(() => {
