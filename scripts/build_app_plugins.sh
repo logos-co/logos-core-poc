@@ -13,7 +13,7 @@ echo "Building app plugins..."
 mkdir -p logos_app/logos_dapps/build/plugins
 
 # List of plugins to build
-plugins=("counter" "colorchanger" "waku_ui" "main_ui" "chat_ui")
+plugins=("counter" "waku_ui" "main_ui" "chat_ui")
 
 # Build each plugin individually
 for plugin_name in "${plugins[@]}"; do
