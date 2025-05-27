@@ -2,9 +2,9 @@ cmake_minimum_required(VERSION 3.14)
 project(LogosModules)
 
 # Find Qt packages
-find_package(Qt6 COMPONENTS Core REQUIRED)
+find_package(Qt6 COMPONENTS Core RemoteObjects REQUIRED)
 if(NOT Qt6_FOUND)
-    find_package(Qt5 COMPONENTS Core REQUIRED)
+    find_package(Qt5 COMPONENTS Core RemoteObjects REQUIRED)
 endif()
 
 # Set QT_VERSION_MAJOR based on what was found

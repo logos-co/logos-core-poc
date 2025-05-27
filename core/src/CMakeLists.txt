@@ -23,7 +23,7 @@ add_library(logos_core SHARED ${LOGOS_CORE_SOURCES})
 target_compile_definitions(logos_core PRIVATE LOGOS_CORE_LIBRARY)
 
 # Link Qt libraries to the library
-target_link_libraries(logos_core PRIVATE Qt${QT_VERSION_MAJOR}::Core)
+target_link_libraries(logos_core PRIVATE Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::RemoteObjects)
 
 # Include directories for the library
 target_include_directories(logos_core PRIVATE

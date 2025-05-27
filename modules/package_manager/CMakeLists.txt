@@ -6,6 +6,8 @@ set(PLUGIN_SOURCES
     package_manager_plugin.h
     package_manager_interface.h
     ${CMAKE_SOURCE_DIR}/../core/interface.h
+    ${CMAKE_SOURCE_DIR}/../SDK/cpp/logos_api.cpp
+    ${CMAKE_SOURCE_DIR}/../SDK/cpp/logos_api.h
 )
 
 # Create the plugin library
@@ -16,12 +18,13 @@ set_target_properties(package_manager_plugin PROPERTIES
     PREFIX "")
 
 # Link Qt libraries
-target_link_libraries(package_manager_plugin PRIVATE Qt${QT_VERSION_MAJOR}::Core)
+target_link_libraries(package_manager_plugin PRIVATE Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::RemoteObjects)
 
 # Include directories
 target_include_directories(package_manager_plugin PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/../core
+    ${CMAKE_SOURCE_DIR}/../SDK/cpp
 )
 
 # Set common properties for both platforms

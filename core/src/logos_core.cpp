@@ -11,6 +11,7 @@
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QHash>
+#include <QRemoteObjectRegistryHost>
 #include "../interface.h"
 #include "../plugin_registry.h"
 #include "core_manager/core_manager.h"
@@ -29,6 +30,9 @@ static QStringList g_loaded_plugins;
 
 // Global hash to store known plugin names and paths
 static QHash<QString, QString> g_known_plugins;
+
+// Global Qt Remote Object registry host
+static QRemoteObjectRegistryHost* g_registry_host = nullptr;
 
 // Helper function to process a plugin and extract its metadata
 static QString processPlugin(const QString &pluginPath)
@@ -250,6 +254,18 @@ static bool initializeCoreManager()
     // Register it in the plugin registry
     PluginRegistry::registerPlugin(coreManager, coreManager->name());
     
+    // Enable remote access for the core manager
+    if (g_registry_host) {
+        bool success = g_registry_host->enableRemoting(coreManager, coreManager->name());
+        if (success) {
+            qDebug() << "Core manager enabled for remote access with name:" << coreManager->name();
+        } else {
+            qWarning() << "Failed to enable remote access for core manager";
+        }
+    } else {
+        qWarning() << "Registry host not initialized, cannot enable remote access for core manager";
+    }
+    
     // Add to loaded plugins list
     g_loaded_plugins.append(coreManager->name());
     
@@ -281,6 +297,12 @@ void logos_core_start()
     
     // Clear the list of loaded plugins before loading new ones
     g_loaded_plugins.clear();
+    
+    // Initialize Qt Remote Object registry host
+    if (!g_registry_host) {
+        g_registry_host = new QRemoteObjectRegistryHost(QUrl(QStringLiteral("local:logoscore_registry")));
+        qDebug() << "Qt Remote Object registry host initialized at: local:logoscore_registry";
+    }
     
     // First initialize the core manager
     if (!initializeCoreManager()) {
@@ -324,6 +346,13 @@ int logos_core_exec()
 
 void logos_core_cleanup()
 {
+    // Clean up Qt Remote Object registry host
+    if (g_registry_host) {
+        delete g_registry_host;
+        g_registry_host = nullptr;
+        qDebug() << "Qt Remote Object registry host cleaned up";
+    }
+    
     delete g_app;
     g_app = nullptr;
 }
