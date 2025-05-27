@@ -6,6 +6,7 @@
 #include <QDebug>
 #include <QMessageBox>
 #include "core/plugin_registry.h"
+#include "logos_api.h"
 
 PluginMethodsView::PluginMethodsView(const QString& pluginName, QWidget* parent)
     : QWidget(parent)
@@ -117,47 +118,16 @@ void PluginMethodsView::setupUi()
 
 void PluginMethodsView::loadPluginMethods()
 {
-    // Get the core manager from the registry
-    QObject* coreManagerObj = PluginRegistry::getPlugin<QObject>("core_manager");
-    if (!coreManagerObj) {
-        qWarning() << "CoreManager plugin not found";
-        m_methodsTree->addTopLevelItem(new QTreeWidgetItem(QStringList() << "Error: CoreManager plugin not found"));
+    LogosAPI api;
+    QVariant result = api.callRemoteMethod("core_manager", "getPluginMethods", m_pluginName);
+
+    if (!result.isValid()) {
+        qWarning() << "Failed to call getPluginMethods method";
+        m_methodsTree->addTopLevelItem(new QTreeWidgetItem(QStringList() << "Error: Failed to call getPluginMethods method"));
         return;
     }
-    
-    // Check available methods on the plugin
-    const QMetaObject* metaObj = coreManagerObj->metaObject();
-    qDebug() << "Available methods on CoreManager:";
-    for (int i = 0; i < metaObj->methodCount(); ++i) {
-        QMetaMethod method = metaObj->method(i);
-        qDebug() << " - " << method.methodSignature();
-    }
-    
-    // Try to find the specific getPluginMethods method
-    int methodIndex = metaObj->indexOfMethod("getPluginMethods(QString)");
-    if (methodIndex == -1) {
-        qWarning() << "getPluginMethods method not found on CoreManager plugin";
-        m_methodsTree->addTopLevelItem(new QTreeWidgetItem(QStringList() << "Error: getPluginMethods method not found"));
-        return;
-    }
-    
-    // Invoke the method once we found it
-    QJsonArray methods;
-    QMetaMethod method = metaObj->method(methodIndex);
-    bool success = method.invoke(
-        coreManagerObj,
-        Q_RETURN_ARG(QJsonArray, methods),
-        Q_ARG(QString, m_pluginName)
-    );
-    
-    if (!success) {
-        qWarning() << "Failed to invoke getPluginMethods method";
-        m_methodsTree->addTopLevelItem(new QTreeWidgetItem(QStringList() << "Error: Failed to invoke getPluginMethods method"));
-        return;
-    }
-    
-    // Display the methods in the tree widget
-    displayPluginMethods(methods);
+
+    displayPluginMethods(result.toJsonArray());
 }
 
 void PluginMethodsView::displayPluginMethods(const QJsonArray& methods)

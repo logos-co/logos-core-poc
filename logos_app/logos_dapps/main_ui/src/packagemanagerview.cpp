@@ -16,6 +16,7 @@
 #include <QSizePolicy>
 #include <QDir>
 #include <QFile>
+#include <QTimer>
 
 PackageManagerView::PackageManagerView(QWidget *parent)
     : QWidget(parent)
@@ -32,12 +33,17 @@ PackageManagerView::PackageManagerView(QWidget *parent)
     , m_applyButton(nullptr)
     , m_detailsTextEdit(nullptr)
     , m_mainWindow(nullptr)
+    , m_logosAPI(nullptr)
 {
+    // Initialize LogosAPI
+    m_logosAPI = new LogosAPI("local:logoscore_registry", this);
+    
     setupUi();
 }
 
 PackageManagerView::~PackageManagerView()
 {
+    // LogosAPI will be automatically deleted as it's a child object
 }
 
 void PackageManagerView::setupUi()
@@ -379,25 +385,21 @@ void PackageManagerView::onPackageSelected(int row, int column)
 
 void PackageManagerView::scanPackagesFolder()
 {
-    // Clear existing packages
     clearPackageList();
 
-    // Get the package_manager plugin
-    QObject* packageManagerPlugin = PluginRegistry::getPlugin<QObject>("package_manager");
-    if (!packageManagerPlugin) {
-        qDebug() << "package_manager plugin not found";
+    QJsonArray packagesArray;
+    if (m_logosAPI && m_logosAPI->isConnected()) {
+        QVariant result = m_logosAPI->callRemoteMethod("package_manager", "getPackages");
+        packagesArray = result.toJsonArray();
+        qDebug() << "LogosAPI: Retrieved" << packagesArray.size() << "packages from package_manager";
+    } else {
+        qDebug() << "LogosAPI not connected, cannot get packages from package_manager";
         addFallbackPackages();
         return;
     }
 
-    QJsonArray packagesArray;
-    QMetaObject::invokeMethod(
-        packageManagerPlugin,
-        "getPackages",
-        Qt::DirectConnection,
-        Q_RETURN_ARG(QJsonArray, packagesArray)
-    );
-
+    qDebug() << "================================================";
+    qDebug() << "packagesArray:" << packagesArray;
     if (packagesArray.isEmpty()) {
         addFallbackPackages();
         return;
@@ -504,22 +506,6 @@ void PackageManagerView::onApplyClicked()
         return;
     }
 
-    // Get the package_manager plugin
-    QObject* packageManagerPlugin = PluginRegistry::getPlugin<QObject>("package_manager");
-    // Get the core_manager plugin
-    QObject* coreManagerPlugin = PluginRegistry::getPlugin<QObject>("core_manager");
-
-    if (!packageManagerPlugin) {
-        m_detailsTextEdit->setText("Error: package_manager plugin not found. Cannot process plugins.");
-        qDebug() << "package_manager plugin not found";
-        return;
-    }
-    if (!coreManagerPlugin) {
-        m_detailsTextEdit->setText("Error: core_manager plugin not found. Cannot process plugins.");
-        qDebug() << "core_manager plugin not found";
-        return;
-    }
-
     // Process each selected package
     QStringList successfulPlugins;
     QStringList failedPlugins;
@@ -567,15 +553,24 @@ void PackageManagerView::onApplyClicked()
             continue;
         }
 
-        // Regular installation process for non-UI plugins
+        // // Regular installation process for non-UI plugins
+        // bool installSuccess = false;
+        // QMetaObject::invokeMethod(
+        //     packageManagerPlugin,
+        //     "installPlugin",
+        //     Qt::DirectConnection,
+        //     Q_RETURN_ARG(bool, installSuccess),
+        //     Q_ARG(QString, filePath)
+        // );
+
+        // Use LogosAPI to call installPlugin on the package_manager object
         bool installSuccess = false;
-        QMetaObject::invokeMethod(
-            packageManagerPlugin,
-            "installPlugin",
-            Qt::DirectConnection,
-            Q_RETURN_ARG(bool, installSuccess),
-            Q_ARG(QString, filePath)
-        );
+        if (m_logosAPI && m_logosAPI->isConnected()) {
+            QVariant result = m_logosAPI->callRemoteMethod("package_manager", "installPlugin", filePath);
+            installSuccess = result.toBool();
+        } else {
+            qDebug() << "LogosAPI not connected, cannot install plugin:" << packageName;
+        }
 
         if (!installSuccess) {
             failedPlugins << packageName + " (installation failed)";
@@ -628,6 +623,9 @@ void PackageManagerView::onApplyClicked()
 
     // Refresh the package list to show updated status
     scanPackagesFolder();
+
+    // call scanPackagesFolder again after 5 seconds
+    QTimer::singleShot(5000, this, &PackageManagerView::scanPackagesFolder);
 }
 
 QList<QString> PackageManagerView::getSelectedPackages()

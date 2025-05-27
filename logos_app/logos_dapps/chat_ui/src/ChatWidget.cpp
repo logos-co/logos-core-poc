@@ -6,6 +6,7 @@
 #include <csignal>
 #include <QTimer>
 #include "../../core/plugin_registry.h"
+#include "logos_api.h"
 
 // Static pointer to the active ChatWidget for callbacks
 static ChatWidget* activeWidget = nullptr;
@@ -28,10 +29,14 @@ ChatWidget::ChatWidget(QWidget* parent)
     : QWidget(parent), 
       isWakuInitialized(false),
       isWakuRunning(false),
-      chatPlugin(nullptr) {
+      chatPlugin(nullptr),
+      m_logosAPI(nullptr) {
     
     // Set as the active widget
     activeWidget = this;
+    
+    // Initialize LogosAPI
+    m_logosAPI = new LogosAPI("local:logoscore_registry", this);
     
     // Get the chat plugin from the registry
     chatPlugin = PluginRegistry::getPlugin<ChatInterface>("chat");
@@ -185,7 +190,9 @@ void ChatWidget::onJoinChannelClicked() {
         return;
     }
     
-    if (chatPlugin->joinChannel(currentChannel.toStdString())) {
+    QVariant result = m_logosAPI->callRemoteMethod("chat", "joinChannel", currentChannel);
+    bool success = result.toBool();
+    if (success) {
         updateStatus("Joined channel: " + currentChannel);
         QString joinMessage = "You have joined channel: " + currentChannel;
         chatDisplay->append("<i>" + joinMessage + "</i>");
@@ -226,16 +233,22 @@ void ChatWidget::onSendButtonClicked() {
 
     QString message = messageInput->text().trimmed();
     if (message.isEmpty()) return;
-    
+
     // Check if Waku is running
     if (!isWakuRunning) {
         QMessageBox::warning(this, "Waku Error", "Waku is not running. Please initialize Waku first.");
         return;
     }
-    
+
     // Send the message
-    chatPlugin->sendMessage(currentChannel.toStdString(), username.toStdString(), message.toStdString());
-    
+    // Use LogosAPI to call sendMessage on the chat plugin
+    if (m_logosAPI && m_logosAPI->isConnected()) {
+        QVariant result = m_logosAPI->callRemoteMethod("chat", "sendMessage", currentChannel, username, message);
+        qDebug() << "LogosAPI sendMessage result:" << result;
+    } else {
+        qDebug() << "LogosAPI not connected";
+    }
+
     // Clear input field
     messageInput->clear();
 }

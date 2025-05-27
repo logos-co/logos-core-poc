@@ -9,6 +9,7 @@
 #include <QLabel>
 #include <string>
 #include "../../modules/chat/chat_interface.h"
+#include "logos_api.h"
 
 class ChatWidget : public QWidget {
     Q_OBJECT
@@ -41,6 +42,9 @@ private:
     
     // Chat plugin
     ChatInterface* chatPlugin;
+    
+    // LogosAPI instance for remote method calls
+    LogosAPI* m_logosAPI;
     
     // Connection status
     bool isWakuInitialized;

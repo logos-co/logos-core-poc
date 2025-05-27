@@ -6,9 +6,9 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Find Qt packages
-find_package(Qt6 COMPONENTS Core REQUIRED)
+find_package(Qt6 COMPONENTS Core RemoteObjects REQUIRED)
 if (NOT Qt6_FOUND)
-    find_package(Qt5 5.15 COMPONENTS Core REQUIRED)
+    find_package(Qt5 5.15 COMPONENTS Core RemoteObjects REQUIRED)
 endif()
 
 # Set automoc on
@@ -46,6 +46,8 @@ add_library(chat SHARED
     src/chat_api.cpp
     ${PROTO_SRC}
     ${PROTO_HDR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api.h
 )
 
 # Make sure protocol buffers are generated before building
@@ -63,11 +65,13 @@ target_include_directories(chat PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_BINARY_DIR}
     ${Protobuf_INCLUDE_DIRS}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp
 )
 
 # Link against libraries
 target_link_libraries(chat PRIVATE 
     Qt::Core
+    Qt::RemoteObjects
     ${Protobuf_LIBRARIES}
     Threads::Threads
 )

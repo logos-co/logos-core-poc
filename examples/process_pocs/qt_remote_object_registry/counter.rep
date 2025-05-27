@@ -1,0 +1,6 @@
+class Counter {
+    PROP(int value=0);
+    SLOT(void increment());
+    SLOT(void decrement());
+    SIGNAL(valueChanged(int newValue));
+}; 

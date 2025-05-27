@@ -135,60 +135,24 @@ bool PackageManagerPlugin::installPlugin(const QString& pluginPath)
         }
     }
     
-    // Call processPlugin on core_manager
-    QObject* coreManagerPlugin = PluginRegistry::getPlugin<QObject>("core_manager");
-    if (!coreManagerPlugin) {
-        qWarning() << "core_manager plugin not found. Cannot process plugin.";
+    // Use LogosAPI to call the remote method
+    LogosAPI api;
+    if (!api.isConnected()) {
+        qWarning() << "Failed to connect to Logos Core registry.";
         return false;
     }
     
-    // // Connect to the Qt Remote Objects registry and get the core manager replica
-    QRemoteObjectNode repNode;
-    repNode.connectToNode(QUrl(QStringLiteral("local:logoscore_registry")));
-    
-    QRemoteObjectReplica* coreManagerReplica = repNode.acquireDynamic("core_manager");
-    if (!coreManagerReplica) {
-        qWarning() << "Failed to acquire core manager replica from remote registry.";
-        return false;
-    }
-
-    // Wait for the replica to be initialized
-    if (!coreManagerReplica->waitForSource(5000)) {
-        qWarning() << "Timeout waiting for core manager replica to be ready.";
-        delete coreManagerReplica;
-        return false;
-    }
-
-    // For remote objects, we need to handle the asynchronous call properly
-    QRemoteObjectPendingCall pendingCall;
-    bool success = QMetaObject::invokeMethod(
-        coreManagerReplica,
-        "processPlugin",
-        Qt::DirectConnection,
-        Q_RETURN_ARG(QRemoteObjectPendingCall, pendingCall),
-        Q_ARG(QString, destinationPath)
-    );
-    
-    if (!success) {
-        qWarning() << "Failed to invoke processPlugin method on remote core manager";
-        delete coreManagerReplica;
+    qDebug() << "Calling processPlugin with destinationPath:" << destinationPath;
+    QVariant result = api.callRemoteMethod("core_manager", "processPlugin", destinationPath);
+    if (!result.isValid()) {
+        qDebug() << "ERROR: --------------------------------";
+        qWarning() << "Failed to process installed plugin:" << destinationPath;
         return false;
     }
     
-    // Wait for the result and extract the return value
-    pendingCall.waitForFinished(5000); // 5 second timeout
-    if (!pendingCall.isFinished() || pendingCall.error() != QRemoteObjectPendingCall::NoError) {
-        qWarning() << "Remote call failed or timed out:" << pendingCall.error();
-        delete coreManagerReplica;
-        return false;
-    }
-    
-    QString pluginName = pendingCall.returnValue().toString();
-    
-    // Clean up the replica
-    delete coreManagerReplica;
-    
+    QString pluginName = result.toString();
     if (pluginName.isEmpty()) {
+        qDebug() << "ERROR: --------------------------------";
         qWarning() << "Failed to process installed plugin:" << destinationPath;
         return false;
     }

@@ -8,7 +8,7 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
 # Find Qt packages
-find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets RemoteObjects)
 
 # Try to find the component-interfaces package first
 find_package(component-interfaces QUIET)
@@ -36,6 +36,8 @@ set(SOURCES
     src/pluginmethodsview.cpp
     src/packagemanagerview.cpp
     src/main_ui_resources.qrc
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp/logos_api.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp/logos_api.h
 )
 
 add_library(main_ui SHARED ${SOURCES})
@@ -45,6 +47,7 @@ target_include_directories(main_ui PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_SOURCE_DIR}/../../..
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../core
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp
 )
 
 # Add Qt definitions
@@ -57,6 +60,7 @@ target_link_libraries(main_ui
     PRIVATE 
         Qt6::Core 
         Qt6::Widgets
+        Qt6::RemoteObjects
         component-interfaces
 )
 

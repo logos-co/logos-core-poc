@@ -127,6 +127,7 @@ QString CoreManagerPlugin::processPlugin(const QString& filePath) {
     return pluginName;
 }
 
+// TODO: unclear if in use but it needs to be updated
 QJsonArray CoreManagerPlugin::getPluginMethods(const QString& pluginName) {
     QJsonArray methodsArray;
 

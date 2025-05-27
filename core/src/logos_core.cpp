@@ -144,6 +144,18 @@ static bool loadPlugin(const QString &pluginName)
     PluginRegistry::registerPlugin(plugin, basePlugin->name());
     qDebug() << "Registered plugin with key:" << basePlugin->name().toLower().replace(" ", "_");
 
+    // Register with Qt Remote Objects for remote access
+    if (g_registry_host) {
+        bool success = g_registry_host->enableRemoting(plugin, basePlugin->name());
+        if (success) {
+            qDebug() << "Plugin enabled for remote access with name:" << basePlugin->name();
+        } else {
+            qWarning() << "Failed to enable remote access for plugin:" << basePlugin->name();
+        }
+    } else {
+        qWarning() << "Registry host not initialized, cannot enable remote access for plugin:" << basePlugin->name();
+    }
+
     // Use QObject reflection (QMetaObject) for runtime inspection
     const QMetaObject *metaObject = plugin->metaObject();
     qDebug() << "\nPlugin class name:" << metaObject->className();
@@ -252,7 +264,7 @@ static bool initializeCoreManager()
     CoreManagerPlugin* coreManager = new CoreManagerPlugin();
     
     // Register it in the plugin registry
-    PluginRegistry::registerPlugin(coreManager, coreManager->name());
+    // PluginRegistry::registerPlugin(coreManager, coreManager->name());
     
     // Enable remote access for the core manager
     if (g_registry_host) {
@@ -463,16 +475,18 @@ int logos_core_unload_plugin(const char* plugin_name)
     QObject* plugin = nullptr;
 
     // First try to get it directly from registry
-    plugin = PluginRegistry::getPlugin<QObject>(registryKey);
+    // plugin = PluginRegistry::getPlugin<QObject>(registryKey);
 
-    if (plugin) {
-        bool removed = PluginRegistry::unregisterPlugin(registryKey);
+    // if (plugin) {
+        // bool removed = PluginRegistry::unregisterPlugin(registryKey);
+
+        // TODO: disableRemote for this plugin
 
         g_loaded_plugins.removeAll(name);
 
-        delete plugin;
+        // delete plugin;
         qDebug() << "Successfully deleted plugin object";
-    }
+    // }
 
     qDebug() << "Successfully unloaded plugin:" << name;
     return 1;

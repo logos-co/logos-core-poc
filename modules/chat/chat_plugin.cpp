@@ -22,20 +22,22 @@ bool ChatPlugin::initialize(MessageCallback messageCallback) {
     return (wakuCtx != nullptr);
 }
 
-bool ChatPlugin::joinChannel(const std::string& channelName) {
+bool ChatPlugin::joinChannel(const QString& channelName) {
     if (wakuCtx == nullptr) {
         return false;
     }
     
-    return ::joinChannel(wakuCtx, channelName, currentRelayTopic);
+    // Convert QString to std::string for the underlying API
+    return ::joinChannel(wakuCtx, channelName.toStdString(), currentRelayTopic);
 }
 
-void ChatPlugin::sendMessage(const std::string& channelName, const std::string& username, const std::string& message) {
+void ChatPlugin::sendMessage(const QString& channelName, const QString& username, const QString& message) {
     if (wakuCtx == nullptr) {
         return;
     }
     
-    ::sendMessage(wakuCtx, channelName, username, message);
+    // Convert QString to std::string for the underlying API
+    ::sendMessage(wakuCtx, channelName.toStdString(), username.toStdString(), message.toStdString());
 }
 
 void ChatPlugin::retrieveHistory(const std::string& channelName, MessageCallback callback) {

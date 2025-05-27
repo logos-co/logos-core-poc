@@ -8,7 +8,7 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
 # Find Qt packages
-find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets RemoteObjects)
 
 # Try to find the component-interfaces package first
 find_package(component-interfaces QUIET)
@@ -30,6 +30,8 @@ find_library(LOGOS_CORE_LIB logos_core PATHS ${CMAKE_BINARY_DIR}/../core/lib)
 set(SOURCES
     ChatUIComponent.cpp
     src/ChatWidget.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp/logos_api.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp/logos_api.h
 )
 
 add_library(chat_ui SHARED ${SOURCES})
@@ -39,6 +41,7 @@ target_include_directories(chat_ui PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../../..
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../core
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp
 )
 
 # Link libraries
@@ -46,6 +49,7 @@ target_link_libraries(chat_ui
     PRIVATE 
         Qt6::Core 
         Qt6::Widgets
+        Qt6::RemoteObjects
         component-interfaces
 )
 

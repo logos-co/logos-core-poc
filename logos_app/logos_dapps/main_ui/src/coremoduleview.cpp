@@ -9,7 +9,7 @@
 #include <QStackedWidget>
 #include <QFileDialog>
 #include <QMessageBox>
-#include "core/plugin_registry.h"
+#include "logos_api.h"
 #include "pluginmethodsview.h"
 #include <QJsonArray>
 #include <QJsonObject>
@@ -170,18 +170,20 @@ void CoreModuleView::createPluginList()
 void CoreModuleView::updatePluginList()
 {
     qDebug() << "\n\n----------> Updating plugin list\n\n";
-    // Get the core_manager plugin
-    QObject* coreManagerPlugin = PluginRegistry::getPlugin<QObject>("core_manager");
-    if (!coreManagerPlugin) {
-        qWarning() << "Core manager plugin not found!";
+    
+    // Use LogosAPI to get the list of known plugins
+    LogosAPI api;
+    QVariant result = api.callRemoteMethod("core_manager", "getKnownPlugins");
+    
+    if (!result.isValid()) {
+        qWarning() << "Failed to get known plugins from core manager";
         return;
     }
+    
+    QJsonArray pluginsArray = result.toJsonArray();
 
-    // Get the list of known plugins using invokeMethod - now returns QJsonArray with status
-    QJsonArray pluginsArray;
-    QMetaObject::invokeMethod(coreManagerPlugin, "getKnownPlugins",
-                            Qt::DirectConnection,
-                            Q_RETURN_ARG(QJsonArray, pluginsArray));
+    qDebug() << "================================";
+    qDebug() << "pluginsArray:" << pluginsArray;
 
     // Clear the current list
     m_pluginList->clear();
@@ -276,20 +278,11 @@ void CoreModuleView::onLoadPluginClicked()
 
     qDebug() << "Loading plugin:" << pluginName;
 
-    // Get the core_manager plugin
-    QObject* coreManagerPlugin = PluginRegistry::getPlugin<QObject>("core_manager");
-    if (!coreManagerPlugin) {
-        qWarning() << "Core manager plugin not found!";
-        return;
-    }
+    // Use LogosAPI to load the plugin
+    LogosAPI api;
+    QVariant result = api.callRemoteMethod("core_manager", "loadPlugin", pluginName);
 
-    // Call the loadPlugin method
-    bool success = false;
-    QMetaObject::invokeMethod(coreManagerPlugin, "loadPlugin",
-                            Qt::DirectConnection,
-                            Q_RETURN_ARG(bool, success),
-                            Q_ARG(QString, pluginName));
-
+    bool success = result.toBool();
     if (success) {
         qDebug() << "Successfully loaded plugin:" << pluginName;
         // Update the UI to reflect the loaded plugin
@@ -314,20 +307,11 @@ void CoreModuleView::onUnloadPluginClicked()
 
     qDebug() << "Unloading plugin:" << pluginName;
 
-    // Get the core_manager plugin
-    QObject* coreManagerPlugin = PluginRegistry::getPlugin<QObject>("core_manager");
-    if (!coreManagerPlugin) {
-        qWarning() << "Core manager plugin not found!";
-        return;
-    }
+    // Use LogosAPI to unload the plugin
+    LogosAPI api;
+    QVariant result = api.callRemoteMethod("core_manager", "unloadPlugin", pluginName);
 
-    // Call the unloadPlugin method
-    bool success = false;
-    QMetaObject::invokeMethod(coreManagerPlugin, "unloadPlugin",
-                            Qt::DirectConnection,
-                            Q_RETURN_ARG(bool, success),
-                            Q_ARG(QString, pluginName));
-
+    bool success = result.toBool();
     if (success) {
         qDebug() << "Successfully unloaded plugin:" << pluginName;
         // Update the UI to reflect the unloaded plugin
@@ -406,23 +390,11 @@ void CoreModuleView::onAddPluginClicked()
 
     qDebug() << "Selected plugin file:" << filePath;
 
-    // Get the core_manager plugin
-    QObject* coreManagerPlugin = PluginRegistry::getPlugin<QObject>("core_manager");
-    if (!coreManagerPlugin) {
-        QMessageBox::critical(this, "Error", "Core manager plugin not found!");
-        return;
-    }
+    // Use LogosAPI to install the plugin
+    LogosAPI api;
+    QVariant result = api.callRemoteMethod("core_manager", "installPlugin", filePath);
 
-    // Call the installPlugin method instead of processPlugin
-    bool success = false;
-    QMetaObject::invokeMethod(
-        coreManagerPlugin,
-        "installPlugin",
-        Qt::DirectConnection,
-        Q_RETURN_ARG(bool, success),
-        Q_ARG(QString, filePath)
-    );
-
+    bool success = result.toBool();
     if (!success) {
         QMessageBox::warning(this, "Warning", "Failed to install plugin file.");
         return;

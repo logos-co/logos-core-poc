@@ -4,6 +4,13 @@
 #include <QObject>
 #include <QString>
 #include <QUrl>
+#include <QVariant>
+#include <QVariantList>
+#include <QList>
+#include <QMap>
+#include <QHash>
+#include <QDebug>
+#include <functional>
 
 class QRemoteObjectNode;
 class QRemoteObjectReplica;
@@ -36,11 +43,11 @@ public:
      * @brief Request a remote object replica by name
      * @param objectName The name of the remote object to acquire
      * @param timeoutMs Timeout in milliseconds to wait for the replica to be ready (default: 5000)
-     * @return QRemoteObjectReplica* pointer to the replica, or nullptr if failed
+     * @return QObject* pointer to the replica, or nullptr if failed
      * 
      * @note The caller is responsible for deleting the returned replica when done
      */
-    QRemoteObjectReplica* requestObject(const QString& objectName, int timeoutMs = 5000);
+    QObject* requestObject(const QString& objectName, int timeoutMs = 5000);
 
     /**
      * @brief Check if the client is connected to the registry
@@ -60,16 +67,139 @@ public:
      */
     bool reconnect();
 
+    /**
+     * @brief Call a method on a remote object and wait for the result
+     * @param objectName The name of the remote object
+     * @param methodName The name of the method to call
+     * @param args Arguments to pass to the method (supports 0-5 arguments)
+     * @param timeoutMs Timeout in milliseconds to wait for the result (default: 5000)
+     * @return QVariant containing the result, or invalid QVariant if failed
+     * 
+     * @note This method handles the asynchronous nature of remote calls automatically
+     * @note Currently supports up to 5 string arguments
+     */
+    QVariant callRemoteMethod(const QString& objectName, const QString& methodName, 
+                             const QVariantList& args = QVariantList(), int timeoutMs = 5000);
+
+    /**
+     * @brief Call a method on a remote object with a single argument (convenience method)
+     * @param objectName The name of the remote object
+     * @param methodName The name of the method to call
+     * @param arg Single argument to pass to the method
+     * @param timeoutMs Timeout in milliseconds to wait for the result (default: 5000)
+     * @return QVariant containing the result, or invalid QVariant if failed
+     */
+    QVariant callRemoteMethod(const QString& objectName, const QString& methodName, 
+                             const QVariant& arg, int timeoutMs = 5000);
+
+    /**
+     * @brief Call a method on a remote object with two arguments (convenience method)
+     * @param objectName The name of the remote object
+     * @param methodName The name of the method to call
+     * @param arg1 First argument to pass to the method
+     * @param arg2 Second argument to pass to the method
+     * @param timeoutMs Timeout in milliseconds to wait for the result (default: 5000)
+     * @return QVariant containing the result, or invalid QVariant if failed
+     */
+    QVariant callRemoteMethod(const QString& objectName, const QString& methodName, 
+                             const QVariant& arg1, const QVariant& arg2, int timeoutMs = 5000);
+
+    /**
+     * @brief Call a method on a remote object with three arguments (convenience method)
+     * @param objectName The name of the remote object
+     * @param methodName The name of the method to call
+     * @param arg1 First argument to pass to the method
+     * @param arg2 Second argument to pass to the method
+     * @param arg3 Third argument to pass to the method
+     * @param timeoutMs Timeout in milliseconds to wait for the result (default: 5000)
+     * @return QVariant containing the result, or invalid QVariant if failed
+     */
+    QVariant callRemoteMethod(const QString& objectName, const QString& methodName, 
+                             const QVariant& arg1, const QVariant& arg2, const QVariant& arg3, int timeoutMs = 5000);
+
+    /**
+     * @brief Call a method on a remote object with four arguments (convenience method)
+     * @param objectName The name of the remote object
+     * @param methodName The name of the method to call
+     * @param arg1 First argument to pass to the method
+     * @param arg2 Second argument to pass to the method
+     * @param arg3 Third argument to pass to the method
+     * @param arg4 Fourth argument to pass to the method
+     * @param timeoutMs Timeout in milliseconds to wait for the result (default: 5000)
+     * @return QVariant containing the result, or invalid QVariant if failed
+     */
+    QVariant callRemoteMethod(const QString& objectName, const QString& methodName, 
+                             const QVariant& arg1, const QVariant& arg2, const QVariant& arg3, 
+                             const QVariant& arg4, int timeoutMs = 5000);
+
+    /**
+     * @brief Call a method on a remote object with five arguments (convenience method)
+     * @param objectName The name of the remote object
+     * @param methodName The name of the method to call
+     * @param arg1 First argument to pass to the method
+     * @param arg2 Second argument to pass to the method
+     * @param arg3 Third argument to pass to the method
+     * @param arg4 Fourth argument to pass to the method
+     * @param arg5 Fifth argument to pass to the method
+     * @param timeoutMs Timeout in milliseconds to wait for the result (default: 5000)
+     * @return QVariant containing the result, or invalid QVariant if failed
+     */
+    QVariant callRemoteMethod(const QString& objectName, const QString& methodName, 
+                             const QVariant& arg1, const QVariant& arg2, const QVariant& arg3, 
+                             const QVariant& arg4, const QVariant& arg5, int timeoutMs = 5000);
+
+    /**
+     * @brief Register an event listener for the specified event name
+     * @param eventName The name of the event to listen for
+     * @param callback Function to call when the event is triggered, receives QVariantList with event data
+     * 
+     * Multiple listeners can be registered for the same event name.
+     */
+    void onEvent(const QString& eventName, std::function<void(const QVariantList&)> callback);
+
+public slots:
+    /**
+     * @brief Handle incoming event responses and trigger registered callbacks
+     * @param eventName The name of the event that was triggered
+     * @param data The event data to pass to the callbacks
+     * 
+     * This slot is typically connected to signals from remote objects to handle
+     * events and notifications from the Logos Core system.
+     */
+    void onEventResponse(const QString& eventName, const QVariantList& data);
+
 private:
     QRemoteObjectNode* m_node;
     QString m_registryUrl;
     bool m_connected;
+
+    // Storage for string arguments to keep them alive during method calls
+    mutable QList<QString> m_stringArgs;
+
+    // Event listeners storage - maps event names to lists of callback functions
+    QHash<QString, QList<std::function<void(const QVariantList&)>>> m_eventListeners;
 
     /**
      * @brief Internal method to establish connection to the registry
      * @return true if connection successful, false otherwise
      */
     bool connectToRegistry();
+
+    /**
+     * @brief Helper function to create QGenericArgument from QVariant
+     * @param variant The QVariant to convert
+     * @return QGenericArgument that can be used with QMetaObject::invokeMethod
+     */
+    auto createArgument(const QVariant& variant);
+
+    /**
+     * @brief Helper function to determine if a method returns void
+     * @param replica The replica object
+     * @param methodName The method name to check
+     * @param args The arguments for the method
+     * @return true if the method is likely to return void, false otherwise
+     */
+    static bool isVoidMethod(QObject* replica, const QString& methodName, const QVariantList& args);
 };
 
 #endif // LOGOS_API_H 

@@ -16,6 +16,7 @@
 #include <QSet>
 #include <QStringList>
 #include "core/plugin_registry.h"
+#include "logos_api.h"
 
 class MainWindow;
 
@@ -86,4 +87,7 @@ private:
     
     // Flag to prevent circular dependency selection
     bool m_isProcessingDependencies;
+    
+    // LogosAPI instance for remote method calls
+    LogosAPI* m_logosAPI;
 }; 

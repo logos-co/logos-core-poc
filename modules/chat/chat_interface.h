@@ -13,8 +13,8 @@ public:
 
     // Core chat functionality
     Q_INVOKABLE virtual bool initialize(MessageCallback messageCallback = nullptr) = 0;
-    Q_INVOKABLE virtual bool joinChannel(const std::string& channelName) = 0;
-    Q_INVOKABLE virtual void sendMessage(const std::string& channelName, const std::string& username, const std::string& message) = 0;
+    Q_INVOKABLE virtual bool joinChannel(const QString& channelName) = 0;
+    Q_INVOKABLE virtual void sendMessage(const QString& channelName, const QString& username, const QString& message) = 0;
     Q_INVOKABLE virtual void retrieveHistory(const std::string& channelName, MessageCallback callback = nullptr) = 0;
 };
 
