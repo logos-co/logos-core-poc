@@ -1,5 +1,7 @@
 # logos-core-poc
 
+note: For a stable version use the master branch [https://github.com/logos-co/logos-core-poc/tree/master](https://github.com/logos-co/logos-core-poc/tree/master)
+
 ## Setup
 
 ```bash
