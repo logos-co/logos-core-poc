@@ -1,18 +1,35 @@
 #include "chat_plugin.h"
 #include "../../core/plugin_registry.h"
 
-ChatPlugin::ChatPlugin() : currentRelayTopic("/waku/2/rs/16/32"), wakuPlugin(nullptr) {
+ChatPlugin::ChatPlugin() : currentRelayTopic("/waku/2/rs/16/32"), wakuPlugin(nullptr), logosAPI(nullptr) {
     // Get the waku plugin from the PluginRegistry
     wakuPlugin = PluginRegistry::getPlugin<WakuInterface>("waku");
+    
+    // Initialize the Logos API
+    logosAPI = new LogosAPI("local:logoscore_registry", this);
 }
 
 ChatPlugin::~ChatPlugin() {
     // Clean up any resources if needed
+    if (logosAPI) {
+        delete logosAPI;
+        logosAPI = nullptr;
+    }
 }
 
 bool ChatPlugin::initialize(MessageCallback messageCallback) {
-    // Initialize and start Waku
-    void* result = ::initAndStart(currentRelayTopic, messageCallback);
+    // Create a message callback that emits the signal
+    MessageCallback actualCallback = [this](const std::string& timestamp, const std::string& nick, const std::string& message) {
+        // TODO: this later will be LogosAPI.emit...
+        // Emit the eventResponse signal
+        emit eventResponse(QString::fromStdString(timestamp), QString::fromStdString(nick), QString::fromStdString(message));
+    };
+    
+    // Use the provided callback if given, otherwise use our signal-emitting callback
+    MessageCallback callbackToUse = messageCallback ? messageCallback : actualCallback;
+    
+    // Initialize and start Waku with the callback
+    void* result = ::initAndStart(currentRelayTopic, callbackToUse);
     
     // Return success/failure
     return (result != nullptr);

@@ -127,8 +127,25 @@ void ChatWidget::initWaku() {
 
     updateStatus("Status: Initializing Waku...");
     
+    // Register the callback with LogosAPI
+    //m_logosAPI->onEvent("chat", [this](const QVariantList& data) {
+    //    qDebug() << "Received chat event:" << data;
+    //});
+    
+
+    // listen to eventResponse signal from chatPlugin
+    if (chatPlugin) {
+        // Get the QObject pointer directly from the plugin registry
+        // The plugin is actually a QObject (ChatPlugin) but returned as ChatInterface*
+        QObject* pluginObject = dynamic_cast<QObject*>(chatPlugin);
+        if (pluginObject) {
+            QObject::connect(pluginObject, SIGNAL(eventResponse(QString,QString,QString)), 
+                            this, SLOT(onEventResponse(QString,QString,QString)));
+        }
+    }
+
     // Initialize chat with message handler
-    bool success = chatPlugin->initialize(handleWakuMessage);
+    bool success = chatPlugin->initialize();
     
     if (success) {
         isWakuInitialized = true;
@@ -262,4 +279,10 @@ void ChatWidget::displayMessage(const QString& sender, const QString& message) {
     QString timestamp = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss");
     QString formattedMessage = QString("[%1] %2: %3").arg(timestamp, sender, message);
     chatDisplay->append(formattedMessage);
+}
+
+void ChatWidget::onEventResponse(const QString& timestamp, const QString& nick, const QString& message) {
+    qDebug() << "RECEIVED via eventResponse: [" << timestamp << "] " << nick << ": " << message;
+    // Display the message in the chat widget
+    displayMessage(nick, message);
 } 

@@ -26,7 +26,11 @@ public:
     Q_INVOKABLE void sendMessage(const QString& channelName, const QString& username, const QString& message) override;
     Q_INVOKABLE void retrieveHistory(const std::string& channelName, MessageCallback callback = nullptr) override;
 
+signals:
+    void eventResponse(const QString& timestamp, const QString& nick, const QString& message);
+
 private:
     std::string currentRelayTopic;
     WakuInterface* wakuPlugin;
+    LogosAPI* logosAPI;
 }; 

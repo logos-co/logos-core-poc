@@ -16,6 +16,9 @@ public:
     Q_INVOKABLE virtual bool joinChannel(const QString& channelName) = 0;
     Q_INVOKABLE virtual void sendMessage(const QString& channelName, const QString& username, const QString& message) = 0;
     Q_INVOKABLE virtual void retrieveHistory(const std::string& channelName, MessageCallback callback = nullptr) = 0;
+
+signals:
+    void eventResponse(const QString& timestamp, const QString& nick, const QString& message);
 };
 
 #define ChatInterface_iid "org.logos.ChatInterface"
