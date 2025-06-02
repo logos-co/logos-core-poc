@@ -66,14 +66,8 @@ void WakuUIWidget::onInitButtonClicked() {
 
     statusLabel->setText("Status: Initializing Waku...");
     
-    // Call initWaku with inline callback
-    wakuPlugin->initWaku("{}", [this](bool success, const QString &message) {
-        if (success) {
-            statusLabel->setText(QString("Status: %1").arg(message));
-        } else {
-            statusLabel->setText(QString("Error: %1").arg(message));
-        }
-    });
+    // Call initWaku without callback (callback is now defined locally in the function)
+    wakuPlugin->initWaku("{}");
 }
 
 void WakuUIWidget::onVersionButtonClicked() {

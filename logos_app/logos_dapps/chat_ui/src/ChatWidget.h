@@ -8,7 +8,6 @@
 #include <QLineEdit>
 #include <QLabel>
 #include <string>
-#include "../../modules/chat/chat_interface.h"
 #include "logos_api.h"
 
 class ChatWidget : public QWidget {
@@ -26,7 +25,7 @@ public:
 private slots:
     void onSendButtonClicked();
     void onJoinChannelClicked();
-    
+
 private:
     // UI elements
     QVBoxLayout* mainLayout;
@@ -39,9 +38,6 @@ private:
     QPushButton* sendButton;
     QPushButton* joinButton;
     QLabel* statusLabel;
-    
-    // Chat plugin
-    ChatInterface* chatPlugin;
     
     // LogosAPI instance for remote method calls
     LogosAPI* m_logosAPI;

@@ -7,9 +7,15 @@
 #include <QTimer>
 #include "../../core/plugin_registry.h"
 #include "logos_api.h"
+#include <QRemoteObjectDynamicReplica>
+#include <QRemoteObjectReplica>
+#include <QRemoteObjectRegistryHost>
 
 // Static pointer to the active ChatWidget for callbacks
 static ChatWidget* activeWidget = nullptr;
+
+// Static pointer to the testing registry host
+static QRemoteObjectRegistryHost* testingRegistryHost = nullptr;
 
 // Static callback that can be passed to the C API
 void ChatWidget::handleWakuMessage(const std::string& timestamp, const std::string& nick, const std::string& message) {
@@ -29,7 +35,6 @@ ChatWidget::ChatWidget(QWidget* parent)
     : QWidget(parent), 
       isWakuInitialized(false),
       isWakuRunning(false),
-      chatPlugin(nullptr),
       m_logosAPI(nullptr) {
     
     // Set as the active widget
@@ -37,12 +42,6 @@ ChatWidget::ChatWidget(QWidget* parent)
     
     // Initialize LogosAPI
     m_logosAPI = new LogosAPI("local:logoscore_registry", this);
-    
-    // Get the chat plugin from the registry
-    chatPlugin = PluginRegistry::getPlugin<ChatInterface>("chat");
-    if (!chatPlugin) {
-        qDebug() << "Failed to get chat plugin from registry";
-    }
     
     // Generate random username with 2 digits that will persist during this class lifetime
     int randomNum = rand() % 100;
@@ -119,37 +118,57 @@ ChatWidget::~ChatWidget() {
     stopWaku();
 }
 
-void ChatWidget::initWaku() {
-    if (!chatPlugin) {
-        updateStatus("Error: Chat plugin not loaded");
+void ChatWidget::initWaku()
+{
+    updateStatus("Status: Initializing Waku...");
+
+    // request object from logos api
+    QObject *chatObject = m_logosAPI->requestObject("chat");
+
+    m_logosAPI->onEvent(chatObject, this, "chatMessage", [this](const QString &eventName, const QVariantList &data)
+                        {
+        qDebug() << "RECEIVED via onEvent callback: [" << eventName << "] " << data;
+        handleWakuMessage(data[0].toString().toStdString(), data[1].toString().toStdString(), data[2].toString().toStdString()); });
+
+    m_logosAPI->onEvent(chatObject, this, "historyMessage", [this](const QString &eventName, const QVariantList &data)
+                        {
+        qDebug() << "RECEIVED history via onEvent callback: [" << eventName << "] " << data;
+        // Add [HISTORY] prefix to distinguish history messages
+        QString historyPrefix = "[HISTORY] ";
+        QString nick = data[1].toString();
+        QString message = data[2].toString();
+        // displayMessage(historyPrefix + nick, message); });
+
+        QMetaObject::invokeMethod(activeWidget, [=]() {
+            QString historyPrefix = "[HISTORY] ";
+            activeWidget->displayMessage(historyPrefix + nick, message);
+        }, Qt::QueuedConnection);
+    });
+
+    QVariant result = m_logosAPI->callRemoteMethod("chat", "initialize");
+    bool success = result.toBool();
+
+    if (!success) {
+        updateStatus("Error: Failed to initialize Waku");
         return;
     }
 
-    updateStatus("Status: Initializing Waku...");
-    
-    // Initialize chat with message handler
-    bool success = chatPlugin->initialize(handleWakuMessage);
-    
-    if (success) {
-        isWakuInitialized = true;
-        isWakuRunning = true;
-        updateStatus("Status: Waku initialized and running");
-        
-        // Enable UI components
-        channelInput->setEnabled(true);
-        joinButton->setEnabled(true);
-        messageInput->setEnabled(true);
-        sendButton->setEnabled(true);
-        
-        // Set default channel name
-        currentChannel = "huilong"; // Default channel
-        channelInput->setText(currentChannel);
-        
-        // Join the default channel
-        onJoinChannelClicked();
-    } else {
-        updateStatus("Error: Failed to initialize Waku");
-    }
+    isWakuInitialized = true;
+    isWakuRunning = true;
+    updateStatus("Status: Waku initialized and running");
+
+    // Enable UI components
+    channelInput->setEnabled(true);
+    joinButton->setEnabled(true);
+    messageInput->setEnabled(true);
+    sendButton->setEnabled(true);
+
+    // Set default channel name
+    currentChannel = "huilong"; // Default channel
+    channelInput->setText(currentChannel);
+
+    // Join the default channel
+    onJoinChannelClicked();
 }
 
 void ChatWidget::stopWaku() {
@@ -167,11 +186,6 @@ void ChatWidget::stopWaku() {
 }
 
 void ChatWidget::onJoinChannelClicked() {
-    if (!chatPlugin) {
-        updateStatus("Error: Chat plugin not loaded");
-        return;
-    }
-
     QString channelName = channelInput->text().trimmed();
     if (channelName.isEmpty()) {
         QMessageBox::warning(this, "Channel Error", "Please enter a channel name");
@@ -200,37 +214,21 @@ void ChatWidget::onJoinChannelClicked() {
         // Automatically retrieve message history for the joined channel
         updateStatus("Retrieving message history for the channel...");
         chatDisplay->append("<i>--- Message History ---</i>");
-        
-        // Call retrieveHistory for the joined channel
-        chatPlugin->retrieveHistory(currentChannel.toStdString(), [](const std::string& timestamp, const std::string& nick, const std::string& message) {
-            qDebug() << "HISTORY: [" << QString::fromStdString(timestamp) << "] "
-                    << QString::fromStdString(nick) << ": "
-                    << QString::fromStdString(message);
-            
-            // Forward to the active widget if available
-            if (activeWidget) {
-                QMetaObject::invokeMethod(activeWidget, [=]() {
-                    QString historyPrefix = "[HISTORY] ";
-                    activeWidget->displayMessage(historyPrefix + QString::fromStdString(nick), QString::fromStdString(message));
-                }, Qt::QueuedConnection);
-            }
-        });
+
+        // Call retrieveHistory - history messages will come via historyMessage events
+        QVariant historyResult = m_logosAPI->callRemoteMethod("chat", "retrieveHistory", currentChannel);
+        qDebug() << "LogosAPI retrieveHistory result:" << historyResult;
     } else {
         updateStatus("Failed to join channel: " + currentChannel);
         QMessageBox::warning(this, "Channel Error", "Failed to join channel: " + currentChannel);
     }
-    
+
     // Clear input field
     channelInput->clear();
     channelInput->setText(currentChannel);
 }
 
 void ChatWidget::onSendButtonClicked() {
-    if (!chatPlugin) {
-        updateStatus("Error: Chat plugin not loaded");
-        return;
-    }
-
     QString message = messageInput->text().trimmed();
     if (message.isEmpty()) return;
 
@@ -262,4 +260,4 @@ void ChatWidget::displayMessage(const QString& sender, const QString& message) {
     QString timestamp = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss");
     QString formattedMessage = QString("[%1] %2: %3").arg(timestamp, sender, message);
     chatDisplay->append(formattedMessage);
-} 
+}
