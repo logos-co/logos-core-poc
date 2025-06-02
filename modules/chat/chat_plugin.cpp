@@ -17,7 +17,7 @@ ChatPlugin::~ChatPlugin() {
     }
 }
 
-bool ChatPlugin::initialize(MessageCallback messageCallback) {
+bool ChatPlugin::initialize() {
     // Create a message callback that emits the signal
     MessageCallback actualCallback = [this](const std::string& timestamp, const std::string& nick, const std::string& message) {
         // TODO: this later will be LogosAPI.emit...
@@ -27,11 +27,8 @@ bool ChatPlugin::initialize(MessageCallback messageCallback) {
         emit eventResponse(data);
     };
     
-    // Use the provided callback if given, otherwise use our signal-emitting callback
-    MessageCallback callbackToUse = messageCallback ? messageCallback : actualCallback;
-    
     // Initialize and start Waku with the callback
-    void* result = ::initAndStart(currentRelayTopic, callbackToUse);
+    void* result = ::initAndStart(currentRelayTopic, actualCallback);
     
     // Return success/failure
     return (result != nullptr);
