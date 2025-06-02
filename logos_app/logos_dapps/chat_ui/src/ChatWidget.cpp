@@ -139,8 +139,8 @@ void ChatWidget::initWaku() {
         // The plugin is actually a QObject (ChatPlugin) but returned as ChatInterface*
         QObject* pluginObject = dynamic_cast<QObject*>(chatPlugin);
         if (pluginObject) {
-            QObject::connect(pluginObject, SIGNAL(eventResponse(QString,QString,QString)), 
-                            this, SLOT(onEventResponse(QString,QString,QString)));
+            QObject::connect(pluginObject, SIGNAL(eventResponse(QVariantList)), 
+                            this, SLOT(onEventResponse(QVariantList)));
         }
     }
 
@@ -281,8 +281,13 @@ void ChatWidget::displayMessage(const QString& sender, const QString& message) {
     chatDisplay->append(formattedMessage);
 }
 
-void ChatWidget::onEventResponse(const QString& timestamp, const QString& nick, const QString& message) {
-    qDebug() << "RECEIVED via eventResponse: [" << timestamp << "] " << nick << ": " << message;
-    // Display the message in the chat widget
-    displayMessage(nick, message);
+void ChatWidget::onEventResponse(const QVariantList& data) {
+    if (data.size() >= 3) {
+        QString timestamp = data[0].toString();
+        QString nick = data[1].toString();
+        QString message = data[2].toString();
+        qDebug() << "RECEIVED via eventResponse: [" << timestamp << "] " << nick << ": " << message;
+        // Display the message in the chat widget
+        displayMessage(nick, message);
+    }
 } 

@@ -21,8 +21,10 @@ bool ChatPlugin::initialize(MessageCallback messageCallback) {
     // Create a message callback that emits the signal
     MessageCallback actualCallback = [this](const std::string& timestamp, const std::string& nick, const std::string& message) {
         // TODO: this later will be LogosAPI.emit...
-        // Emit the eventResponse signal
-        emit eventResponse(QString::fromStdString(timestamp), QString::fromStdString(nick), QString::fromStdString(message));
+        // Emit the eventResponse signal with QVariantList
+        QVariantList data;
+        data << QString::fromStdString(timestamp) << QString::fromStdString(nick) << QString::fromStdString(message);
+        emit eventResponse(data);
     };
     
     // Use the provided callback if given, otherwise use our signal-emitting callback
