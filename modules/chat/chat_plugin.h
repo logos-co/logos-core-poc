@@ -27,7 +27,6 @@ public:
     Q_INVOKABLE void retrieveHistory(const std::string& channelName, MessageCallback callback = nullptr) override;
 
 private:
-    void* wakuCtx;
     std::string currentRelayTopic;
     WakuInterface* wakuPlugin;
 }; 

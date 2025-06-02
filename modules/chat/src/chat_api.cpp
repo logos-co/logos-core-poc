@@ -326,7 +326,7 @@ bool encodeProto(const ChatMessage& msg, std::vector<uint8_t>& output) {
 }
 
 // Function to send a message
-void sendMessage(void* wakuCtx, const std::string& channelName, const std::string& username, const std::string& message) {
+void sendMessage(const std::string& channelName, const std::string& username, const std::string& message) {
     // Format the channel name into a content topic if not already formatted
     std::string contentTopic = channelName;
     if (channelName.find("/toy-chat/") == std::string::npos) {
@@ -449,7 +449,7 @@ void* initAndStart(const std::string& relayTopic, MessageCallback messageCallbac
 }
 
 // Function to join a chat channel
-bool joinChannel(void* wakuCtx, const std::string& channelName, const std::string& relayTopic) {
+bool joinChannel(const std::string& channelName, const std::string& relayTopic) {
     // Format the channel name into a content topic if not already formatted
     std::string contentTopic = channelName;
     if (channelName.find("/toy-chat/") == std::string::npos) {
@@ -484,7 +484,7 @@ bool joinChannel(void* wakuCtx, const std::string& channelName, const std::strin
 }
 
 // Function to retrieve message history from store node
-void retrieveHistory(void* wakuCtx, const std::string& channelName, MessageCallback callback) {
+void retrieveHistory(const std::string& channelName, MessageCallback callback) {
     // Format the channel name into a content topic if not already formatted
     std::string contentTopic = channelName;
     if (channelName.find("/toy-chat/") == std::string::npos) {
