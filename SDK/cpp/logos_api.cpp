@@ -20,6 +20,13 @@ LogosAPI::LogosAPI(const QString& registryUrl, QObject *parent)
 
 LogosAPI::~LogosAPI()
 {
+    // Clean up event callbacks and connections
+    for (auto it = m_connections.begin(); it != m_connections.end(); ++it) {
+        QObject::disconnect(it.value());
+    }
+    m_eventCallbacks.clear();
+    m_connections.clear();
+    
     // QRemoteObjectNode will be deleted automatically as it's a child object
 }
 
@@ -291,30 +298,76 @@ QVariant LogosAPI::callRemoteMethod(const QString& objectName, const QString& me
     return callRemoteMethod(objectName, methodName, QVariantList() << arg1 << arg2 << arg3 << arg4 << arg5, timeoutMs);
 }
 
-void LogosAPI::onEvent(const QString& eventName, std::function<void(const QVariantList&)> callback)
+// change from objectName to instead, originObject and destinationObject, and use QObject instead
+void LogosAPI::onEvent(QObject* originObject, QObject* destinationObject, const QString& eventName, std::function<void(const QString&, const QVariantList&)> callback)
 {
-    if (eventName.isEmpty()) {
-        qWarning() << "LogosAPI: Event name cannot be empty";
-        return;
-    }
-
     qDebug() << "LogosAPI: Registering event listener for event:" << eventName;
-    m_eventListeners[eventName].append(callback);
+
+    // Store the callback for this event name
+    m_eventCallbacks[eventName].append(callback);
+
+    // Check if we already have a connection for this origin object
+    if (!m_connections.contains(originObject)) {
+        // Create new connection only if it doesn't exist
+        auto connection = QObject::connect(originObject, SIGNAL(eventResponse(QString, QVariantList)), 
+                                          this, SLOT(invokeCallback(QString, QVariantList)));
+        
+        if (connection) {
+            m_connections[originObject] = connection;
+            qDebug() << "LogosAPI: Created new connection for origin object";
+        } else {
+            qWarning() << "LogosAPI: Failed to create connection for event:" << eventName;
+        }
+    } else {
+        qDebug() << "LogosAPI: Reusing existing connection for origin object";
+    }
+    
+    qDebug() << "LogosAPI: Registered callback for event:" << eventName;
 }
 
-void LogosAPI::onEventResponse(const QString& eventName, const QVariantList& data)
+void LogosAPI::onEventResponse(QObject* replica, const QString& eventName, const QVariantList& data)
 {
+    qDebug() << "LogosAPI: Received event:" << eventName << "with data:" << data;
+
     if (eventName.isEmpty()) {
         qWarning() << "LogosAPI: Event name cannot be empty";
         return;
     }
 
-    qDebug() << "LogosAPI: Received event:" << eventName << "with data:" << data;
+    qDebug() << "LogosAPI: Emitting event:" << eventName << "with data:" << data;
+
+    // emit the eventResponse signal of replica
+    QMetaObject::invokeMethod(replica, "eventResponse", Qt::QueuedConnection, Q_ARG(QString, eventName), Q_ARG(QVariantList, data));
+    // QMetaObject::invokeMethod(replica, "eventResponse_another", Qt::QueuedConnection, Q_ARG(QString, eventName), Q_ARG(QVariantList, data));
+    // TODO: try queued connection instead
+    // QMetaObject::invokeMethod(replica, "eventResponse_another", Qt::DirectConnection, Q_ARG(QString, eventName), Q_ARG(QVariantList, data));
+}
+
+void LogosAPI::invokeCallback(const QString& eventName, const QVariantList& data)
+{
+    qDebug() << "LogosAPI: invokeCallback called for event:" << eventName;
     
-    auto callbacks = m_eventListeners.value(eventName);
-    for (const auto& cb : callbacks) {
-        cb(data);
+    // Call all registered callbacks
+    // Note: This will call all callbacks for any event. In a more sophisticated implementation,
+    // you might want to store event names with callbacks to filter them.
+    for (const auto& callback : m_eventCallbacks[eventName]) {
+        try {
+            callback(eventName, data);
+        } catch (...) {
+            qWarning() << "LogosAPI: Exception in callback for event:" << eventName;
+        }
     }
+    
+    qDebug() << "LogosAPI: Called" << m_eventCallbacks[eventName].size() << "callbacks for event:" << eventName;
+}
+
+void LogosAPI::onEvent(QObject* originObject, QObject* destinationObject, const QString& eventName)
+{
+    qDebug() << "LogosAPI: Registering event listener for event:" << eventName << "(connecting to destination slot)";
+
+    // connect to the eventResponse signal of the destinationObject's slot
+    QObject::connect(originObject, SIGNAL(eventResponse(QString, QVariantList)), 
+                    destinationObject, SLOT(onEventResponse(QString, QVariantList)), Qt::AutoConnection);
 }
 
 // Include MOC for template instantiation
