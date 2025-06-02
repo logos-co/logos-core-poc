@@ -81,15 +81,15 @@ std::vector<uint8_t> base64Decode(const std::string& encoded);
 std::string base64Encode(const std::vector<uint8_t>& data);
 ChatMessage createChatMessage(const std::string& username, const std::string& message);
 bool encodeProto(const ChatMessage& msg, std::vector<uint8_t>& output);
-void sendMessage(void* wakuCtx, const std::string& channelName, const std::string& username, const std::string& message);
+void sendMessage(const std::string& channelName, const std::string& username, const std::string& message);
 void signalHandler(int signal);
 void relayTopicHealthCallback(int callerRet, const char* msg, size_t len, void* userData);
 void connectionChangeCallback(int callerRet, const char* msg, size_t len, void* userData);
 void storeQueryCallback(int callerRet, const char* msg, size_t len, void* userData);
 void nodeOperationCallback(int callerRet, const char* msg, size_t len, void* userData);
-void retrieveHistory(void* wakuCtx, const std::string& channelName, MessageCallback callback = nullptr);
+void retrieveHistory(const std::string& channelName, MessageCallback callback = nullptr);
 void event_handler(int callerRet, const char* msg, size_t len, void* userData);
 void* initAndStart(const std::string& relayTopic, MessageCallback messageCallback = nullptr);
-bool joinChannel(void* wakuCtx, const std::string& channelName, const std::string& relayTopic);
+bool joinChannel(const std::string& channelName, const std::string& relayTopic);
 
 #endif // CHAT_API_H 
