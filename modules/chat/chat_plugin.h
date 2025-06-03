@@ -27,7 +27,7 @@ public:
     Q_INVOKABLE void retrieveHistory(const std::string& channelName, MessageCallback callback = nullptr) override;
 
 signals:
-    void eventResponse(const QVariantList& data);
+    void eventResponse(const QString& eventName, const QVariantList& data);
 
 private:
     std::string currentRelayTopic;
