@@ -143,7 +143,7 @@ void storeQueryCallback(int callerRet, const char* msg, size_t len, void* userDa
             size_t endPos = jsonStr.find("]", pos);
             if (endPos != std::string::npos) {
                 std::string payloadStr = jsonStr.substr(pos, endPos - pos);
-                std::cout << "Raw payload " << messageCount << ": [" << payloadStr << "]" << std::endl;
+                // std::cout << "Raw payload " << messageCount << ": [" << payloadStr << "]" << std::endl;
                 // Convert payload string to vector of bytes
                 std::vector<uint8_t> payloadBytes;
                 std::stringstream ss(payloadStr);
@@ -152,7 +152,7 @@ void storeQueryCallback(int callerRet, const char* msg, size_t len, void* userDa
                     payloadBytes.push_back(static_cast<uint8_t>(std::stoi(numberStr)));
                 }
                 // Decode the payload
-                std::cout << "Attempting to decode payload " << messageCount << ":" << std::endl;
+                // std::cout << "Attempting to decode payload " << messageCount << ":" << std::endl;
                 auto decodedMsg = decodeProto(payloadBytes);
                 printDecodedMessage(decodedMsg, payloadBytes);
                 
@@ -161,10 +161,10 @@ void storeQueryCallback(int callerRet, const char* msg, size_t len, void* userDa
                     callback(decodedMsg.timestamp, decodedMsg.nick, decodedMsg.payload);
                 }
                 
-                std::cout << "----------------------------------------" << std::endl;
+                // std::cout << "----------------------------------------" << std::endl;
             }
         }
-        std::cout << "Total messages found: " << messageCount << std::endl;
+        // std::cout << "Total messages found: " << messageCount << std::endl;
     }
     else if (callerRet != RET_OK) {
         std::cerr << "Store query error: " << callerRet;
@@ -199,13 +199,13 @@ void event_handler(int callerRet, const char* msg, size_t len, void* userData) {
             
             // If we've already processed this message, skip it
             if (processedMessageHashes.find(messageHash) != processedMessageHashes.end()) {
-                std::cout << "Skipping duplicate message with hash: " << messageHash << std::endl;
+                // std::cout << "Skipping duplicate message with hash: " << messageHash << std::endl;
                 return;
             }
             
             // Otherwise, add it to our set of processed hashes
             processedMessageHashes.insert(messageHash);
-            std::cout << "Processing new message with hash: " << messageHash << std::endl;
+            // std::cout << "Processing new message with hash: " << messageHash << std::endl;
         }
     }
 
@@ -239,7 +239,7 @@ void event_handler(int callerRet, const char* msg, size_t len, void* userData) {
 
             // Only process if the content topic matches one of our subscribed channels
             if (isSubscribed) {
-                std::cout << "\nReceived message with matching content topic: " << contentTopic << std::endl;
+                // std::cout << "\nReceived message with matching content topic: " << contentTopic << std::endl;
                 // Extract the payload
                 size_t payloadPos = jsonStr.find("\"payload\":\"");
                 if (payloadPos != std::string::npos) {
@@ -247,11 +247,11 @@ void event_handler(int callerRet, const char* msg, size_t len, void* userData) {
                     size_t payloadEnd = jsonStr.find("\"", payloadStart);
                     if (payloadStart != std::string::npos && payloadEnd != std::string::npos) {
                         std::string encodedPayload = jsonStr.substr(payloadStart, payloadEnd - payloadStart);
-                        std::cout << "Encoded payload: " << encodedPayload << std::endl;
+                        // std::cout << "Encoded payload: " << encodedPayload << std::endl;
                         // Decode the base64 payload
                         std::vector<uint8_t> decodedBytes = base64Decode(encodedPayload);
                         // Decode the protobuf message
-                        std::cout << "Decoding protobuf payload:" << std::endl;
+                        // std::cout << "Decoding protobuf payload:" << std::endl;
                         auto decodedMsg = decodeProto(decodedBytes);
                         printDecodedMessage(decodedMsg, decodedBytes);
                         

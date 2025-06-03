@@ -379,7 +379,7 @@ namespace {
         // Only process if callback exists
         if (data && data->callback && msg != nullptr) {
             QString event = QString::fromUtf8(msg, len);
-            qDebug() << "Waku event received:" << event;
+            // qDebug() << "Waku event received:" << event;
             
             // Call the registered callback with the event data
             data->callback(event);
@@ -402,7 +402,7 @@ namespace {
         
         if (success && msg != nullptr) {
             message = QString::fromUtf8(msg, len);
-            qDebug() << "Store query successful, response:" << message;
+            // qDebug() << "Store query successful, response:" << message;
         } else {
             message = msg ? QString::fromUtf8(msg, len) : "Unknown error";
             qDebug() << "Store query failed:" << message;
