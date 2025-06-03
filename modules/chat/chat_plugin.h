@@ -28,6 +28,7 @@ public:
 
 signals:
     void eventResponse(const QString& eventName, const QVariantList& data);
+    void eventResponse_another(const QString& eventName, const QVariantList& data);
 
 private:
     std::string currentRelayTopic;

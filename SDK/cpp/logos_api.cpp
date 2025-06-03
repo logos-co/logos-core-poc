@@ -291,19 +291,13 @@ QVariant LogosAPI::callRemoteMethod(const QString& objectName, const QString& me
     return callRemoteMethod(objectName, methodName, QVariantList() << arg1 << arg2 << arg3 << arg4 << arg5, timeoutMs);
 }
 
-void LogosAPI::onEvent(const QString& objectName, const QString& eventName, std::function<void(const QVariantList&)> callback)
+// change from objectName to instead, originObject and destinationObject, and use QObject instead
+void LogosAPI::onEvent(QObject* originObject, QObject* destinationObject, const QString& eventName, std::function<void(const QString&, const QVariantList&)> callback)
 {
-    // get the replica
-    QObject* replica = requestObject(objectName);
-    if (!replica) {
-        qWarning() << "LogosAPI: Failed to acquire replica for object:" << objectName;
-        return;
-    }
-
     qDebug() << "LogosAPI: Registering event listener for event:" << eventName;
 
-    // connect to the eventResponse signal
-    // QObject::connect(replica, SIGNAL(eventResponse(QString, QVariantList)), this, SLOT(onEventResponse(QString, QVariantList)));
+    // connect to the eventResponse signal of the destinationObject
+    QObject::connect(originObject, SIGNAL(eventResponse(QString, QVariantList)), destinationObject, SLOT(onEventResponse(QString, QVariantList)));
 }
 
 void LogosAPI::onEventResponse(QObject* replica, const QString& eventName, const QVariantList& data)

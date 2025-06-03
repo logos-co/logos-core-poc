@@ -132,17 +132,59 @@ void ChatWidget::initWaku() {
     //    qDebug() << "Received chat event:" << data;
     //});
     
+    // request object from logos api
+    QObject* chatObject = m_logosAPI->requestObject("chat");
+    // cast to ChatInterface
+    // ChatInterface* chatInterface = dynamic_cast<ChatInterface*>(chatObject);
+    // QObject* chatInterfaceObject = dynamic_cast<QObject*>(chatInterface);
+
+
+    // TODO: is this chatObject valid??
+    // check if object is valid
+    // print signals etc.. to check it's really there
+    // can also do poc to check what's going on
 
     // listen to eventResponse signal from chatPlugin
-    if (chatPlugin) {
-        // Get the QObject pointer directly from the plugin registry
-        // The plugin is actually a QObject (ChatPlugin) but returned as ChatInterface*
+    // if (chatPlugin) {
+    //     // Get the QObject pointer directly from the plugin registry
+    //     // The plugin is actually a QObject (ChatPlugin) but returned as ChatInterface*
+        
         QObject* pluginObject = dynamic_cast<QObject*>(chatPlugin);
+
+        // check object type
+        qDebug() << "chatObject type:" << chatObject->metaObject()->className();
+        // qDebug() << "chatInterface type:" << chatInterface->metaObject()->className();
+        qDebug() << "pluginObject type:" << pluginObject->metaObject()->className();
+
+        // check if chatObject has eventResponse signal
+        qDebug() << "chatObject has eventResponse signal:" << chatObject->metaObject()->indexOfSignal("eventResponse(QString,QVariantList)");
+        qDebug() << "pluginObject has eventResponse signal:" << pluginObject->metaObject()->indexOfSignal("eventResponse(QString,QVariantList)");
+
+        // check if chatObject has eventResponse_alternative signal
+        qDebug() << "chatObject has eventResponse_alternative signal:" << chatObject->metaObject()->indexOfSignal("eventResponse_alternative(QString,QVariantList)");
+        qDebug() << "pluginObject has eventResponse_alternative signal:" << pluginObject->metaObject()->indexOfSignal("eventResponse_alternative(QString,QVariantList)");
+
+        // check if chatObject has eventResponse_another signal
+        qDebug() << "chatObject has eventResponse_another signal:" << chatObject->metaObject()->indexOfSignal("eventResponse_another(QString,QVariantList)");
+        qDebug() << "pluginObject has eventResponse_another signal:" << pluginObject->metaObject()->indexOfSignal("eventResponse_another(QString,QVariantList)");
+
+        // check if chatObject has eventResponse slot
+        qDebug() << "chatObject has eventResponse slot:" << chatObject->metaObject()->indexOfSlot("onEventResponse(QString,QVariantList)");
+        qDebug() << "pluginObject has eventResponse slot:" << pluginObject->metaObject()->indexOfSlot("onEventResponse(QString,QVariantList)");
+
+        exit(1);
+
         if (pluginObject) {
-            QObject::connect(pluginObject, SIGNAL(eventResponse(QString, QVariantList)), 
-                            this, SLOT(onEventResponse(QString, QVariantList)));
+            // QObject::connect(pluginObject, SIGNAL(eventResponse(QString, QVariantList)), 
+            QObject::connect(chatObject, SIGNAL(eventResponse(QString, QVariantList)), 
+                            this, SLOT(onEventResponse(QString, QVariantList)), Qt::DirectConnection);
         }
-    }
+    // }
+
+    // m_logosAPI->onEvent(chatObject, this, "chatMessage", [this](const QString& eventName, const QVariantList& data) {
+    //   qDebug() << "RECEIVED via onEvent: [" << eventName << "] " << data;
+    //   exit(1);
+    //});
 
     // Initialize chat with message handler
     bool success = chatPlugin->initialize();
