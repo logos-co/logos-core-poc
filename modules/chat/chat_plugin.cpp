@@ -24,7 +24,8 @@ bool ChatPlugin::initialize() {
         // Emit the eventResponse signal with QVariantList
         QVariantList data;
         data << QString::fromStdString(timestamp) << QString::fromStdString(nick) << QString::fromStdString(message);
-        emit eventResponse("chatMessage", data);
+        // emit eventResponse("chatMessage", data);
+        logosAPI->onEventResponse(this, "chatMessage", data);
     };
     
     // Initialize and start Waku with the callback

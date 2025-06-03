@@ -155,7 +155,7 @@ public:
      * 
      * Multiple listeners can be registered for the same event name.
      */
-    void onEvent(const QString& eventName, std::function<void(const QVariantList&)> callback);
+    void onEvent(const QString& objectName, const QString& eventName, std::function<void(const QVariantList&)> callback);
 
 public slots:
     /**
@@ -166,7 +166,7 @@ public slots:
      * This slot is typically connected to signals from remote objects to handle
      * events and notifications from the Logos Core system.
      */
-    void onEventResponse(const QString& eventName, const QVariantList& data);
+    void onEventResponse(QObject* replica, const QString& eventName, const QVariantList& data);
 
 private:
     QRemoteObjectNode* m_node;

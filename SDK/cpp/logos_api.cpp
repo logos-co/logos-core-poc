@@ -291,30 +291,34 @@ QVariant LogosAPI::callRemoteMethod(const QString& objectName, const QString& me
     return callRemoteMethod(objectName, methodName, QVariantList() << arg1 << arg2 << arg3 << arg4 << arg5, timeoutMs);
 }
 
-void LogosAPI::onEvent(const QString& eventName, std::function<void(const QVariantList&)> callback)
+void LogosAPI::onEvent(const QString& objectName, const QString& eventName, std::function<void(const QVariantList&)> callback)
 {
-    if (eventName.isEmpty()) {
-        qWarning() << "LogosAPI: Event name cannot be empty";
+    // get the replica
+    QObject* replica = requestObject(objectName);
+    if (!replica) {
+        qWarning() << "LogosAPI: Failed to acquire replica for object:" << objectName;
         return;
     }
 
     qDebug() << "LogosAPI: Registering event listener for event:" << eventName;
-    m_eventListeners[eventName].append(callback);
+
+    // connect to the eventResponse signal
+    // QObject::connect(replica, SIGNAL(eventResponse(QString, QVariantList)), this, SLOT(onEventResponse(QString, QVariantList)));
 }
 
-void LogosAPI::onEventResponse(const QString& eventName, const QVariantList& data)
+void LogosAPI::onEventResponse(QObject* replica, const QString& eventName, const QVariantList& data)
 {
+    qDebug() << "LogosAPI: Received event:" << eventName << "with data:" << data;
+
     if (eventName.isEmpty()) {
         qWarning() << "LogosAPI: Event name cannot be empty";
         return;
     }
 
-    qDebug() << "LogosAPI: Received event:" << eventName << "with data:" << data;
-    
-    auto callbacks = m_eventListeners.value(eventName);
-    for (const auto& cb : callbacks) {
-        cb(data);
-    }
+    qDebug() << "LogosAPI: Emitting event:" << eventName << "with data:" << data;
+
+    // emit the eventResponse signal of replica
+    QMetaObject::invokeMethod(replica, "eventResponse", Qt::DirectConnection, Q_ARG(QString, eventName), Q_ARG(QVariantList, data));
 }
 
 // Include MOC for template instantiation
