@@ -292,7 +292,8 @@ QVariant LogosAPI::callRemoteMethod(const QString& objectName, const QString& me
 }
 
 // change from objectName to instead, originObject and destinationObject, and use QObject instead
-void LogosAPI::onEvent(QObject* originObject, QObject* destinationObject, const QString& eventName, std::function<void(const QString&, const QVariantList&)> callback)
+// void LogosAPI::onEvent(QObject* originObject, QObject* destinationObject, const QString& eventName, std::function<void(const QString&, const QVariantList&)> callback)
+void LogosAPI::onEvent(QObject* originObject, QObject* destinationObject, const QString& eventName)
 {
     qDebug() << "LogosAPI: Registering event listener for event:" << eventName;
 
@@ -312,10 +313,13 @@ void LogosAPI::onEventResponse(QObject* replica, const QString& eventName, const
     qDebug() << "LogosAPI: Emitting event:" << eventName << "with data:" << data;
 
     // emit the eventResponse signal of replica
-    // QMetaObject::invokeMethod(replica, "eventResponse", Qt::DirectConnection, Q_ARG(QString, eventName), Q_ARG(QVariantList, data));
-    QMetaObject::invokeMethod(replica, "eventResponse_another", Qt::DirectConnection, Q_ARG(QString, eventName), Q_ARG(QVariantList, data));
+    QMetaObject::invokeMethod(replica, "eventResponse", Qt::QueuedConnection, Q_ARG(QString, eventName), Q_ARG(QVariantList, data));
+    // QMetaObject::invokeMethod(replica, "eventResponse_another", Qt::QueuedConnection, Q_ARG(QString, eventName), Q_ARG(QVariantList, data));
     // TODO: try queued connection instead
     // QMetaObject::invokeMethod(replica, "eventResponse_another", Qt::DirectConnection, Q_ARG(QString, eventName), Q_ARG(QVariantList, data));
+
+
+
 }
 
 // Include MOC for template instantiation

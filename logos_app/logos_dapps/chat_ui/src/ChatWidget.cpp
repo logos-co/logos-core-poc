@@ -205,11 +205,14 @@ void ChatWidget::initWaku() {
             // QObject::connect(pluginObject, SIGNAL(eventResponse(QString, QVariantList)), 
             //QObject::connect(chatObject, SIGNAL(eventResponse(QString,QVariantList)), 
             //                this, SLOT(onEventResponse(QString,QVariantList)), Qt::AutoConnection);
-            QObject::connect(chatObject, SIGNAL(eventResponse(QString, QVariantList)), 
-                           this, SLOT(onEventResponse(QString,QVariantList)), Qt::AutoConnection);
                         //    this, SLOT(onEventResponse(QString,QVariantList)), Qt::QueuedConnection);
         // }
     // }
+
+    // QObject::connect(chatObject, SIGNAL(eventResponse(QString, QVariantList)), 
+    //                this, SLOT(onEventResponse(QString,QVariantList)), Qt::AutoConnection);
+
+    m_logosAPI->onEvent(chatObject, this, "chatMessage");
 
     // connect to local:testing and acquire chat_replica
     // QRemoteObjectNode remoteNode;

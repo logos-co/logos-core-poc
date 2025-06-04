@@ -155,7 +155,8 @@ public:
      * 
      * Multiple listeners can be registered for the same event name.
      */
-    void onEvent(QObject* originObject, QObject* destinationObject, const QString& eventName, std::function<void(const QString&, const QVariantList&)> callback);
+    // void onEvent(QObject* originObject, QObject* destinationObject, const QString& eventName, std::function<void(const QString&, const QVariantList&)> callback);
+    void onEvent(QObject* originObject, QObject* destinationObject, const QString& eventName);
 
 public slots:
     /**

@@ -25,11 +25,14 @@ bool ChatPlugin::initialize() {
         QVariantList data;
         data << QString::fromStdString(timestamp) << QString::fromStdString(nick) << QString::fromStdString(message);
         // emit eventResponse("chatMessage", data);
-        // logosAPI->onEventResponse(this, "chatMessage", data);
 
-        QMetaObject::invokeMethod(this, [this, data]() {
-           emit eventResponse("chatMessage", data);
-        }, Qt::QueuedConnection);
+        // QMetaObject::invokeMethod(this, [this, data]() {
+        logosAPI->onEventResponse(this, "chatMessage", data);
+        // }, Qt::QueuedConnection);
+
+        // QMetaObject::invokeMethod(this, [this, data]() {
+        //    emit eventResponse("chatMessage", data);
+        // }, Qt::QueuedConnection);
 
     };
     
