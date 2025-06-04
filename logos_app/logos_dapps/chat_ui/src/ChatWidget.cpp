@@ -46,9 +46,6 @@ ChatWidget::ChatWidget(QWidget* parent)
     
     // Get the chat plugin from the registry
     chatPlugin = PluginRegistry::getPlugin<ChatInterface>("chat");
-    if (!chatPlugin) {
-        qDebug() << "Failed to get chat plugin from registry";
-    }
 
     // Generate random username with 2 digits that will persist during this class lifetime
     int randomNum = rand() % 100;
@@ -127,12 +124,6 @@ ChatWidget::~ChatWidget() {
 
 void ChatWidget::initWaku()
 {
-    if (!chatPlugin)
-    {
-        updateStatus("Error: Chat plugin not loaded");
-        return;
-    }
-
     updateStatus("Status: Initializing Waku...");
 
     // request object from logos api
@@ -141,34 +132,32 @@ void ChatWidget::initWaku()
     m_logosAPI->onEvent(chatObject, this, "chatMessage", [this](const QString &eventName, const QVariantList &data)
                         {
         qDebug() << "RECEIVED via onEvent callback: [" << eventName << "] " << data;
-        // use handleWakuMessage to handle the message
         handleWakuMessage(data[0].toString().toStdString(), data[1].toString().toStdString(), data[2].toString().toStdString()); });
 
-    bool success = chatPlugin->initialize();
+    QVariant result = m_logosAPI->callRemoteMethod("chat", "initialize");
+    bool success = result.toBool();
 
-    if (success)
-    {
-        isWakuInitialized = true;
-        isWakuRunning = true;
-        updateStatus("Status: Waku initialized and running");
-
-        // Enable UI components
-        channelInput->setEnabled(true);
-        joinButton->setEnabled(true);
-        messageInput->setEnabled(true);
-        sendButton->setEnabled(true);
-
-        // Set default channel name
-        currentChannel = "huilong"; // Default channel
-        channelInput->setText(currentChannel);
-
-        // Join the default channel
-        onJoinChannelClicked();
-    }
-    else
-    {
+    if (!success) {
         updateStatus("Error: Failed to initialize Waku");
+        return;
     }
+
+    isWakuInitialized = true;
+    isWakuRunning = true;
+    updateStatus("Status: Waku initialized and running");
+
+    // Enable UI components
+    channelInput->setEnabled(true);
+    joinButton->setEnabled(true);
+    messageInput->setEnabled(true);
+    sendButton->setEnabled(true);
+
+    // Set default channel name
+    currentChannel = "huilong"; // Default channel
+    channelInput->setText(currentChannel);
+
+    // Join the default channel
+    onJoinChannelClicked();
 }
 
 void ChatWidget::stopWaku() {
