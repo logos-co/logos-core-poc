@@ -51,21 +51,21 @@ ChatWidget::ChatWidget(QWidget* parent)
     }
 
     // Create registry at local:testing for chat plugin
-        testingRegistryHost = new QRemoteObjectRegistryHost(QUrl(QStringLiteral("local:testing")), this);
-        qDebug() << "Created testing registry host at: local:testing";
+    //     testingRegistryHost = new QRemoteObjectRegistryHost(QUrl(QStringLiteral("local:testing")), this);
+    //     qDebug() << "Created testing registry host at: local:testing";
     
-    // Register chat plugin as chat_replica name in the registry
-    QObject* chatPluginObject = dynamic_cast<QObject*>(chatPlugin);
-    if (chatPluginObject) {
-        bool success = testingRegistryHost->enableRemoting(chatPluginObject, "chat_replica");
-        if (success) {
-            qDebug() << "Successfully registered chat plugin as 'chat_replica' in testing registry";
-        } else {
-            qDebug() << "Failed to register chat plugin as 'chat_replica' in testing registry";
-        }
-    } else {
-        qDebug() << "Failed to cast chat plugin to QObject for registry registration";
-    }
+    // // Register chat plugin as chat_replica name in the registry
+    // QObject* chatPluginObject = dynamic_cast<QObject*>(chatPlugin);
+    // if (chatPluginObject) {
+    //     bool success = testingRegistryHost->enableRemoting(chatPluginObject, "chat_replica");
+    //     if (success) {
+    //         qDebug() << "Successfully registered chat plugin as 'chat_replica' in testing registry";
+    //     } else {
+    //         qDebug() << "Failed to register chat plugin as 'chat_replica' in testing registry";
+    //     }
+    // } else {
+    //     qDebug() << "Failed to cast chat plugin to QObject for registry registration";
+    // }
 
     // Generate random username with 2 digits that will persist during this class lifetime
     int randomNum = rand() % 100;
@@ -216,6 +216,12 @@ void ChatWidget::initWaku() {
         qDebug() << "RECEIVED via onEvent callback: [" << eventName << "] " << data;
         // use handleWakuMessage to handle the message
         handleWakuMessage(data[0].toString().toStdString(), data[1].toString().toStdString(), data[2].toString().toStdString());
+    });
+
+    m_logosAPI->onEvent(chatObject, this, "chatMessage", [this](const QString& eventName, const QVariantList& data) {
+        qDebug() << "RECEIVED2 via onEvent callback: [" << eventName << "] " << data;
+        // use handleWakuMessage to handle the message
+        handleWakuMessage(data[0].toString().toStdString(), data[1].toString().toStdString(), data[2].toString().toStdString() + " (via onEvent callback)");
     });
 
     //m_logosAPI->onEvent(chatObject, this, "chatMessage", [this](const QString& eventName, const QVariantList& data) {
