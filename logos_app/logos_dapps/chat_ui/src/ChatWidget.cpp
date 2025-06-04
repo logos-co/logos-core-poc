@@ -212,7 +212,24 @@ void ChatWidget::initWaku() {
     // QObject::connect(chatObject, SIGNAL(eventResponse(QString, QVariantList)), 
     //                this, SLOT(onEventResponse(QString,QVariantList)), Qt::AutoConnection);
 
-    m_logosAPI->onEvent(chatObject, this, "chatMessage");
+    m_logosAPI->onEvent(chatObject, this, "chatMessage", [this](const QString& eventName, const QVariantList& data) {
+        qDebug() << "RECEIVED via onEvent callback: [" << eventName << "] " << data;
+        // use handleWakuMessage to handle the message
+        handleWakuMessage(data[0].toString().toStdString(), data[1].toString().toStdString(), data[2].toString().toStdString());
+    });
+
+    //m_logosAPI->onEvent(chatObject, this, "chatMessage", [this](const QString& eventName, const QVariantList& data) {
+    //    qDebug() << "RECEIVED via onEvent callback: [" << eventName << "] " << data;
+    //    if (data.size() >= 3) {
+    //        QString timestamp = data[0].toString();
+    //        QString nick = data[1].toString();
+    //        QString message = data[2].toString();
+    //        qDebug() << "RECEIVED via callback: [" << timestamp << "] " << nick << ": " << message;
+    //        // Display the message in the chat widget
+    //        displayMessage(nick, message);
+    //    }
+    //});
+
 
     // connect to local:testing and acquire chat_replica
     // QRemoteObjectNode remoteNode;
@@ -380,7 +397,7 @@ void ChatWidget::onEventResponse(const QString& eventName, const QVariantList& d
     if (data.size() >= 3) {
         QString timestamp = data[0].toString();
         QString nick = data[1].toString();
-        QString message = data[2].toString();
+        QString message = data[2].toString() + " (via eventResponse)";
         qDebug() << "RECEIVED via eventResponse: [" << timestamp << "] " << nick << ": " << message;
         // Display the message in the chat widget
         displayMessage(nick, message);

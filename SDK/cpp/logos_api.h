@@ -150,12 +150,21 @@ public:
 
     /**
      * @brief Register an event listener for the specified event name
+     * @param originObject The object that will emit the event
+     * @param destinationObject The object that will receive the event
      * @param eventName The name of the event to listen for
-     * @param callback Function to call when the event is triggered, receives QVariantList with event data
+     * @param callback Function to call when the event is triggered, receives eventName and event data
      * 
      * Multiple listeners can be registered for the same event name.
      */
-    // void onEvent(QObject* originObject, QObject* destinationObject, const QString& eventName, std::function<void(const QString&, const QVariantList&)> callback);
+    void onEvent(QObject* originObject, QObject* destinationObject, const QString& eventName, std::function<void(const QString&, const QVariantList&)> callback);
+    
+    /**
+     * @brief Register an event listener without callback (connects to destinationObject's slot)
+     * @param originObject The object that will emit the event
+     * @param destinationObject The object that will receive the event
+     * @param eventName The name of the event to listen for
+     */
     void onEvent(QObject* originObject, QObject* destinationObject, const QString& eventName);
 
 public slots:
@@ -168,6 +177,13 @@ public slots:
      * events and notifications from the Logos Core system.
      */
     void onEventResponse(QObject* replica, const QString& eventName, const QVariantList& data);
+    
+    /**
+     * @brief Helper slot to invoke stored callbacks
+     * @param eventName The name of the event that was triggered
+     * @param data The event data to pass to the callback
+     */
+    void invokeCallback(const QString& eventName, const QVariantList& data);
 
 private:
     QRemoteObjectNode* m_node;
@@ -179,6 +195,10 @@ private:
 
     // Event listeners storage - maps event names to lists of callback functions
     QHash<QString, QList<std::function<void(const QVariantList&)>>> m_eventListeners;
+    
+    // Store callbacks and their corresponding connections separately
+    QList<std::function<void(const QString&, const QVariantList&)>> m_eventCallbacks;
+    QList<QMetaObject::Connection> m_eventConnections;
 
     /**
      * @brief Internal method to establish connection to the registry
