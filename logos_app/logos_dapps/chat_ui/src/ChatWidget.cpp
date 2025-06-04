@@ -7,9 +7,15 @@
 #include <QTimer>
 #include "../../core/plugin_registry.h"
 #include "logos_api.h"
+#include <QRemoteObjectDynamicReplica>
+#include <QRemoteObjectReplica>
+#include <QRemoteObjectRegistryHost>
 
 // Static pointer to the active ChatWidget for callbacks
 static ChatWidget* activeWidget = nullptr;
+
+// Static pointer to the testing registry host
+static QRemoteObjectRegistryHost* testingRegistryHost = nullptr;
 
 // Static callback that can be passed to the C API
 void ChatWidget::handleWakuMessage(const std::string& timestamp, const std::string& nick, const std::string& message) {
@@ -43,7 +49,24 @@ ChatWidget::ChatWidget(QWidget* parent)
     if (!chatPlugin) {
         qDebug() << "Failed to get chat plugin from registry";
     }
+
+    // Create registry at local:testing for chat plugin
+        testingRegistryHost = new QRemoteObjectRegistryHost(QUrl(QStringLiteral("local:testing")), this);
+        qDebug() << "Created testing registry host at: local:testing";
     
+    // Register chat plugin as chat_replica name in the registry
+    QObject* chatPluginObject = dynamic_cast<QObject*>(chatPlugin);
+    if (chatPluginObject) {
+        bool success = testingRegistryHost->enableRemoting(chatPluginObject, "chat_replica");
+        if (success) {
+            qDebug() << "Successfully registered chat plugin as 'chat_replica' in testing registry";
+        } else {
+            qDebug() << "Failed to register chat plugin as 'chat_replica' in testing registry";
+        }
+    } else {
+        qDebug() << "Failed to cast chat plugin to QObject for registry registration";
+    }
+
     // Generate random username with 2 digits that will persist during this class lifetime
     int randomNum = rand() % 100;
     username = QString("LogosUser_%1").arg(randomNum, 2, 10, QChar('0'));
@@ -134,10 +157,14 @@ void ChatWidget::initWaku() {
     
     // request object from logos api
     QObject* chatObject = m_logosAPI->requestObject("chat");
+
+    // ====================================
+    // TODO: get replica here directly
+    // ====================================
+
     // cast to ChatInterface
     // ChatInterface* chatInterface = dynamic_cast<ChatInterface*>(chatObject);
     // QObject* chatInterfaceObject = dynamic_cast<QObject*>(chatInterface);
-
 
     // TODO: is this chatObject valid??
     // check if object is valid
@@ -148,7 +175,7 @@ void ChatWidget::initWaku() {
     // if (chatPlugin) {
     //     // Get the QObject pointer directly from the plugin registry
     //     // The plugin is actually a QObject (ChatPlugin) but returned as ChatInterface*
-        
+
         QObject* pluginObject = dynamic_cast<QObject*>(chatPlugin);
 
         // check object type
@@ -172,43 +199,65 @@ void ChatWidget::initWaku() {
         qDebug() << "chatObject has eventResponse slot:" << chatObject->metaObject()->indexOfSlot("onEventResponse(QString,QVariantList)");
         qDebug() << "pluginObject has eventResponse slot:" << pluginObject->metaObject()->indexOfSlot("onEventResponse(QString,QVariantList)");
 
-        exit(1);
+        // exit(1);
 
-        if (pluginObject) {
+        // if (pluginObject) {
             // QObject::connect(pluginObject, SIGNAL(eventResponse(QString, QVariantList)), 
+            //QObject::connect(chatObject, SIGNAL(eventResponse(QString,QVariantList)), 
+            //                this, SLOT(onEventResponse(QString,QVariantList)), Qt::AutoConnection);
             QObject::connect(chatObject, SIGNAL(eventResponse(QString, QVariantList)), 
-                            this, SLOT(onEventResponse(QString, QVariantList)), Qt::DirectConnection);
-        }
+                           this, SLOT(onEventResponse(QString,QVariantList)), Qt::AutoConnection);
+                        //    this, SLOT(onEventResponse(QString,QVariantList)), Qt::QueuedConnection);
+        // }
     // }
+
+    // connect to local:testing and acquire chat_replica
+    // QRemoteObjectNode remoteNode;
+    // remoteNode.connectToNode(QUrl(QStringLiteral("local:testing")));
+
+    // // Acquire the replica
+    // QRemoteObjectReplica* replica = remoteNode.acquireDynamic("chat_replica");
+    // if (!replica) {
+    //     qDebug() << "Failed to acquire chat_replica";
+    //     return;
+    // }
+
+    // Wait 5 seconds before connecting to the replica
+    //QTimer::singleShot(5000, [replica, this]() {
+    //    QObject::connect(replica, SIGNAL(eventResponse(QString, QVariantList)), 
+    //                    this, SLOT(onEventResponse(QString, QVariantList)), Qt::AutoConnection);
+    //});
 
     // m_logosAPI->onEvent(chatObject, this, "chatMessage", [this](const QString& eventName, const QVariantList& data) {
     //   qDebug() << "RECEIVED via onEvent: [" << eventName << "] " << data;
     //   exit(1);
     //});
 
-    // Initialize chat with message handler
-    bool success = chatPlugin->initialize();
-    
-    if (success) {
-        isWakuInitialized = true;
-        isWakuRunning = true;
-        updateStatus("Status: Waku initialized and running");
+    // Initialize chat with message handler after 10 seconds
+    // QTimer::singleShot(10000, [this]() {
+        bool success = chatPlugin->initialize();
         
-        // Enable UI components
-        channelInput->setEnabled(true);
-        joinButton->setEnabled(true);
-        messageInput->setEnabled(true);
-        sendButton->setEnabled(true);
-        
-        // Set default channel name
-        currentChannel = "huilong"; // Default channel
-        channelInput->setText(currentChannel);
-        
-        // Join the default channel
-        onJoinChannelClicked();
-    } else {
-        updateStatus("Error: Failed to initialize Waku");
-    }
+        if (success) {
+            isWakuInitialized = true;
+            isWakuRunning = true;
+            updateStatus("Status: Waku initialized and running");
+            
+            // Enable UI components
+            channelInput->setEnabled(true);
+            joinButton->setEnabled(true);
+            messageInput->setEnabled(true);
+            sendButton->setEnabled(true);
+            
+            // Set default channel name
+            currentChannel = "huilong"; // Default channel
+            channelInput->setText(currentChannel);
+            
+            // Join the default channel
+            onJoinChannelClicked();
+        } else {
+            updateStatus("Error: Failed to initialize Waku");
+        }
+    // });
 }
 
 void ChatWidget::stopWaku() {
