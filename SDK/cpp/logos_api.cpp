@@ -307,6 +307,7 @@ void LogosAPI::onEvent(QObject* originObject, QObject* destinationObject, const 
     m_eventCallbacks[eventName].append(callback);
 
     // Create connection key for this origin/destination pair
+    // TODO: probably doesn't need destinationObject actually
     ConnectionKey connKey = {originObject, destinationObject};
     
     // Check if we already have a connection for this origin/destination pair

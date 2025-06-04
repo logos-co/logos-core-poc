@@ -236,29 +236,6 @@ void ChatWidget::initWaku() {
     //    }
     //});
 
-
-    // connect to local:testing and acquire chat_replica
-    // QRemoteObjectNode remoteNode;
-    // remoteNode.connectToNode(QUrl(QStringLiteral("local:testing")));
-
-    // // Acquire the replica
-    // QRemoteObjectReplica* replica = remoteNode.acquireDynamic("chat_replica");
-    // if (!replica) {
-    //     qDebug() << "Failed to acquire chat_replica";
-    //     return;
-    // }
-
-    // Wait 5 seconds before connecting to the replica
-    //QTimer::singleShot(5000, [replica, this]() {
-    //    QObject::connect(replica, SIGNAL(eventResponse(QString, QVariantList)), 
-    //                    this, SLOT(onEventResponse(QString, QVariantList)), Qt::AutoConnection);
-    //});
-
-    // m_logosAPI->onEvent(chatObject, this, "chatMessage", [this](const QString& eventName, const QVariantList& data) {
-    //   qDebug() << "RECEIVED via onEvent: [" << eventName << "] " << data;
-    //   exit(1);
-    //});
-
     // Initialize chat with message handler after 10 seconds
     // QTimer::singleShot(10000, [this]() {
         bool success = chatPlugin->initialize();
@@ -398,14 +375,14 @@ void ChatWidget::displayMessage(const QString& sender, const QString& message) {
     chatDisplay->append(formattedMessage);
 }
 
-void ChatWidget::onEventResponse(const QString& eventName, const QVariantList& data) {
-    qDebug() << "RECEIVED via eventResponse: [" << eventName << "] " << data;
-    if (data.size() >= 3) {
-        QString timestamp = data[0].toString();
-        QString nick = data[1].toString();
-        QString message = data[2].toString() + " (via eventResponse)";
-        qDebug() << "RECEIVED via eventResponse: [" << timestamp << "] " << nick << ": " << message;
-        // Display the message in the chat widget
-        displayMessage(nick, message);
-    }
-} 
+//void ChatWidget::onEventResponse(const QString& eventName, const QVariantList& data) {
+//    qDebug() << "RECEIVED via eventResponse: [" << eventName << "] " << data;
+//    if (data.size() >= 3) {
+//        QString timestamp = data[0].toString();
+//        QString nick = data[1].toString();
+//        QString message = data[2].toString() + " (via eventResponse)";
+//        qDebug() << "RECEIVED via eventResponse: [" << timestamp << "] " << nick << ": " << message;
+//        // Display the message in the chat widget
+//        displayMessage(nick, message);
+//    }
+//} 
