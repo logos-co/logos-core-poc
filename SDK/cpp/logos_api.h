@@ -27,16 +27,6 @@ class LogosAPI : public QObject
     Q_OBJECT
 
 public:
-    // Custom key structure for origin/destination pair
-    struct ConnectionKey {
-        QObject* origin;
-        QObject* destination;
-        
-        bool operator==(const ConnectionKey& other) const {
-            return origin == other.origin && destination == other.destination;
-        }
-    };
-
     /**
      * @brief Construct a new LogosAPI
      * @param registryUrl The URL of the remote registry (default: "local:logoscore_registry")
@@ -209,8 +199,9 @@ private:
     // Store callbacks by event name for the new callback-based approach
     QHash<QString, QList<std::function<void(const QString&, const QVariantList&)>>> m_eventCallbacks;
     
-    // Track existing connections by origin/destination pair to avoid duplicates
-    QHash<ConnectionKey, QMetaObject::Connection> m_connections;
+    // Track existing connections by origin object to avoid duplicates
+    // Since we always connect to 'this' LogosAPI instance, we only need to track origin objects
+    QHash<QObject*, QMetaObject::Connection> m_connections;
 
     /**
      * @brief Internal method to establish connection to the registry
@@ -234,11 +225,5 @@ private:
      */
     static bool isVoidMethod(QObject* replica, const QString& methodName, const QVariantList& args);
 };
-
-// Hash function for ConnectionKey to enable use in QHash
-inline uint qHash(const LogosAPI::ConnectionKey& key, uint seed = 0) {
-    return qHash(reinterpret_cast<quintptr>(key.origin), seed) ^ 
-           qHash(reinterpret_cast<quintptr>(key.destination), seed);
-}
 
 #endif // LOGOS_API_H 

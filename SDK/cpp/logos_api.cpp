@@ -306,24 +306,20 @@ void LogosAPI::onEvent(QObject* originObject, QObject* destinationObject, const 
     // Store the callback for this event name
     m_eventCallbacks[eventName].append(callback);
 
-    // Create connection key for this origin/destination pair
-    // TODO: probably doesn't need destinationObject actually
-    ConnectionKey connKey = {originObject, destinationObject};
-    
-    // Check if we already have a connection for this origin/destination pair
-    if (!m_connections.contains(connKey)) {
+    // Check if we already have a connection for this origin object
+    if (!m_connections.contains(originObject)) {
         // Create new connection only if it doesn't exist
         auto connection = QObject::connect(originObject, SIGNAL(eventResponse(QString, QVariantList)), 
                                           this, SLOT(invokeCallback(QString, QVariantList)));
         
         if (connection) {
-            m_connections[connKey] = connection;
-            qDebug() << "LogosAPI: Created new connection for origin/destination pair";
+            m_connections[originObject] = connection;
+            qDebug() << "LogosAPI: Created new connection for origin object";
         } else {
             qWarning() << "LogosAPI: Failed to create connection for event:" << eventName;
         }
     } else {
-        qDebug() << "LogosAPI: Reusing existing connection for origin/destination pair";
+        qDebug() << "LogosAPI: Reusing existing connection for origin object";
     }
     
     qDebug() << "LogosAPI: Registered callback for event:" << eventName;
