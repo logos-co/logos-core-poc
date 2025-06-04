@@ -35,7 +35,6 @@ ChatWidget::ChatWidget(QWidget* parent)
     : QWidget(parent), 
       isWakuInitialized(false),
       isWakuRunning(false),
-      chatPlugin(nullptr),
       m_logosAPI(nullptr) {
     
     // Set as the active widget
@@ -44,9 +43,6 @@ ChatWidget::ChatWidget(QWidget* parent)
     // Initialize LogosAPI
     m_logosAPI = new LogosAPI("local:logoscore_registry", this);
     
-    // Get the chat plugin from the registry
-    chatPlugin = PluginRegistry::getPlugin<ChatInterface>("chat");
-
     // Generate random username with 2 digits that will persist during this class lifetime
     int randomNum = rand() % 100;
     username = QString("LogosUser_%1").arg(randomNum, 2, 10, QChar('0'));
