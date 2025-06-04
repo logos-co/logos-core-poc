@@ -15,11 +15,10 @@ public:
     Q_INVOKABLE virtual bool initialize() = 0;
     Q_INVOKABLE virtual bool joinChannel(const QString& channelName) = 0;
     Q_INVOKABLE virtual void sendMessage(const QString& channelName, const QString& username, const QString& message) = 0;
-    Q_INVOKABLE virtual void retrieveHistory(const std::string& channelName, MessageCallback callback = nullptr) = 0;
+    Q_INVOKABLE virtual bool retrieveHistory(const std::string& channelName) = 0;
 
 signals:
     void eventResponse(const QString& eventName, const QVariantList& data);
-    void eventResponse_alternative(const QString& eventName, const QVariantList& data);
 };
 
 #define ChatInterface_iid "org.logos.ChatInterface"

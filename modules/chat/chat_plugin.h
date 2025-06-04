@@ -24,11 +24,11 @@ public:
     Q_INVOKABLE bool initialize() override;
     Q_INVOKABLE bool joinChannel(const QString& channelName) override;
     Q_INVOKABLE void sendMessage(const QString& channelName, const QString& username, const QString& message) override;
-    Q_INVOKABLE void retrieveHistory(const std::string& channelName, MessageCallback callback = nullptr) override;
+    Q_INVOKABLE bool retrieveHistory(const std::string& channelName) override;
+    Q_INVOKABLE bool retrieveHistory(const QString& channelName);
 
 signals:
     void eventResponse(const QString& eventName, const QVariantList& data);
-    void eventResponse_another(const QString& eventName, const QVariantList& data);
 
 private:
     std::string currentRelayTopic;
