@@ -26,7 +26,6 @@ public:
 private slots:
     void onSendButtonClicked();
     void onJoinChannelClicked();
-    // void onEventResponse(const QString& eventName, const QVariantList& data);
 
 private:
     // UI elements
