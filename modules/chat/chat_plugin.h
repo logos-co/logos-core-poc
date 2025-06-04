@@ -28,6 +28,7 @@ public:
     Q_INVOKABLE bool retrieveHistory(const QString& channelName);
 
 signals:
+    // for now this is required for events, later it might not be necessary if using a proxy
     void eventResponse(const QString& eventName, const QVariantList& data);
 
 private:
