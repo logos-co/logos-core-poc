@@ -24,7 +24,7 @@ public:
     virtual ~WakuInterface() {}
 
     // Plugin methods
-    virtual void initWaku(const QString &cfg = "{}", WakuInitCallback callback = nullptr) = 0;
+    virtual void initWaku(const QString &cfg = "{}") = 0;
     virtual void getVersion(WakuVersionCallback callback = nullptr) = 0;
     virtual void startWaku(WakuStartCallback callback = nullptr) = 0;
     virtual void stopWaku(WakuStopCallback callback = nullptr) = 0;

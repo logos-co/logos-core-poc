@@ -1,5 +1,6 @@
 #include "chat_api.h"
 #include <unordered_set> // Add for storing message hashes
+#include "logos_api.h"
 
 // Constants
 const std::string TOY_CHAT_CONTENT_TOPIC = "/toy-chat/2/huilong/proto";
@@ -326,7 +327,7 @@ bool encodeProto(const ChatMessage& msg, std::vector<uint8_t>& output) {
 }
 
 // Function to send a message
-void sendMessage(const std::string& channelName, const std::string& username, const std::string& message) {
+void sendMessage(LogosAPI* logosAPI, const std::string& channelName, const std::string& username, const std::string& message) {
     // Format the channel name into a content topic if not already formatted
     std::string contentTopic = channelName;
     if (channelName.find("/toy-chat/") == std::string::npos) {
@@ -376,7 +377,7 @@ void sendMessage(const std::string& channelName, const std::string& username, co
 }
 
 // Function to initialize and start a Waku node
-void* initAndStart(const std::string& relayTopic, MessageCallback messageCallback) {
+void* initAndStart(LogosAPI* logosAPI, const std::string& relayTopic, MessageCallback messageCallback) {
     // Create appropriate Waku config
     std::string configStr = R"({
         "host": "0.0.0.0",
@@ -399,6 +400,7 @@ void* initAndStart(const std::string& relayTopic, MessageCallback messageCallbac
 
     // Get waku plugin
     WakuInterface* wakuPlugin = PluginRegistry::getPlugin<WakuInterface>("waku");
+
     if (!wakuPlugin) {
         std::cerr << "Failed to get Waku plugin" << std::endl;
         return nullptr;
@@ -406,12 +408,7 @@ void* initAndStart(const std::string& relayTopic, MessageCallback messageCallbac
     
     std::cout << "Found Waku Plugin, initializing" << std::endl;
     // Call initWaku on the plugin
-    wakuPlugin->initWaku(
-        QString::fromStdString(configStr), 
-        [](bool success, const QString &message) {
-            std::cout << "Waku Plugin init result: " << (success ? "Success" : "Failed") << " - " << message.toStdString() << std::endl;
-        }
-    );
+    wakuPlugin->initWaku(QString::fromStdString(configStr));
 
     std::this_thread::sleep_for(std::chrono::seconds(3));
 
@@ -449,7 +446,7 @@ void* initAndStart(const std::string& relayTopic, MessageCallback messageCallbac
 }
 
 // Function to join a chat channel
-bool joinChannel(const std::string& channelName, const std::string& relayTopic) {
+bool joinChannel(LogosAPI* logosAPI, const std::string& channelName, const std::string& relayTopic) {
     // Format the channel name into a content topic if not already formatted
     std::string contentTopic = channelName;
     if (channelName.find("/toy-chat/") == std::string::npos) {
@@ -484,7 +481,7 @@ bool joinChannel(const std::string& channelName, const std::string& relayTopic) 
 }
 
 // Function to retrieve message history from store node
-void retrieveHistory(const std::string& channelName, MessageCallback callback) {
+void retrieveHistory(LogosAPI* logosAPI, const std::string& channelName, MessageCallback callback) {
     // Format the channel name into a content topic if not already formatted
     std::string contentTopic = channelName;
     if (channelName.find("/toy-chat/") == std::string::npos) {

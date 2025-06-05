@@ -460,7 +460,7 @@ Waku::~Waku() {
     }
 }
 
-void Waku::initWaku(const QString &cfg, WakuInitCallback callback) {
+void Waku::initWaku(const QString &cfg) {
     qDebug() << "Initializing Waku...";
     // Clean up existing instance if any
     if (wakuCtx) {
@@ -468,8 +468,13 @@ void Waku::initWaku(const QString &cfg, WakuInitCallback callback) {
         wakuCtx = nullptr;
     }
 
+    // Define a local callback that logs the result
+    WakuInitCallback localCallback = [](bool success, const QString &message) {
+        qDebug() << "Waku initialization result:" << (success ? "Success" : "Failed") << "-" << message;
+    };
+
     // Save the callback
-    InitData* userData = new InitData{this, callback};
+    InitData* userData = new InitData{this, localCallback};
 
     // Initialize Waku - passing the callback data as userData and configuration
     QByteArray cfgUtf8 = cfg.toUtf8();
@@ -477,8 +482,8 @@ void Waku::initWaku(const QString &cfg, WakuInitCallback callback) {
     if (!wakuCtx) {
         qDebug() << "Failed to initialize Waku";
         // Call callback for failure case
-        if (callback) {
-            callback(false, "Failed to initialize Waku");
+        if (localCallback) {
+            localCallback(false, "Failed to initialize Waku");
         }
         delete userData;
     }

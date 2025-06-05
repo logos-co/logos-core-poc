@@ -26,7 +26,7 @@ bool ChatPlugin::initialize() {
     };
 
     // Initialize and start Waku with the callback
-    void* result = ::initAndStart(currentRelayTopic, actualCallback);
+    void* result = ::initAndStart(logosAPI, currentRelayTopic, actualCallback);
 
     // Return success/failure
     return (result != nullptr);
@@ -34,12 +34,12 @@ bool ChatPlugin::initialize() {
 
 bool ChatPlugin::joinChannel(const QString& channelName) {
     // Convert QString to std::string for the underlying API
-    return ::joinChannel(channelName.toStdString(), currentRelayTopic);
+    return ::joinChannel(logosAPI, channelName.toStdString(), currentRelayTopic);
 }
 
 void ChatPlugin::sendMessage(const QString& channelName, const QString& username, const QString& message) {
     // Convert QString to std::string for the underlying API
-    ::sendMessage(channelName.toStdString(), username.toStdString(), message.toStdString());
+    ::sendMessage(logosAPI, channelName.toStdString(), username.toStdString(), message.toStdString());
 }
 
 bool ChatPlugin::retrieveHistory(const std::string& channelName) {
@@ -50,7 +50,7 @@ bool ChatPlugin::retrieveHistory(const std::string& channelName) {
         logosAPI->onEventResponse(this, "historyMessage", data);
     };
 
-    ::retrieveHistory(channelName, actualCallback);
+    ::retrieveHistory(logosAPI, channelName, actualCallback);
     return true; // Assume success for now
 }
 
