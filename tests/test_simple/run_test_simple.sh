@@ -8,8 +8,44 @@ echo "Building and running Test Simple application..."
 # Get the script directory (where this script is located)
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-# Navigate to the tests directory (parent of test_simple)
-cd "$SCRIPT_DIR/.."
+# Navigate to the project root
+cd "$SCRIPT_DIR/../.."
+
+# Build core first
+echo "Building Logos Core..."
+cd core
+if [ -d "build" ]; then
+    echo "Cleaning existing core build..."
+    rm -rf build
+fi
+mkdir -p build
+cd build
+cmake ..
+if command -v nproc >/dev/null 2>&1; then
+    JOBS=$(nproc)
+elif command -v sysctl >/dev/null 2>&1; then
+    JOBS=$(sysctl -n hw.ncpu)
+else
+    JOBS=2
+fi
+make -j$JOBS
+echo "Core build completed!"
+
+# Build template_module
+echo "Building template_module..."
+cd ../../modules
+if [ -d "build" ]; then
+    echo "Cleaning existing modules build..."
+    rm -rf build
+fi
+mkdir -p build
+cd build
+cmake ..
+make -j$JOBS template_module_plugin
+echo "Template module build completed!"
+
+# Navigate to the tests directory
+cd ../../tests
 
 # Create and enter build directory
 mkdir -p build
