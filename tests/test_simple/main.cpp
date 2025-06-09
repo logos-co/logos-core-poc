@@ -11,6 +11,26 @@
 // Qt-style plugin testing utility class
 class PluginTester {
 public:
+    // ANSI color codes for terminal output
+    static const QString RED_BOLD;
+    static const QString GREEN_BOLD;
+    static const QString YELLOW_BOLD;
+    static const QString RESET;
+    
+    // Print error message in red bold
+    static void printError(const QString& message) {
+        std::cerr << RED_BOLD.toStdString() << message.toStdString() << RESET.toStdString() << std::endl;
+    }
+    
+    // Print success message in green bold
+    static void printSuccess(const QString& message) {
+        std::cout << GREEN_BOLD.toStdString() << message.toStdString() << RESET.toStdString() << std::endl;
+    }
+    
+    // Print warning message in yellow bold
+    static void printWarning(const QString& message) {
+        std::cout << YELLOW_BOLD.toStdString() << message.toStdString() << RESET.toStdString() << std::endl;
+    }
     // Get current loaded plugins as QStringList
     static QStringList getLoadedPlugins() {
         QStringList result;
@@ -46,9 +66,9 @@ public:
         sortedLoaded.sort();
 
         if (sortedExpected != sortedLoaded) {
-            qCritical() << "FAIL:" << message;
-            qCritical() << "  Expected:" << expected.join(", ");
-            qCritical() << "  Actual:  " << loaded.join(", ");
+            printError(QString("FAIL: %1").arg(message));
+            printError(QString("  Expected: %1").arg(expected.join(", ")));
+            printError(QString("  Actual:   %1").arg(loaded.join(", ")));
             
             if (errorCode >= 0) {
                 logos_core_cleanup();
@@ -57,7 +77,7 @@ public:
             return false;
         }
 
-        qDebug() << "PASS:" << message << "- plugins:" << expected.join(", ");
+        printSuccess(QString("PASS: %1 - plugins: %2").arg(message).arg(expected.join(", ")));
         return true;
     }
 
@@ -68,9 +88,9 @@ public:
 
         for (const QString& plugin : expectedPlugins) {
             if (!loaded.contains(plugin)) {
-                qCritical() << "FAIL:" << message;
-                qCritical() << "  Missing plugin:" << plugin;
-                qCritical() << "  Loaded plugins:" << loaded.join(", ");
+                printError(QString("FAIL: %1").arg(message));
+                printError(QString("  Missing plugin: %1").arg(plugin));
+                printError(QString("  Loaded plugins: %1").arg(loaded.join(", ")));
 
                 if (errorCode >= 0) {
                     logos_core_cleanup();
@@ -80,7 +100,7 @@ public:
             }
         }
 
-        qDebug() << "PASS:" << message << "- contains:" << expectedPlugins.join(", ");
+        printSuccess(QString("PASS: %1 - contains: %2").arg(message).arg(expectedPlugins.join(", ")));
         return true;
     }
 
@@ -91,9 +111,9 @@ public:
 
         for (const QString& plugin : unexpectedPlugins) {
             if (loaded.contains(plugin)) {
-                qCritical() << "FAIL:" << message;
-                qCritical() << "  Unexpected plugin found:" << plugin;
-                qCritical() << "  Loaded plugins:" << loaded.join(", ");
+                printError(QString("FAIL: %1").arg(message));
+                printError(QString("  Unexpected plugin found: %1").arg(plugin));
+                printError(QString("  Loaded plugins: %1").arg(loaded.join(", ")));
 
                 if (errorCode >= 0) {
                     logos_core_cleanup();
@@ -103,7 +123,7 @@ public:
             }
         }
 
-        qDebug() << "PASS:" << message << "- excludes:" << unexpectedPlugins.join(", ");
+        printSuccess(QString("PASS: %1 - excludes: %2").arg(message).arg(unexpectedPlugins.join(", ")));
         return true;
     }
 
@@ -113,10 +133,10 @@ public:
         QStringList loaded = getLoadedPlugins();
 
         if (loaded.size() != expectedCount) {
-            qCritical() << "FAIL:" << message;
-            qCritical() << "  Expected count:" << expectedCount;
-            qCritical() << "  Actual count:  " << loaded.size();
-            qCritical() << "  Loaded plugins:" << loaded.join(", ");
+            printError(QString("FAIL: %1").arg(message));
+            printError(QString("  Expected count: %1").arg(expectedCount));
+            printError(QString("  Actual count:   %1").arg(loaded.size()));
+            printError(QString("  Loaded plugins: %1").arg(loaded.join(", ")));
 
             if (errorCode >= 0) {
                 logos_core_cleanup();
@@ -125,7 +145,7 @@ public:
             return false;
         }
 
-        qDebug() << "PASS:" << message << "- count:" << expectedCount;
+        printSuccess(QString("PASS: %1 - count: %2").arg(message).arg(expectedCount));
         return true;
     }
 };
@@ -145,6 +165,12 @@ public:
 
 bool EventTracker::eventReceived = false;
 QVariantList EventTracker::lastEventData;
+
+// Define static color constants
+const QString PluginTester::RED_BOLD = "\033[1;31m";
+const QString PluginTester::GREEN_BOLD = "\033[1;32m";
+const QString PluginTester::YELLOW_BOLD = "\033[1;33m";
+const QString PluginTester::RESET = "\033[0m";
 
 int main(int argc, char *argv[])
 {
@@ -175,9 +201,9 @@ int main(int argc, char *argv[])
     // Load the template_module plugin specifically
     qDebug() << "\n=== Loading template_module plugin ===";
     if (logos_core_load_plugin("template_module")) {
-        qDebug() << "Successfully loaded template_module plugin";
+        PluginTester::printSuccess("Successfully loaded template_module plugin");
     } else {
-        qCritical() << "Failed to load template_module plugin";
+        PluginTester::printError("CRITICAL: Failed to load template_module plugin");
         logos_core_cleanup();
         exit(1);
     }
@@ -199,7 +225,7 @@ int main(int argc, char *argv[])
     // Get template_module object for event listening
     QObject* templateModuleObj = testAPI.requestObject("template_module");
     if (!templateModuleObj) {
-        qCritical() << "Failed to get template_module from registry";
+        PluginTester::printError("CRITICAL: Failed to get template_module from registry");
         logos_core_cleanup();
         exit(1);
     }
@@ -214,7 +240,7 @@ int main(int argc, char *argv[])
     
     QVariant result = testAPI.callRemoteMethod("template_module", "foo", testParam);
     if (!result.isValid() || !result.toBool()) {
-        qCritical() << "Failed to call foo() method or method returned false";
+        PluginTester::printError("CRITICAL: Failed to call foo() method or method returned false");
         logos_core_cleanup();
         exit(1);
     }
@@ -226,17 +252,17 @@ int main(int argc, char *argv[])
     
     // Check if event was received
     if (EventTracker::eventReceived) {
-        qDebug() << "SUCCESS: Event received!";
+        PluginTester::printSuccess("SUCCESS: Event received!");
         if (EventTracker::lastEventData.size() > 0 && 
             EventTracker::lastEventData[0].toString() == testParam.toString()) {
-            qDebug() << "SUCCESS: Event contains correct parameter:" << testParam;
+            PluginTester::printSuccess(QString("SUCCESS: Event contains correct parameter: %1").arg(testParam.toString()));
         } else {
-            qCritical() << "FAIL: Event parameter mismatch";
+            PluginTester::printError("CRITICAL: Event parameter mismatch");
             logos_core_cleanup();
             exit(1);
         }
     } else {
-        qCritical() << "FAIL: No event received";
+        PluginTester::printError("CRITICAL: No event received");
         logos_core_cleanup();
         exit(1);
     }
