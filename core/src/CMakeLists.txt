@@ -16,6 +16,12 @@ set(HOST_SOURCES
     main.cpp
 )
 
+# Define the module host sources
+set(MODULE_HOST_SOURCES
+    module_host.cpp
+    ../interface.h
+)
+
 # Create the logos core library
 add_library(logos_core SHARED ${LOGOS_CORE_SOURCES})
 
@@ -58,6 +64,19 @@ target_include_directories(logoscore PRIVATE
     ${Qt${QT_VERSION_MAJOR}_INCLUDE_DIRS}
 )
 
+# Create the module host application
+add_executable(module_host ${MODULE_HOST_SOURCES})
+
+# Link the module host with Qt libraries
+target_link_libraries(module_host PRIVATE Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::RemoteObjects)
+
+# Include directories for the module host application
+target_include_directories(module_host PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/..
+    ${Qt${QT_VERSION_MAJOR}_INCLUDE_DIRS}
+)
+
 # Set RPATH settings for the executable
 if(APPLE)
     set_target_properties(logoscore PROPERTIES
@@ -65,6 +84,17 @@ if(APPLE)
         BUILD_WITH_INSTALL_RPATH TRUE)
 else()
     set_target_properties(logoscore PROPERTIES
+        INSTALL_RPATH "$ORIGIN/../lib"
+        BUILD_WITH_INSTALL_RPATH TRUE)
+endif()
+
+# Set RPATH settings for the module host executable
+if(APPLE)
+    set_target_properties(module_host PROPERTIES
+        INSTALL_RPATH "@loader_path/../lib"
+        BUILD_WITH_INSTALL_RPATH TRUE)
+else()
+    set_target_properties(module_host PROPERTIES
         INSTALL_RPATH "$ORIGIN/../lib"
         BUILD_WITH_INSTALL_RPATH TRUE)
 endif() 

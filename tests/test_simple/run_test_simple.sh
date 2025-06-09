@@ -96,6 +96,20 @@ else
     echo "  cd ../../modules && mkdir -p build && cd build && cmake .. && make"
 fi
 
+# Copy the module_host executable from the core build directory
+MODULE_HOST_SOURCE="../../core/build/bin/module_host"
+MODULE_HOST_DEST="bin/module_host"
+
+if [ -f "$MODULE_HOST_SOURCE" ]; then
+    echo "Copying module_host executable..."
+    cp "$MODULE_HOST_SOURCE" "$MODULE_HOST_DEST"
+    echo "Successfully copied module_host executable to: $MODULE_HOST_DEST"
+else
+    echo "Error: module_host executable not found at: $MODULE_HOST_SOURCE"
+    echo "This is required for plugin loading. Make sure the core build completed successfully."
+    exit 1
+fi
+
 # Set up library paths for running the application
 if [[ "$(uname)" == "Darwin" ]]; then
     echo "Setting up library paths for macOS..."

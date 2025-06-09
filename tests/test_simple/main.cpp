@@ -218,10 +218,11 @@ int main(int argc, char *argv[])
 
     // Test the event system
     qDebug() << "\n=== Testing Template Module Events ===";
-    
+
     // Initialize LogosAPI for testing
-    LogosAPI testAPI("local:logoscore_registry");
-    
+    // LogosAPI testAPI("local:logoscore_registry");
+    LogosAPI testAPI("local:logos_template_module");
+
     // Get template_module object for event listening
     QObject* templateModuleObj = testAPI.requestObject("template_module");
     if (!templateModuleObj) {
@@ -273,8 +274,17 @@ int main(int argc, char *argv[])
     qDebug() << "✓ Event system tests passed";
     qDebug() << "✓ Template module foo() event trigger test passed";
 
-    // Clean up resources
-    logos_core_cleanup();
-
-    return 0;
+    // // Clean up resources
+    // logos_core_cleanup();
+    
+    // keep the app running until ctrl+c
+    PluginTester::printSuccess("Application running - Press Ctrl+C to exit...");
+    
+    // Create a QCoreApplication instance for event loop
+    QCoreApplication app(argc, argv);
+    
+    // Run the event loop until interrupted
+    app.exec();
+ 
+    // return 0;
 }

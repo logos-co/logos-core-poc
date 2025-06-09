@@ -238,7 +238,7 @@ int main(int argc, char *argv[])
     qDebug() << "\n=== Testing Package Installation ===";
     
     // Initialize LogosAPI for testing
-    LogosAPI testAPI("local:logoscore_registry");
+    LogosAPI testAPI("local:logos_package_manager");
     
     // Determine the correct file extension for this platform
     QString libExt;
@@ -271,6 +271,9 @@ int main(int argc, char *argv[])
     
     if (installSuccess) {
         qDebug() << "\n\n\n\nSUCCESS: Package installation completed successfully";
+
+        // logos load template_module
+        logos_core_load_plugin("template_module");
         
         // Check if the plugin is now loaded
         qDebug() << "\n=== Post-Installation Plugin State ===";
@@ -278,11 +281,62 @@ int main(int argc, char *argv[])
         
         // Verify that template_module is now loaded
         PluginTester::assertContains(QStringList{"template_module"}, 4, 
-                                   "template_module should be loaded after installation");
+                                  "template_module should be loaded after installation");
         
         // Test that all three plugins are loaded: core_manager, package_manager, and template_module
         PluginTester::assertEqual(QStringList{"core_manager", "package_manager", "template_module"}, 5, 
-                                 "All three plugins should be loaded after installation");
+                                "All three plugins should be loaded after installation");
+        
+        // Test the event system
+        qDebug() << "\n=== Testing Template Module Events ===";
+
+        // Initialize LogosAPI for testing
+        LogosAPI eventTestAPI("local:logos_template_module");
+
+        // Get template_module object for event listening
+        QObject* templateModuleObj = eventTestAPI.requestObject("template_module");
+        if (!templateModuleObj) {
+            PluginTester::printError("CRITICAL: Failed to get template_module from registry");
+            logos_core_cleanup();
+            exit(1);
+        }
+        
+        // Register event listener
+        EventTracker::eventReceived = false;
+        eventTestAPI.onEvent(templateModuleObj, nullptr, "fooTriggered", EventTracker::onEvent);
+        
+        // Call foo method using remote API
+        QVariant testParam = "hello_world";
+        qDebug() << "Calling foo() remotely with parameter:" << testParam;
+        
+        QVariant eventResult = eventTestAPI.callRemoteMethod("template_module", "foo", testParam);
+        if (!eventResult.isValid() || !eventResult.toBool()) {
+            PluginTester::printError("CRITICAL: Failed to call foo() method or method returned false");
+            logos_core_cleanup();
+            exit(1);
+        }
+        
+        qDebug() << "foo() method called successfully";
+        
+        // Process events briefly
+        QCoreApplication::processEvents();
+        
+        // Check if event was received
+        if (EventTracker::eventReceived) {
+            PluginTester::printSuccess("SUCCESS: Event received!");
+            if (EventTracker::lastEventData.size() > 0 && 
+                EventTracker::lastEventData[0].toString() == testParam.toString()) {
+                PluginTester::printSuccess(QString("SUCCESS: Event contains correct parameter: %1").arg(testParam.toString()));
+            } else {
+                PluginTester::printError("CRITICAL: Event parameter mismatch");
+                logos_core_cleanup();
+                exit(1);
+            }
+        } else {
+            PluginTester::printError("CRITICAL: No event received");
+            logos_core_cleanup();
+            exit(1);
+        }
         
     } else {
         PluginTester::printError("CRITICAL: Package installation failed");
@@ -297,9 +351,20 @@ int main(int argc, char *argv[])
     qDebug() << "✓ Package discovery tests passed";
     qDebug() << "✓ Package installation tests passed";
     qDebug() << "✓ Template module is now available and loaded";
+    qDebug() << "✓ Event system tests passed";
+    qDebug() << "✓ Template module foo() event trigger test passed";
+
+    // keep the app running until ctrl+c
+    PluginTester::printSuccess("Application running - Press Ctrl+C to exit...");
+    
+    // Create a QCoreApplication instance for event loop
+    QCoreApplication app(argc, argv);
+    
+    // Run the event loop until interrupted
+    app.exec();
 
     // Clean up resources
-    logos_core_cleanup();
+    // logos_core_cleanup();
 
     return 0;
 } 

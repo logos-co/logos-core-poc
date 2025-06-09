@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QDebug>
 #include <QDir>
+#include <QFile>
 #include <QMetaProperty>
 #include <QMetaMethod>
 #include <QTimer>
@@ -12,6 +13,7 @@
 #include <QJsonArray>
 #include <QHash>
 #include <QRemoteObjectRegistryHost>
+#include <QProcess>
 #include "../interface.h"
 #include "../plugin_registry.h"
 #include "core_manager/core_manager.h"
@@ -30,6 +32,9 @@ static QStringList g_loaded_plugins;
 
 // Global hash to store known plugin names and paths
 static QHash<QString, QString> g_known_plugins;
+
+// Global hash to store plugin processes
+static QHash<QString, QProcess*> g_plugin_processes;
 
 // Global Qt Remote Object registry host
 static QRemoteObjectRegistryHost* g_registry_host = nullptr;
@@ -99,7 +104,7 @@ static QString processPlugin(const QString &pluginPath)
     return pluginName;
 }
 
-// Helper function to load a plugin by name
+// Helper function to load a plugin by name using module_host in a separate process
 static bool loadPlugin(const QString &pluginName)
 {
     if (!g_known_plugins.contains(pluginName)) {
@@ -108,96 +113,79 @@ static bool loadPlugin(const QString &pluginName)
     }
 
     QString pluginPath = g_known_plugins.value(pluginName);
-    qDebug() << "Loading plugin:" << pluginName << "from path:" << pluginPath;
+    qDebug() << "Loading plugin:" << pluginName << "from path:" << pluginPath << "in separate process";
 
-    // Load the plugin
-    QPluginLoader loader(pluginPath);
-    QObject *plugin = loader.instance();
-
-    if (!plugin) {
-        qWarning() << "Failed to load plugin:" << loader.errorString();
+    // Check if plugin is already loaded
+    if (g_plugin_processes.contains(pluginName)) {
+        qWarning() << "Plugin already loaded:" << pluginName;
         return false;
     }
 
-    qDebug() << "Plugin loaded successfully.";
+    // Find the module_host executable
+    QString moduleHostPath = QDir::cleanPath(QCoreApplication::applicationDirPath() + "/module_host");
+#ifdef Q_OS_WIN
+    moduleHostPath += ".exe";
+#endif
 
-    // Cast to the base PluginInterface
-    PluginInterface *basePlugin = qobject_cast<PluginInterface *>(plugin);
-    qDebug() << "Plugin casted to PluginInterface";
-    if (!basePlugin) {
-        qWarning() << "Plugin does not implement the PluginInterface";
+    qDebug() << "Module host path:" << moduleHostPath;
+
+    // Check if module_host exists
+    if (!QFile::exists(moduleHostPath)) {
+        qCritical() << "module_host executable not found at:" << moduleHostPath;
         return false;
     }
 
-    // Verify that the plugin name matches the metadata
-    if (pluginName != basePlugin->name()) {
-        qWarning() << "Plugin name mismatch! Expected:" << pluginName << "Actual:" << basePlugin->name();
+    // Create a new process for the plugin
+    QProcess* process = new QProcess();
+    
+    // Set up arguments for module_host
+    QStringList arguments;
+    arguments << "--name" << pluginName;
+    arguments << "--path" << pluginPath;
+
+    qDebug() << "Starting module_host with arguments:" << arguments;
+
+    // Start the process
+    process->start(moduleHostPath, arguments);
+
+    if (!process->waitForStarted(5000)) { // Wait up to 5 seconds for the process to start
+        qCritical() << "Failed to start module_host process:" << process->errorString();
+        delete process;
+        return false;
     }
 
-    qDebug() << "Plugin name:" << basePlugin->name();
-    qDebug() << "Plugin version:" << basePlugin->version();
+    qDebug() << "Module host process started successfully for plugin:" << pluginName;
+    qDebug() << "Process ID:" << process->processId();
+
+    // Store the process
+    g_plugin_processes.insert(pluginName, process);
 
     // Add the plugin name to our loaded plugins list
-    g_loaded_plugins.append(basePlugin->name());
+    g_loaded_plugins.append(pluginName);
 
-    // Register the plugin using the PluginRegistry namespace function
-    PluginRegistry::registerPlugin(plugin, basePlugin->name());
-    qDebug() << "Registered plugin with key:" << basePlugin->name().toLower().replace(" ", "_");
+    // Connect to process finished signal for cleanup
+    QObject::connect(process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+                     [pluginName, process](int exitCode, QProcess::ExitStatus exitStatus) {
+                         qDebug() << "Plugin process finished:" << pluginName 
+                                  << "Exit code:" << exitCode 
+                                  << "Exit status:" << exitStatus;
+                         
+                         // Remove from our tracking lists
+                         g_plugin_processes.remove(pluginName);
+                         g_loaded_plugins.removeAll(pluginName);
+                         
+                         // Clean up the process object
+                         process->deleteLater();
+                     });
 
-    // Register with Qt Remote Objects for remote access
-    if (g_registry_host) {
-        bool success = g_registry_host->enableRemoting(plugin, basePlugin->name());
-        if (success) {
-            qDebug() << "Plugin enabled for remote access with name:" << basePlugin->name();
-        } else {
-            qWarning() << "Failed to enable remote access for plugin:" << basePlugin->name();
-        }
-    } else {
-        qWarning() << "Registry host not initialized, cannot enable remote access for plugin:" << basePlugin->name();
-    }
+    // Connect to error signal
+    QObject::connect(process, &QProcess::errorOccurred,
+                     [pluginName](QProcess::ProcessError error) {
+                         qCritical() << "Plugin process error for" << pluginName << ":" << error;
+                     });
 
-    // Use QObject reflection (QMetaObject) for runtime inspection
-    const QMetaObject *metaObject = plugin->metaObject();
-    qDebug() << "\nPlugin class name:" << metaObject->className();
-
-    // List properties
-    qDebug() << "\nProperties:";
-    for (int i = 0; i < metaObject->propertyCount(); ++i) {
-        QMetaProperty property = metaObject->property(i);
-        qDebug() << " -" << property.name() << "=" << plugin->property(property.name());
-    }
-
-    // List methods
-    qDebug() << "\nMethods:";
-    for (int i = 0; i < metaObject->methodCount(); ++i) {
-        QMetaMethod method = metaObject->method(i);
-        qDebug() << " -" << method.methodSignature();
-        
-        // List parameter types for more complex methods
-        if (method.parameterCount() > 0) {
-            QStringList paramDetails;
-            for (int p = 0; p < method.parameterCount(); ++p) {
-                QString paramType = method.parameterTypeName(p);
-                QString paramName = method.parameterNames().at(p);
-                
-                // Add extra info for known callback types
-                if (paramType == "WakuInitCallback") {
-                    paramDetails << QString("  - Parameter %1: %2 (std::function<void(bool success, const QString &message)>)").arg(p).arg(paramType);
-                } else if (paramType == "WakuVersionCallback") {
-                    paramDetails << QString("  - Parameter %1: %2 (std::function<void(const QString &version)>)").arg(p).arg(paramType);
-                } else if (!paramType.isEmpty()) {
-                    paramDetails << QString("  - Parameter %1: %2").arg(p).arg(paramType);
-                }
-            }
-            
-            if (!paramDetails.isEmpty()) {
-                qDebug() << "   Parameters:";
-                for (const QString &detail : paramDetails) {
-                    qDebug() << detail;
-                }
-            }
-        }
-    }
+    qDebug() << "Plugin" << pluginName << "is now running in separate process";
+    qDebug() << "Remote registry URL for this plugin: local:logos_" << pluginName;
     
     return true;
 }
@@ -358,6 +346,26 @@ int logos_core_exec()
 
 void logos_core_cleanup()
 {
+    // Terminate all plugin processes
+    qDebug() << "Terminating all plugin processes...";
+    for (auto it = g_plugin_processes.begin(); it != g_plugin_processes.end(); ++it) {
+        QProcess* process = it.value();
+        QString pluginName = it.key();
+        
+        qDebug() << "Terminating plugin process:" << pluginName;
+        process->terminate();
+        
+        if (!process->waitForFinished(3000)) {
+            qWarning() << "Process did not terminate gracefully, killing it:" << pluginName;
+            process->kill();
+            process->waitForFinished(1000);
+        }
+        
+        delete process;
+    }
+    g_plugin_processes.clear();
+    g_loaded_plugins.clear();
+    
     // Clean up Qt Remote Object registry host
     if (g_registry_host) {
         delete g_registry_host;
@@ -467,27 +475,32 @@ int logos_core_unload_plugin(const char* plugin_name)
         return 0;
     }
 
-    // Converting to registry key format 
-    QString registryKey = name.toLower().replace(" ", "_");
-    qDebug() << "Looking for plugin in registry with key:" << registryKey;
+    // Check if we have a process for this plugin
+    if (!g_plugin_processes.contains(name)) {
+        qWarning() << "No process found for plugin:" << name;
+        return 0;
+    }
 
-    // Get the plugin object from the registry
-    QObject* plugin = nullptr;
+    // Get the process
+    QProcess* process = g_plugin_processes.value(name);
+    
+    qDebug() << "Terminating plugin process for:" << name;
+    
+    // Terminate the process gracefully
+    process->terminate();
+    
+    // Wait for the process to finish, with a timeout
+    if (!process->waitForFinished(5000)) {
+        qWarning() << "Process did not terminate gracefully, killing it";
+        process->kill();
+        process->waitForFinished(2000);
+    }
 
-    // First try to get it directly from registry
-    // plugin = PluginRegistry::getPlugin<QObject>(registryKey);
-
-    // if (plugin) {
-        // bool removed = PluginRegistry::unregisterPlugin(registryKey);
-
-        // TODO: disableRemote for this plugin
-
-        g_loaded_plugins.removeAll(name);
-
-        // delete plugin;
-        qDebug() << "Successfully deleted plugin object";
-    // }
-
+    // Remove from our tracking structures
+    g_plugin_processes.remove(name);
+    g_loaded_plugins.removeAll(name);
+    
+    // The process will be cleaned up by the signal handler
     qDebug() << "Successfully unloaded plugin:" << name;
     return 1;
 }

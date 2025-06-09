@@ -36,7 +36,7 @@ PackageManagerView::PackageManagerView(QWidget *parent)
     , m_logosAPI(nullptr)
 {
     // Initialize LogosAPI
-    m_logosAPI = new LogosAPI("local:logoscore_registry", this);
+    m_logosAPI = new LogosAPI("local:logos_package_manager", this);
     
     setupUi();
 }
