@@ -1,0 +1,80 @@
+#!/bin/bash
+
+# Exit on error
+set -e
+
+echo "Building and running Test Simple application..."
+
+# Get the script directory (where this script is located)
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+# Navigate to the tests directory (parent of test_simple)
+cd "$SCRIPT_DIR/.."
+
+# Create and enter build directory
+mkdir -p build
+cd build
+
+# Configure with CMake
+echo "Configuring with CMake..."
+cmake ..
+
+# Build the application
+echo "Building test_simple application..."
+if command -v nproc >/dev/null 2>&1; then
+    JOBS=$(nproc)
+elif command -v sysctl >/dev/null 2>&1; then
+    JOBS=$(sysctl -n hw.ncpu)
+else
+    JOBS=2
+fi
+
+make -j$JOBS
+
+echo "Build completed successfully!"
+
+# Determine the platform-specific library extension
+if [[ "$(uname)" == "Darwin" ]]; then
+    LIB_EXT="dylib"
+elif [[ "$(uname)" == "Linux" ]]; then
+    LIB_EXT="so"
+else
+    LIB_EXT="dll"  # Windows
+fi
+
+# Create modules directory in the build output
+echo "Setting up modules directory..."
+mkdir -p bin/modules
+
+# Copy the template_module plugin from the modules build directory
+TEMPLATE_MODULE_SOURCE="../../modules/build/modules/template_module_plugin.$LIB_EXT"
+TEMPLATE_MODULE_DEST="bin/modules/template_module_plugin.$LIB_EXT"
+
+if [ -f "$TEMPLATE_MODULE_SOURCE" ]; then
+    echo "Copying template_module plugin..."
+    cp "$TEMPLATE_MODULE_SOURCE" "$TEMPLATE_MODULE_DEST"
+    echo "Successfully copied template_module plugin to: $TEMPLATE_MODULE_DEST"
+else
+    echo "Warning: template_module plugin not found at: $TEMPLATE_MODULE_SOURCE"
+    echo "You may need to build the modules first by running:"
+    echo "  cd ../../modules && mkdir -p build && cd build && cmake .. && make"
+fi
+
+# Set up library paths for running the application
+if [[ "$(uname)" == "Darwin" ]]; then
+    echo "Setting up library paths for macOS..."
+    export DYLD_LIBRARY_PATH="$DYLD_LIBRARY_PATH:$(pwd)/../../core/build/lib"
+    echo "DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH"
+else
+    echo "Setting up library paths for Linux..."
+    export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$(pwd)/../../core/build/lib"
+    echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
+fi
+
+# Run the application
+echo ""
+echo "Running Test Simple application..."
+echo "Press Ctrl+C to stop the application."
+echo "=================================="
+cd bin
+./test_simple 
