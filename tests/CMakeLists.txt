@@ -22,4 +22,5 @@ include_directories(${CMAKE_SOURCE_DIR}/../core/src)
 include_directories(${CMAKE_SOURCE_DIR}/../core)
 
 # Add subdirectories
-add_subdirectory(test_simple) 
+add_subdirectory(test_simple)
+add_subdirectory(test_install_package) 
