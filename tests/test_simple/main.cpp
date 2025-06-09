@@ -4,7 +4,9 @@
 #include <QStringList>
 #include <QCoreApplication>
 #include <QDebug>
+#include <QVariantList>
 #include "../../core/src/logos_core.h"
+#include "../../SDK/cpp/logos_api.h"
 
 // Qt-style plugin testing utility class
 class PluginTester {
@@ -128,6 +130,22 @@ public:
     }
 };
 
+// Simple event tracker
+class EventTracker {
+public:
+    static bool eventReceived;
+    static QVariantList lastEventData;
+    
+    static void onEvent(const QString& eventName, const QVariantList& data) {
+        qDebug() << "Event received:" << eventName << "with data:" << data;
+        eventReceived = true;
+        lastEventData = data;
+    }
+};
+
+bool EventTracker::eventReceived = false;
+QVariantList EventTracker::lastEventData;
+
 int main(int argc, char *argv[])
 {
     std::cout << "Test Simple Application Starting..." << std::endl;
@@ -161,7 +179,7 @@ int main(int argc, char *argv[])
     } else {
         qCritical() << "Failed to load template_module plugin";
         logos_core_cleanup();
-        exit(2);
+        exit(1);
     }
 
     // Show and verify final plugin state
@@ -172,12 +190,65 @@ int main(int argc, char *argv[])
     PluginTester::assertEqual(QStringList{"core_manager", "template_module"}, 3, 
                              "Final state - exact match");
 
+    // Test the event system
+    qDebug() << "\n=== Testing Template Module Events ===";
+    
+    // Initialize LogosAPI for testing
+    LogosAPI testAPI("local:logoscore_registry");
+    
+    // Get template_module object for event listening
+    QObject* templateModuleObj = testAPI.requestObject("template_module");
+    if (!templateModuleObj) {
+        qCritical() << "Failed to get template_module from registry";
+        logos_core_cleanup();
+        exit(1);
+    }
+    
+    // Register event listener
+    EventTracker::eventReceived = false;
+    testAPI.onEvent(templateModuleObj, nullptr, "fooTriggered", EventTracker::onEvent);
+    
+    // Call foo method using remote API
+    QVariant testParam = "hello_world";
+    qDebug() << "Calling foo() remotely with parameter:" << testParam;
+    
+    QVariant result = testAPI.callRemoteMethod("template_module", "foo", testParam);
+    if (!result.isValid() || !result.toBool()) {
+        qCritical() << "Failed to call foo() method or method returned false";
+        logos_core_cleanup();
+        exit(1);
+    }
+    
+    qDebug() << "foo() method called successfully";
+    
+    // Process events briefly
+    QCoreApplication::processEvents();
+    
+    // Check if event was received
+    if (EventTracker::eventReceived) {
+        qDebug() << "SUCCESS: Event received!";
+        if (EventTracker::lastEventData.size() > 0 && 
+            EventTracker::lastEventData[0].toString() == testParam.toString()) {
+            qDebug() << "SUCCESS: Event contains correct parameter:" << testParam;
+        } else {
+            qCritical() << "FAIL: Event parameter mismatch";
+            logos_core_cleanup();
+            exit(1);
+        }
+    } else {
+        qCritical() << "FAIL: No event received";
+        logos_core_cleanup();
+        exit(1);
+    }
+
     // All assertions passed - test completed successfully
-    std::cout << "\nAll plugin tests passed successfully!" << std::endl;
-    std::cout << "Test Simple application completed." << std::endl;
+    qDebug() << "\n=== All Tests Completed Successfully ===";
+    qDebug() << "✓ Plugin loading tests passed";
+    qDebug() << "✓ Event system tests passed";
+    qDebug() << "✓ Template module foo() event trigger test passed";
 
     // Clean up resources
     logos_core_cleanup();
 
     return 0;
-} 
+}

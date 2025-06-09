@@ -1,11 +1,16 @@
 set(CMAKE_AUTOMOC ON)
 
+# Find Qt RemoteObjects (needed for LogosAPI)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core RemoteObjects)
+
 # Plugin sources
 set(PLUGIN_SOURCES
     template_module_plugin.cpp
     template_module_plugin.h
     template_module_interface.h
     ${CMAKE_SOURCE_DIR}/../core/interface.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api.h
 )
 
 # Create the plugin library
@@ -16,12 +21,16 @@ set_target_properties(template_module_plugin PROPERTIES
     PREFIX "")
 
 # Link Qt libraries
-target_link_libraries(template_module_plugin PRIVATE Qt${QT_VERSION_MAJOR}::Core)
+target_link_libraries(template_module_plugin PRIVATE 
+    Qt${QT_VERSION_MAJOR}::Core 
+    Qt${QT_VERSION_MAJOR}::RemoteObjects
+)
 
 # Include directories
 target_include_directories(template_module_plugin PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/../core
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp
 )
 
 # Set common properties for both platforms
