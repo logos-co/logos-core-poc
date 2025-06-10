@@ -12,7 +12,6 @@
 #include <QPushButton>
 #include <QSpacerItem>
 #include "mainwindow.h"
-#include "../../../core/plugin_registry.h"
 
 ModulesView::ModulesView(QWidget *parent, MainWindow* mainWindow)
     : QWidget(parent)

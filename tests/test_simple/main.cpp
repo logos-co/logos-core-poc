@@ -220,8 +220,8 @@ int main(int argc, char *argv[])
     qDebug() << "\n=== Testing Template Module Events ===";
 
     // Initialize LogosAPI for testing
-    // LogosAPI testAPI("local:logoscore_registry");
-    LogosAPI testAPI("local:logos_template_module");
+    // LogosAPI testAPI("core_registry");
+    LogosAPI testAPI("template_module");
 
     // Get template_module object for event listening
     QObject* templateModuleObj = testAPI.requestObject("template_module");

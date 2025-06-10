@@ -7,6 +7,9 @@
 #include <QJsonArray>
 #include "../../interface.h"
 
+// Forward declaration
+class LogosAPI;
+
 class CoreManagerPlugin : public QObject, public PluginInterface {
     Q_OBJECT
     Q_PLUGIN_METADATA(IID PluginInterface_iid FILE "metadata.json")
@@ -36,6 +39,7 @@ public:
 private:
     QString m_pluginsDirectory;
     QStringList m_loadedPlugins;
+    LogosAPI* m_logosAPI;
 };
 
 #endif // CORE_MANAGER_PLUGIN_H 

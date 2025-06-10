@@ -8,8 +8,8 @@
 #include <QJsonArray>
 #include <QFileInfo>
 #include <QFile>
-#include "../../plugin_registry.h"
 #include "logos_core.h"
+#include "logos_api.h"
 
 CoreManagerPlugin::CoreManagerPlugin() {
     qDebug() << "CoreManager plugin created";
@@ -34,9 +34,6 @@ void CoreManagerPlugin::setPluginsDirectory(const QString& directory) {
 void CoreManagerPlugin::start() {
     qDebug() << "Starting CoreManager plugin";
     logos_core_start();
-
-    // Register ourselves in the plugin registry
-    PluginRegistry::registerPlugin(this, name());
 }
 
 void CoreManagerPlugin::cleanup() {
@@ -128,11 +125,18 @@ QString CoreManagerPlugin::processPlugin(const QString& filePath) {
 }
 
 // TODO: unclear if in use but it needs to be updated
+// TODO: this should NOT be in liblogos in any case and should be moved to its own module
 QJsonArray CoreManagerPlugin::getPluginMethods(const QString& pluginName) {
     QJsonArray methodsArray;
 
-    // Get the plugin from the registry
-    QObject* plugin = PluginRegistry::getPlugin<QObject>(pluginName);
+    auto m_logosAPI = new LogosAPI(pluginName, this);
+
+    // Get the plugin using LogosAPI instead of PluginRegistry
+    QObject* plugin = nullptr;
+    if (m_logosAPI && m_logosAPI->isConnected()) {
+        plugin = m_logosAPI->requestObject(pluginName);
+    }
+
     if (!plugin) {
         qWarning() << "Plugin not found:" << pluginName;
         return methodsArray;
@@ -182,6 +186,9 @@ QJsonArray CoreManagerPlugin::getPluginMethods(const QString& pluginName) {
 
         methodsArray.append(methodObj);
     }
+
+    // Clean up the replica object when done
+    delete plugin;
 
     return methodsArray;
 }

@@ -1,0 +1,13 @@
+{
+  "name": "waku_module",
+  "version": "1.0.0",
+  "description": "Waku module",
+  "author": "Logos Core Team",
+  "type": "core",
+  "category": "protocol",
+  "main": "waku_module_plugin",
+  "dependencies": [],
+  "include": ["libwaku.so", "libwaku.dylib", "libwaku.dll"],
+  "capabilities": [
+  ]
+} 

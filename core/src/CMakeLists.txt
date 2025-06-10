@@ -1,5 +1,8 @@
 set(CMAKE_AUTOMOC ON)
 
+# Add SDK subdirectory to build the logos_sdk library
+add_subdirectory(../../SDK/cpp ${CMAKE_BINARY_DIR}/sdk)
+
 # Define the library sources
 set(LOGOS_CORE_SOURCES
     logos_core.cpp
@@ -8,7 +11,6 @@ set(LOGOS_CORE_SOURCES
     core_manager/core_manager.h
     core_manager/core_manager_interface.h
     ../interface.h
-    ../plugin_registry.h
 )
 
 # Define the host application sources
@@ -28,13 +30,18 @@ add_library(logos_core SHARED ${LOGOS_CORE_SOURCES})
 # Set the LOGOS_CORE_LIBRARY definition for the library
 target_compile_definitions(logos_core PRIVATE LOGOS_CORE_LIBRARY)
 
-# Link Qt libraries to the library
-target_link_libraries(logos_core PRIVATE Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::RemoteObjects)
+# Link Qt libraries and SDK to the library
+target_link_libraries(logos_core PRIVATE 
+    Qt${QT_VERSION_MAJOR}::Core 
+    Qt${QT_VERSION_MAJOR}::RemoteObjects
+    logos_sdk
+)
 
 # Include directories for the library
 target_include_directories(logos_core PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/..
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp
     ${Qt${QT_VERSION_MAJOR}_INCLUDE_DIRS}
 )
 

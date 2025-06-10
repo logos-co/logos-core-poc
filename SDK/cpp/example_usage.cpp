@@ -53,7 +53,7 @@ void exampleUsage()
 void exampleCustomUsage()
 {
     // Create client with custom registry URL
-    LogosAPI client("local:custom_registry");
+    LogosAPI client("custom_registry");
     
     if (!client.isConnected()) {
         // Try to reconnect

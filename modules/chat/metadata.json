@@ -6,7 +6,7 @@
   "type": "core",
   "category": "chat",
   "main": "chat_plugin",
-  "dependencies": ["waku"],
+  "dependencies": ["waku_module"],
   "build": {
     "type": "cmake",
     "files": [

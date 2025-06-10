@@ -36,12 +36,9 @@ set(SOURCES
 
 add_library(chat_ui SHARED ${SOURCES})
 
-# Include directories
+## Include directories
 target_include_directories(chat_ui PRIVATE 
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../..
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../core
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/src
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp
 )
 
 # Link libraries
@@ -52,11 +49,6 @@ target_link_libraries(chat_ui
         Qt6::RemoteObjects
         component-interfaces
 )
-
-# Link against logos_core if found
-if(LOGOS_CORE_LIB)
-    target_link_libraries(chat_ui PRIVATE ${LOGOS_CORE_LIB})
-endif()
 
 # For macOS, we need to set the bundle properties
 if(APPLE)

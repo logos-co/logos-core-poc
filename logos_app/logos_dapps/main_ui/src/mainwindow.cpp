@@ -13,7 +13,6 @@
 #include "coremoduleview.h"
 #include "packagemanagerview.h"
 #include "modulesgenericview.h"
-#include "core/plugin_registry.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QWidget(parent)

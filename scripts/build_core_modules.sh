@@ -10,7 +10,7 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # Build libwaku
 echo "Building libwaku..."
-"$SCRIPT_DIR/../modules/waku/build_libwaku.sh"
+"$SCRIPT_DIR/../modules/waku_module/build_libwaku.sh"
 
 # Navigate to modules directory
 cd modules
@@ -35,19 +35,19 @@ cmake --build .
 
 # Fix library paths for platform-specific dynamic libraries
 if [ "$(uname)" = "Darwin" ]; then
-    echo "Fixing library paths for waku_plugin.dylib on macOS..."
+    echo "Fixing library paths for waku_module_plugin.dylib on macOS..."
     # Use otool to get the current library path
-    CURRENT_PATH=$(otool -L "modules/waku_plugin.dylib" | grep libwaku.so | awk '{print $1}')
+    CURRENT_PATH=$(otool -L "modules/waku_module_plugin.dylib" | grep libwaku.so | awk '{print $1}')
     
     # Update the paths using relative references
-    install_name_tool -change "${CURRENT_PATH}" "@rpath/libwaku.so" "modules/waku_plugin.dylib"
+    install_name_tool -change "${CURRENT_PATH}" "@rpath/libwaku.so" "modules/waku_module_plugin.dylib"
     install_name_tool -id "@rpath/libwaku.so" "modules/libwaku.so"
 elif [ "$(uname)" = "Linux" ]; then
-    echo "Fixing library paths for waku_plugin.so on Linux..."
+    echo "Fixing library paths for waku_module_plugin.so on Linux..."
     # No need for install_name_tool on Linux
     # Set rpath directly for Linux shared objects
-    if [ -f "modules/waku_plugin.so" ]; then
-        patchelf --set-rpath '$ORIGIN' "modules/waku_plugin.so"
+    if [ -f "modules/waku_module_plugin.so" ]; then
+        patchelf --set-rpath '$ORIGIN' "modules/waku_module_plugin.so"
     fi
 fi
 

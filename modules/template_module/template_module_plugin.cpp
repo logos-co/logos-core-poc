@@ -3,14 +3,13 @@
 #include <QCoreApplication>
 #include <QVariantList>
 #include <QDateTime>
-#include "../../core/plugin_registry.h"
 
 TemplateModulePlugin::TemplateModulePlugin() : logosAPI(nullptr)
 {
     qDebug() << "TemplateModulePlugin: Initializing...";
     
     // Initialize the Logos API
-    logosAPI = new LogosAPI("local:logoscore_registry", this);
+    logosAPI = new LogosAPI("core_registry", this);
     
     qDebug() << "TemplateModulePlugin: Initialized successfully";
 }

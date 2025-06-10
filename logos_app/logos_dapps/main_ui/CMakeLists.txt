@@ -45,8 +45,6 @@ add_library(main_ui SHARED ${SOURCES})
 # Add include directories before target_link_libraries
 target_include_directories(main_ui PRIVATE 
     ${CMAKE_CURRENT_SOURCE_DIR}/src
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../..
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../core
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp
 )
 

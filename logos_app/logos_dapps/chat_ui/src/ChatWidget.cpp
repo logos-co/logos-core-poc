@@ -5,17 +5,10 @@
 #include <iostream>
 #include <csignal>
 #include <QTimer>
-#include "../../core/plugin_registry.h"
 #include "logos_api.h"
-#include <QRemoteObjectDynamicReplica>
-#include <QRemoteObjectReplica>
-#include <QRemoteObjectRegistryHost>
 
 // Static pointer to the active ChatWidget for callbacks
 static ChatWidget* activeWidget = nullptr;
-
-// Static pointer to the testing registry host
-static QRemoteObjectRegistryHost* testingRegistryHost = nullptr;
 
 // Static callback that can be passed to the C API
 void ChatWidget::handleWakuMessage(const std::string& timestamp, const std::string& nick, const std::string& message) {
@@ -40,8 +33,7 @@ ChatWidget::ChatWidget(QWidget* parent)
     // Set as the active widget
     activeWidget = this;
     
-    // Initialize LogosAPI
-    m_logosAPI = new LogosAPI("local:logoscore_registry", this);
+    m_logosAPI = new LogosAPI("chat", this);
     
     // Generate random username with 2 digits that will persist during this class lifetime
     int randomNum = rand() % 100;
@@ -125,19 +117,14 @@ void ChatWidget::initWaku()
     // request object from logos api
     QObject *chatObject = m_logosAPI->requestObject("chat");
 
-    m_logosAPI->onEvent(chatObject, this, "chatMessage", [this](const QString &eventName, const QVariantList &data)
-                        {
-        qDebug() << "RECEIVED via onEvent callback: [" << eventName << "] " << data;
-        handleWakuMessage(data[0].toString().toStdString(), data[1].toString().toStdString(), data[2].toString().toStdString()); });
+    m_logosAPI->onEvent(chatObject, this, "chatMessage", [this](const QString &eventName, const QVariantList &data) {
+        handleWakuMessage(data[0].toString().toStdString(), data[1].toString().toStdString(), data[2].toString().toStdString());
+    });
 
-    m_logosAPI->onEvent(chatObject, this, "historyMessage", [this](const QString &eventName, const QVariantList &data)
-                        {
-        qDebug() << "RECEIVED history via onEvent callback: [" << eventName << "] " << data;
-        // Add [HISTORY] prefix to distinguish history messages
+    m_logosAPI->onEvent(chatObject, this, "historyMessage", [this](const QString &eventName, const QVariantList &data) {
         QString historyPrefix = "[HISTORY] ";
         QString nick = data[1].toString();
         QString message = data[2].toString();
-        // displayMessage(historyPrefix + nick, message); });
 
         QMetaObject::invokeMethod(activeWidget, [=]() {
             QString historyPrefix = "[HISTORY] ";
@@ -238,8 +225,6 @@ void ChatWidget::onSendButtonClicked() {
         return;
     }
 
-    // Send the message
-    // Use LogosAPI to call sendMessage on the chat plugin
     if (m_logosAPI && m_logosAPI->isConnected()) {
         QVariant result = m_logosAPI->callRemoteMethod("chat", "sendMessage", currentChannel, username, message);
         qDebug() << "LogosAPI sendMessage result:" << result;
