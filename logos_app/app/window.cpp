@@ -6,7 +6,6 @@
 #include <QVBoxLayout>
 #include <QPluginLoader>
 #include <QDir>
-// #include "core/plugin_registry.h"
 
 Window::Window(QWidget *parent)
     : QMainWindow(parent)

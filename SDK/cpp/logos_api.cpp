@@ -8,10 +8,10 @@
 #include <QTime>
 #include <string>
 
-LogosAPI::LogosAPI(const QString& registryUrl, QObject *parent)
+LogosAPI::LogosAPI(const QString& module_name, QObject *parent)
     : QObject(parent)
     , m_node(nullptr)
-    , m_registryUrl(registryUrl)
+    , m_registryUrl(QString("local:logos_%1").arg(module_name))
     , m_connected(false)
 {
     m_node = new QRemoteObjectNode(this);

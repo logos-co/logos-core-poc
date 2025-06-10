@@ -15,7 +15,6 @@
 #include <QRemoteObjectRegistryHost>
 #include <QProcess>
 #include "../interface.h"
-#include "../plugin_registry.h"
 #include "core_manager/core_manager.h"
 
 // Declare QObject* as a metatype so it can be stored in QVariant
@@ -138,6 +137,9 @@ static bool loadPlugin(const QString &pluginName)
     // Create a new process for the plugin
     QProcess* process = new QProcess();
     
+    // Set up the process to capture output (merge stdout and stderr)
+    process->setProcessChannelMode(QProcess::MergedChannels);
+    
     // Set up arguments for module_host
     QStringList arguments;
     arguments << "--name" << pluginName;
@@ -170,6 +172,12 @@ static bool loadPlugin(const QString &pluginName)
                                   << "Exit code:" << exitCode 
                                   << "Exit status:" << exitStatus;
                          
+                         // TODO: This is temporary and later needs a mechanism to restart the process
+                         if (exitStatus == QProcess::CrashExit) {
+                             qCritical() << "Plugin process crashed:" << pluginName << "- terminating core with error";
+                             exit(1);
+                         }
+                         
                          // Remove from our tracking lists
                          g_plugin_processes.remove(pluginName);
                          g_loaded_plugins.removeAll(pluginName);
@@ -182,6 +190,47 @@ static bool loadPlugin(const QString &pluginName)
     QObject::connect(process, &QProcess::errorOccurred,
                      [pluginName](QProcess::ProcessError error) {
                          qCritical() << "Plugin process error for" << pluginName << ":" << error;
+                         
+                         // TODO: This is temporary and later needs a mechanism to restart the process
+                         if (error == QProcess::Crashed) {
+                             qCritical() << "Plugin process crashed:" << pluginName << "- terminating core with error";
+                             exit(1);
+                         }
+                     });
+
+    // Connect to output signals to forward logs from module_host to main process
+    QObject::connect(process, &QProcess::readyReadStandardOutput,
+                     [pluginName, process]() {
+                         QByteArray output = process->readAllStandardOutput();
+                         if (!output.isEmpty()) {
+                             // Forward logs to main process with plugin prefix
+                             QString logLine = QString::fromUtf8(output).trimmed();
+                             QStringList lines = logLine.split('\n', Qt::SkipEmptyParts);
+                             for (const QString &line : lines) {
+                                 // Parse the Qt log level from the line and forward appropriately
+                                 if (line.contains("qrc:") || line.contains("Warning:") || line.contains("WARNING:")) {
+                                     qWarning() << "[MODULE_HOST" << pluginName << "]:" << line;
+                                 } else if (line.contains("Critical:") || line.contains("FAILED:") || line.contains("ERROR:")) {
+                                     qCritical() << "[MODULE_HOST" << pluginName << "]:" << line;
+                                 } else {
+                                     qDebug() << "[MODULE_HOST" << pluginName << "]:" << line;
+                                 }
+                             }
+                         }
+                     });
+
+    // Connect to stderr output (in case channel mode changes)
+    QObject::connect(process, &QProcess::readyReadStandardError,
+                     [pluginName, process]() {
+                         QByteArray output = process->readAllStandardError();
+                         if (!output.isEmpty()) {
+                             // Forward error logs to main process with plugin prefix
+                             QString logLine = QString::fromUtf8(output).trimmed();
+                             QStringList lines = logLine.split('\n', Qt::SkipEmptyParts);
+                             for (const QString &line : lines) {
+                                 qCritical() << "[MODULE_HOST" << pluginName << "] STDERR:" << line;
+                             }
+                         }
                      });
 
     qDebug() << "Plugin" << pluginName << "is now running in separate process";
@@ -251,9 +300,6 @@ static bool initializeCoreManager()
     // Create the core manager instance directly
     CoreManagerPlugin* coreManager = new CoreManagerPlugin();
     
-    // Register it in the plugin registry
-    // PluginRegistry::registerPlugin(coreManager, coreManager->name());
-    
     // Enable remote access for the core manager
     if (g_registry_host) {
         bool success = g_registry_host->enableRemoting(coreManager, coreManager->name());
@@ -300,8 +346,8 @@ void logos_core_start()
     
     // Initialize Qt Remote Object registry host
     if (!g_registry_host) {
-        g_registry_host = new QRemoteObjectRegistryHost(QUrl(QStringLiteral("local:logoscore_registry")));
-        qDebug() << "Qt Remote Object registry host initialized at: local:logoscore_registry";
+        g_registry_host = new QRemoteObjectRegistryHost(QUrl(QStringLiteral("local:logos_core_registry")));
+        qDebug() << "Qt Remote Object registry host initialized at: local:logos_core_registry";
     }
     
     // First initialize the core manager

@@ -15,8 +15,8 @@ set(SDK_SOURCES
     logos_api.h
 )
 
-# Create the SDK library
-add_library(logos_sdk SHARED ${SDK_SOURCES})
+# Create the SDK library as STATIC instead of SHARED
+add_library(logos_sdk STATIC ${SDK_SOURCES})
 
 # Link Qt libraries
 target_link_libraries(logos_sdk PUBLIC Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::RemoteObjects)
@@ -26,22 +26,7 @@ target_include_directories(logos_sdk PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-# Set output directories
+# Set output directories for static library
 set_target_properties(logos_sdk PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"  # For Windows .dll
-    BUILD_WITH_INSTALL_RPATH TRUE
-    SKIP_BUILD_RPATH FALSE
-)
-
-# Set RPATH settings
-if(APPLE)
-    set_target_properties(logos_sdk PROPERTIES
-        INSTALL_RPATH "@loader_path"
-        INSTALL_NAME_DIR "@rpath"
-        BUILD_WITH_INSTALL_NAME_DIR TRUE)
-else()
-    set_target_properties(logos_sdk PROPERTIES
-        INSTALL_RPATH "$ORIGIN"
-        INSTALL_RPATH_USE_LINK_PATH FALSE)
-endif() 
+    ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
+) 

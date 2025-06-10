@@ -17,8 +17,7 @@
 #include <fstream>
 #include "protocol/protocol.h"
 #include "message.pb.h"
-#include "../../core/plugin_registry.h"
-#include "../../modules/waku/waku_interface.h"
+#include "../../modules/waku_module/waku_module_interface.h"
 
 // Forward declaration
 class LogosAPI;

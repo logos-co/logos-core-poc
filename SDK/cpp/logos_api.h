@@ -29,10 +29,10 @@ class LogosAPI : public QObject
 public:
     /**
      * @brief Construct a new LogosAPI
-     * @param registryUrl The URL of the remote registry (default: "local:logoscore_registry")
+     * @param module_name The name of the module to connect to (default: "core_registry")
      * @param parent Parent QObject
      */
-    explicit LogosAPI(const QString& registryUrl = "local:logoscore_registry", QObject *parent = nullptr);
+    explicit LogosAPI(const QString& module_name = "core_registry", QObject *parent = nullptr);
     
     /**
      * @brief Destructor - cleans up the remote object node

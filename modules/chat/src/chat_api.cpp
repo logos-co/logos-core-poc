@@ -337,9 +337,6 @@ void sendMessage(LogosAPI* logosAPI, const std::string& channelName, const std::
     std::cout << "Sending message to channel: " << channelName << std::endl;
     std::cout << "Using content topic: " << contentTopic << std::endl;
 
-    // Get waku plugin (if available)
-    WakuInterface* wakuPlugin = PluginRegistry::getPlugin<WakuInterface>("waku");
-
     // Create a new chat message
     ChatMessage chatMsg = createChatMessage(username, message);
     // Encode the message
@@ -362,18 +359,7 @@ void sendMessage(LogosAPI* logosAPI, const std::string& channelName, const std::
     std::cout << "Sending message as " << username << ": " << message << std::endl;
     std::cout << "Message JSON: " << messageJson << std::endl;
 
-    // Publish using the waku plugin
-    if (wakuPlugin) {
-        wakuPlugin->relayPublish(
-            QString::fromStdString(DEFAULT_PUBSUB_TOPIC),
-            QString::fromStdString(messageJson),
-            30000,  // timeout in ms
-            [username, message](bool success, const QString &responseMsg) {
-                std::cout << "Waku Plugin relay publish result for message from " << username << ": " 
-                          << (success ? "Success" : "Failed") << " - " << responseMsg.toStdString() << std::endl;
-            }
-        );
-    }
+    logosAPI->callRemoteMethod("waku_module", "relayPublish", QString::fromStdString(DEFAULT_PUBSUB_TOPIC), QString::fromStdString(messageJson));
 }
 
 // Function to initialize and start a Waku node
@@ -398,48 +384,140 @@ void* initAndStart(LogosAPI* logosAPI, const std::string& relayTopic, MessageCal
 
     std::cout << "Waku node config: " << configStr << std::endl;
 
-    // Get waku plugin
-    WakuInterface* wakuPlugin = PluginRegistry::getPlugin<WakuInterface>("waku");
+    // request object waku_module
+    QObject* waku_module = logosAPI->requestObject("waku_module");
 
-    if (!wakuPlugin) {
-        std::cerr << "Failed to get Waku plugin" << std::endl;
-        return nullptr;
-    }
-    
     std::cout << "Found Waku Plugin, initializing" << std::endl;
     // Call initWaku on the plugin
-    wakuPlugin->initWaku(QString::fromStdString(configStr));
+    // wakuPlugin->initWaku(QString::fromStdString(configStr));
+    logosAPI->callRemoteMethod("waku_module", "initWaku", QString::fromStdString(configStr));
 
     std::this_thread::sleep_for(std::chrono::seconds(3));
 
     // Create event handler context
     EventHandlerContext* context = new EventHandlerContext(messageCallback);
 
-    wakuPlugin->setEventCallback([context](const QString &event) {
-        // Convert QString to std::string
-        std::string eventStr = event.toStdString();
-        // Convert to C-style string and call event_handler
-        event_handler(RET_OK, eventStr.c_str(), eventStr.length(), context);
+    // listen to wakuMessage Event and trigger messageCallback with it
+    logosAPI->onEvent(waku_module, nullptr, "wakuMessage", [messageCallback](const QString& eventName, const QVariantList& data) {
+        // print content topic of this message
+        if (!data.isEmpty()) {
+            std::string jsonStr = data.first().toString().toStdString();
+
+            // Process message hash for deduplication
+            std::cout << "🔍 Checking message hash for duplicates..." << std::endl;
+            size_t hashPos = jsonStr.find("\"messageHash\":");
+            if (hashPos != std::string::npos) {
+                size_t hashStart = jsonStr.find("\"", hashPos + 14) + 1;
+                size_t hashEnd = jsonStr.find("\"", hashStart);
+                if (hashStart != std::string::npos && hashEnd != std::string::npos) {
+                    std::string messageHash = jsonStr.substr(hashStart, hashEnd - hashStart);
+
+                    // If we've already processed this message, skip it
+                    if (processedMessageHashes.find(messageHash) != processedMessageHashes.end()) {
+                        std::cout << "🔄 DUPLICATE MESSAGE - Hash already processed: " << messageHash << std::endl;
+                        std::cout << "⏭️ Skipping duplicate message processing" << std::endl;
+                        return;
+                    }
+
+                    // Otherwise, add it to our set of processed hashes
+                    processedMessageHashes.insert(messageHash);
+                    std::cout << "✅ NEW MESSAGE - Hash added to processed set: " << messageHash << std::endl;
+                }
+                else {
+                    std::cout << "⚠️ Could not extract message hash value" << std::endl;
+                }
+            }
+            else {
+                std::cout << "ℹ️ No messageHash field found - treating as new message" << std::endl;
+            }
+
+            // Check if the message contains "contentTopic" field
+            size_t contentTopicPos = jsonStr.find("\"contentTopic\":");
+            if (contentTopicPos != std::string::npos) {
+                // Find the start and end of the content topic value
+                size_t valueStart = jsonStr.find("\"", contentTopicPos + 14) + 1;
+                size_t valueEnd = jsonStr.find("\"", valueStart);
+                if (valueStart != std::string::npos && valueEnd != std::string::npos) {
+                    std::string contentTopic = jsonStr.substr(valueStart, valueEnd - valueStart);
+                    std::cout << "\n\n\n\n\n\nContent Topic: " << contentTopic << std::endl;
+
+                    // Check if the content topic is in our list of subscribed channels
+                    bool isSubscribed = false;
+                    for (const auto &channel : subscribedChannels) {
+                        if (contentTopic == channel) {
+                            isSubscribed = true;
+                            break;
+                        }
+                    }
+
+                    if (isSubscribed) {
+                        std::cout << "🎉🎉🎉 FOUND! This content topic is SUBSCRIBED! 🎉🎉🎉" << std::endl;
+                        std::cout << "*** PROCESSING MESSAGE FROM SUBSCRIBED CHANNEL ***" << std::endl;
+
+                        // Extract and decode the payload
+                        size_t payloadPos = jsonStr.find("\"payload\":\"");
+                        if (payloadPos != std::string::npos) {
+                            size_t payloadStart = payloadPos + 11; // Skip "payload":"
+                            size_t payloadEnd = jsonStr.find("\"", payloadStart);
+                            if (payloadStart != std::string::npos && payloadEnd != std::string::npos) {
+                                std::string encodedPayload = jsonStr.substr(payloadStart, payloadEnd - payloadStart);
+                                std::cout << "📦 Encoded payload: " << encodedPayload << std::endl;
+
+                                // Decode the base64 payload
+                                std::vector<uint8_t> decodedBytes = base64Decode(encodedPayload);
+                                std::cout << "🔓 Decoded " << decodedBytes.size() << " bytes" << std::endl;
+
+                                // Decode the protobuf message
+                                std::cout << "🔍 Decoding protobuf message..." << std::endl;
+                                auto decodedMsg = decodeProto(decodedBytes);
+
+                                if (decodedMsg.success) {
+                                    std::cout << "✅ Successfully decoded message:" << std::endl;
+                                    std::cout << "   📅 Timestamp: " << decodedMsg.timestamp << std::endl;
+                                    std::cout << "   👤 Nick: " << decodedMsg.nick << std::endl;
+                                    std::cout << "   💬 Message: " << decodedMsg.payload << std::endl;
+
+                                    // Call the messageCallback with the decoded message
+                                    messageCallback(decodedMsg.timestamp, decodedMsg.nick, decodedMsg.payload);
+                                }
+                                else {
+                                    std::cout << "❌ Failed to decode protobuf message" << std::endl;
+                                    // Print raw bytes for debugging
+                                    printDecodedMessage(decodedMsg, decodedBytes);
+                                }
+                            }
+                            else {
+                                std::cout << "❌ Could not extract payload from JSON" << std::endl;
+                            }
+                        }
+                        else {
+                            std::cout << "❌ No payload field found in message" << std::endl;
+                        }
+                    }
+                    else {
+                        std::cout << "ℹ️ Content topic not in subscribed channels list" << std::endl;
+                    }
+                }
+                else {
+                    std::cout << "\n\n\n\n\n\nContent Topic: Could not extract value" << std::endl;
+                }
+            }
+            else {
+                std::cout << "\n\n\n\n\n\nContent Topic: Not found in message" << std::endl;
+            }
+        }
+        else {
+            std::cout << "\n\n\n\n\n\nContent Topic: No data available" << std::endl;
+        }
     });
 
-    // Start Waku plugin
-    wakuPlugin->startWaku(
-        [](bool success, const QString &message) {
-            std::cout << "Waku Plugin start result: " << (success ? "Success" : "Failed") << " - " << message.toStdString() << std::endl;
-        }
-    );
+    logosAPI->callRemoteMethod("waku_module", "setEventCallback");
+
+    logosAPI->callRemoteMethod("waku_module", "startWaku");
 
     std::this_thread::sleep_for(std::chrono::seconds(2));
     std::cout << "Waku node started successfully" << std::endl;
 
-    // Subscribe to the relay topic
-    wakuPlugin->relaySubscribe(
-        QString::fromStdString(relayTopic), 
-        [](bool success, const QString &message) {
-            std::cout << "Waku Plugin relay subscribe result: " << (success ? "Success" : "Failed") << " - " << message.toStdString() << std::endl;
-        }
-    );
-    
     // Return a non-null pointer to indicate success
     // We're not using this for anything meaningful anymore
     return (void*)1;
@@ -456,27 +534,11 @@ bool joinChannel(LogosAPI* logosAPI, const std::string& channelName, const std::
     std::cout << "Joining channel: " << channelName << std::endl;
     std::cout << "Subscribing to content topic: " << contentTopic << std::endl;
 
-    // Get waku plugin
-    WakuInterface* wakuPlugin = PluginRegistry::getPlugin<WakuInterface>("waku");
-    if (!wakuPlugin) {
-        std::cerr << "Failed to get Waku plugin" << std::endl;
-        return false;
-    }
-
     std::string contentTopics = "[\"" + contentTopic + "\"]";
-    // Call filterSubscribe on the waku plugin
-    wakuPlugin->filterSubscribe(
-        QString::fromStdString(relayTopic),
-        QString::fromStdString(contentTopics),
-        [contentTopic](bool success, const QString &message) {
-            std::cout << "Waku Plugin filter subscribe result for " << contentTopic << ": " 
-                      << (success ? "Success" : "Failed") << " - " << message.toStdString() << std::endl;
-            if (success) {
-                subscribedChannels.push_back(contentTopic);
-            }
-        }
-    );
-    
+
+    logosAPI->callRemoteMethod("waku_module", "filterSubscribe", QString::fromStdString(relayTopic), QString::fromStdString(contentTopics));
+    subscribedChannels.push_back(contentTopic);
+
     return true;
 }
 
@@ -490,13 +552,6 @@ void retrieveHistory(LogosAPI* logosAPI, const std::string& channelName, Message
     
     std::cout << "Retrieving message history for channel: " << channelName << std::endl;
     std::cout << "Using content topic: " << contentTopic << std::endl;
-
-    // Get waku plugin
-    WakuInterface* wakuPlugin = PluginRegistry::getPlugin<WakuInterface>("waku");
-    if (!wakuPlugin) {
-        std::cerr << "Failed to get Waku plugin" << std::endl;
-        return;
-    }
 
     // Calculate timestamp for 24 hours ago (in nanoseconds)
     uint64_t oneDay = 60 * 60 * 24;
@@ -517,26 +572,47 @@ void retrieveHistory(LogosAPI* logosAPI, const std::string& channelName, Message
 
     // Create a context to hold the callback
     StoreQueryContext* context = new StoreQueryContext(callback);
-    
-    // Pass the main storeQueryCallback to the waku plugin
-    wakuPlugin->storeQuery(
-        QString::fromStdString(queryJson),
-        QString::fromStdString(STORE_NODE),
-        30000,  // timeout in ms
-        [context, channelName](bool success, const QString &message) {
-            std::cout << "Waku Plugin store query response for channel " << channelName << std::endl;
-            if (success && !message.isEmpty()) {
-                // Convert QString to std::string and call storeQueryCallback
-                std::string messageStr = message.toStdString();
-                storeQueryCallback(RET_OK, messageStr.c_str(), messageStr.length(), context);
-            } else {
-                std::cout << "Waku Plugin store query failed or returned empty response" << std::endl;
-                if (context != nullptr) {
-                    delete context; // Clean up the context
+
+    QObject* waku_module = logosAPI->requestObject("waku_module");
+    // listen to event from waku module
+    logosAPI->onEvent(waku_module, nullptr, "storeQueryResponse", [context, channelName, callback](const QString& eventName, const QVariantList& data) {
+        if (!data.isEmpty()) {
+            std::string jsonStr = data.first().toString().toStdString();
+
+            // parse the json and print each message decoded
+            // Find all payloads in the JSON
+            size_t pos = 0;
+            size_t messageCount = 0;
+            while ((pos = jsonStr.find("\"payload\":[", pos)) != std::string::npos) {
+                messageCount++;
+                pos += 11; // Skip "payload":[ part
+                // Find end of payload array
+                size_t endPos = jsonStr.find("]", pos);
+                if (endPos != std::string::npos) {
+                    std::string payloadStr = jsonStr.substr(pos, endPos - pos);
+                    // Convert payload string to vector of bytes
+                    std::vector<uint8_t> payloadBytes;
+                    std::stringstream ss(payloadStr);
+                    std::string numberStr;
+                    while (std::getline(ss, numberStr, ',')) {
+                        payloadBytes.push_back(static_cast<uint8_t>(std::stoi(numberStr)));
+                    }
+                    // Decode the payload
+                    std::cout << "Attempting to decode payload " << messageCount << ":" << std::endl;
+                    auto decodedMsg = decodeProto(payloadBytes);
+                    printDecodedMessage(decodedMsg, payloadBytes);
+                    
+                    // Call the callback if message was decoded successfully
+                    if (callback && decodedMsg.success) {
+                        callback(decodedMsg.timestamp, decodedMsg.nick, decodedMsg.payload);
+                    }
+                    
+                    std::cout << "----------------------------------------" << std::endl;
                 }
             }
+            std::cout << "Total messages found: " << messageCount << std::endl;
         }
-    );
-    
-    std::cout << "History query sent to store node" << std::endl;
+    });
+
+    logosAPI->callRemoteMethod("waku_module", "storeQuery", QString::fromStdString(queryJson), QString::fromStdString(STORE_NODE), 30000);
 } 

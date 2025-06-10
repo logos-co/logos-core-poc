@@ -15,7 +15,6 @@
 #include <QMap>
 #include <QSet>
 #include <QStringList>
-#include "core/plugin_registry.h"
 #include "logos_api.h"
 
 class MainWindow;

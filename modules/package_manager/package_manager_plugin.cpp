@@ -1,7 +1,6 @@
 #include "package_manager_plugin.h"
 #include <QDebug>
 #include <QCoreApplication>
-#include "../../core/plugin_registry.h"
 #include <QDir>
 #include <QFileInfo>
 #include <QFile>
