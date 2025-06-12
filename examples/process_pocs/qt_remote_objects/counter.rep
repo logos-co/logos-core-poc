@@ -1,8 +1,0 @@
-class Counter
-{
-    PROP(int count=0)
-    SLOT(void increment())
-    SLOT(void decrement())
-    SLOT(void reset())
-    SIGNAL(void countChanged())
-} 

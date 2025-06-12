@@ -1,6 +1,0 @@
-class LoggerInterface
-{
-    PROP(QString guid);
-    SLOT(void logMessage(const QString &message));
-    SIGNAL(messageLogged(const QString &message, const QString &timestamp));
-} 
