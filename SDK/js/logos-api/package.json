@@ -1,0 +1,34 @@
+{
+  "name": "logos-api",
+  "version": "1.0.0",
+  "description": "JavaScript SDK for interacting with liblogos_core",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "copy-libs": "node scripts/copy-libs.js"
+  },
+  "files": [
+    "index.js",
+    "README.md",
+    "lib/",
+    "scripts/"
+  ],
+  "keywords": [
+    "logos",
+    "ffi",
+    "core",
+    "plugins",
+    "chat",
+    "waku"
+  ],
+  "author": "Logos Team",
+  "license": "MIT",
+  "dependencies": {
+    "ffi-napi": "^4.0.3",
+    "ref-napi": "^3.0.3"
+  },
+  "peerDependencies": {
+    "ffi-napi": "^4.0.3",
+    "ref-napi": "^3.0.3"
+  }
+} 

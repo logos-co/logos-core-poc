@@ -283,9 +283,9 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    // Join the "huilong" channel
-    qDebug() << "Calling chat joinChannel() method with channel 'huilong'...";
-    QVariant joinResult = chatAPI.callRemoteMethod("chat", "joinChannel", QString("huilong"));
+    // Join the "baixa-chiado" channel
+    qDebug() << "Calling chat joinChannel() method with channel 'baixa-chiado'...";
+    QVariant joinResult = chatAPI.callRemoteMethod("chat", "joinChannel", QString("baixa-chiado"));
     if (joinResult.isValid()) {
         PluginTester::printSuccess("Successfully called chat joinChannel() method");
         qDebug() << "Join channel result:" << joinResult;
@@ -303,7 +303,7 @@ int main(int argc, char *argv[])
         
     //     qDebug() << "Sending periodic test message:" << testMessage;
     //     QVariant sendResult = chatAPI.callRemoteMethod("chat", "sendMessage", 
-    //                                                   QString("huilong"), 
+    //                                                   QString("baixa-chiado"), 
     //                                                   QString("TestUser"), 
     //                                                   testMessage);
     //     if (sendResult.isValid()) {
@@ -335,7 +335,7 @@ int main(int argc, char *argv[])
 
     // Call retrieveHistory method on chat module
     qDebug() << "Calling chat retrieveHistory() method...";
-    QVariant retrieveResult = chatAPI.callRemoteMethod("chat", "retrieveHistory", QString("huilong"));
+    QVariant retrieveResult = chatAPI.callRemoteMethod("chat", "retrieveHistory", QString("baixa-chiado"));
     if (retrieveResult.isValid()) {
         PluginTester::printSuccess("Successfully called chat retrieveHistory() method");
         qDebug() << "Retrieve history result:" << retrieveResult;

@@ -3,7 +3,7 @@
 #include "logos_api.h"
 
 // Constants
-const std::string TOY_CHAT_CONTENT_TOPIC = "/toy-chat/2/huilong/proto";
+const std::string TOY_CHAT_CONTENT_TOPIC = "/toy-chat/2/baixa-chiado/proto";
 const std::string DEFAULT_PUBSUB_TOPIC = "/waku/2/rs/16/32";
 const std::string STORE_NODE = "/dns4/store-01.do-ams3.status.staging.status.im/tcp/30303/p2p/16Uiu2HAm3xVDaz6SRJ6kErwC21zBJEZjavVXg7VSkoWzaV1aMA3F";
 const std::string CONTENT_TOPIC_PREFIX = "/toy-chat/2/";
@@ -461,7 +461,7 @@ void* initAndStart(LogosAPI* logosAPI, const std::string& relayTopic, MessageCal
                             size_t payloadEnd = jsonStr.find("\"", payloadStart);
                             if (payloadStart != std::string::npos && payloadEnd != std::string::npos) {
                                 std::string encodedPayload = jsonStr.substr(payloadStart, payloadEnd - payloadStart);
-                                std::cout << "📦 Encoded payload: " << encodedPayload << std::endl;
+                                // std::cout << "📦 Encoded payload: " << encodedPayload << std::endl;
 
                                 // Decode the base64 payload
                                 std::vector<uint8_t> decodedBytes = base64Decode(encodedPayload);
@@ -600,7 +600,7 @@ void retrieveHistory(LogosAPI* logosAPI, const std::string& channelName, Message
                     // Decode the payload
                     std::cout << "Attempting to decode payload " << messageCount << ":" << std::endl;
                     auto decodedMsg = decodeProto(payloadBytes);
-                    printDecodedMessage(decodedMsg, payloadBytes);
+                    // printDecodedMessage(decodedMsg, payloadBytes);
                     
                     // Call the callback if message was decoded successfully
                     if (callback && decodedMsg.success) {

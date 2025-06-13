@@ -81,7 +81,7 @@ void WakuModulePlugin::event_callback(int callerRet, const char* msg, size_t len
 
     if (msg && len > 0) {
         QString message = QString::fromUtf8(msg, len);
-        qDebug() << "WakuModulePlugin::event_callback message:" << message;
+        // qDebug() << "WakuModulePlugin::event_callback message:" << message;
 
         // Create event data with the message
         QVariantList eventData;
@@ -138,7 +138,7 @@ void WakuModulePlugin::store_query_callback(int callerRet, const char* msg, size
 
     if (msg && len > 0) {
         QString message = QString::fromUtf8(msg, len);
-        qDebug() << "WakuModulePlugin::store_query_callback message:" << message;
+        // qDebug() << "WakuModulePlugin::store_query_callback message:" << message;
 
         // Create event data with the store query result
         QVariantList eventData;
@@ -147,7 +147,7 @@ void WakuModulePlugin::store_query_callback(int callerRet, const char* msg, size
 
         // Trigger event using LogosAPI (similar to event_callback)
         if (plugin->logosAPI) {
-            qDebug() << "WakuModulePlugin: Triggering event 'storeQueryResult' with data:" << eventData;
+            // qDebug() << "WakuModulePlugin: Triggering event 'storeQueryResult' with data:" << eventData;
             plugin->logosAPI->onEventResponse(plugin, "storeQueryResponse", eventData);
             // exit(1);
         } else {
