@@ -3,3 +3,6 @@
 modules/waku/lib/libwaku.so
 modules/waku_module/lib/libwaku.so
 .vscode/**
+**/node_modules/**
+examples/node_app_using_lib/plugins/*
+SDK/js/logos-api/lib/*

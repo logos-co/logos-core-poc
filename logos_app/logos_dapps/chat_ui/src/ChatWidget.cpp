@@ -151,7 +151,7 @@ void ChatWidget::initWaku()
     sendButton->setEnabled(true);
 
     // Set default channel name
-    currentChannel = "huilong"; // Default channel
+    currentChannel = "baixa-chiado"; // Default channel
     channelInput->setText(currentChannel);
 
     // Join the default channel

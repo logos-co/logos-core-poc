@@ -327,14 +327,16 @@ void LogosAPI::onEvent(QObject* originObject, QObject* destinationObject, const 
 
 void LogosAPI::onEventResponse(QObject* replica, const QString& eventName, const QVariantList& data)
 {
-    qDebug() << "LogosAPI: Received event:" << eventName << "with data:" << data;
+    // qDebug() << "LogosAPI: Received event:" << eventName << "with data:" << data;
+    qDebug() << "LogosAPI: Received event:" << eventName;
 
     if (eventName.isEmpty()) {
         qWarning() << "LogosAPI: Event name cannot be empty";
         return;
     }
 
-    qDebug() << "LogosAPI: Emitting event:" << eventName << "with data:" << data;
+    // qDebug() << "LogosAPI: Emitting event:" << eventName << "with data:" << data;
+    qDebug() << "LogosAPI: Emitting event:" << eventName;
 
     // emit the eventResponse signal of replica
     QMetaObject::invokeMethod(replica, "eventResponse", Qt::QueuedConnection, Q_ARG(QString, eventName), Q_ARG(QVariantList, data));
