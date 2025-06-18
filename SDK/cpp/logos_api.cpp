@@ -2,6 +2,7 @@
 #include <QRemoteObjectNode>
 #include <QRemoteObjectReplica>
 #include <QRemoteObjectPendingCall>
+#include <QRemoteObjectRegistryHost>
 #include <QDebug>
 #include <QUrl>
 #include <QMetaObject>
@@ -13,6 +14,7 @@ LogosAPI::LogosAPI(const QString& module_name, QObject *parent)
     , m_node(nullptr)
     , m_registryUrl(QString("local:logos_%1").arg(module_name))
     , m_connected(false)
+    , m_registryHost(nullptr)
 {
     m_node = new QRemoteObjectNode(this);
     connectToRegistry();
@@ -26,6 +28,12 @@ LogosAPI::~LogosAPI()
     }
     m_eventCallbacks.clear();
     m_connections.clear();
+    
+    // Clean up registry host
+    if (m_registryHost) {
+        delete m_registryHost;
+        m_registryHost = nullptr;
+    }
     
     // QRemoteObjectNode will be deleted automatically as it's a child object
 }
@@ -370,6 +378,37 @@ void LogosAPI::onEvent(QObject* originObject, QObject* destinationObject, const 
     // connect to the eventResponse signal of the destinationObject's slot
     QObject::connect(originObject, SIGNAL(eventResponse(QString, QVariantList)), 
                     destinationObject, SLOT(onEventResponse(QString, QVariantList)), Qt::AutoConnection);
+}
+
+bool LogosAPI::registerObject(const QString& name, QObject* object)
+{
+    if (!object) {
+        qWarning() << "LogosAPI: Cannot register null object";
+        return false;
+    }
+
+    if (name.isEmpty()) {
+        qWarning() << "LogosAPI: Cannot register object with empty name";
+        return false;
+    }
+
+    if (!m_registryHost) {
+        m_registryHost = new QRemoteObjectRegistryHost(QUrl(m_registryUrl));
+        if (!m_registryHost) {
+            qCritical() << "LogosAPI: Failed to create registry host";
+            return false;
+        }
+        qDebug() << "LogosAPI: Created registry host with URL:" << m_registryUrl;
+    }
+
+    bool success = m_registryHost->enableRemoting(object, name);
+    if (success) {
+        qDebug() << "LogosAPI: Successfully registered object with name:" << name;
+    } else {
+        qCritical() << "LogosAPI: Failed to register object with name:" << name;
+    }
+
+    return success;
 }
 
 // Include MOC for template instantiation

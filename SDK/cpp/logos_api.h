@@ -14,6 +14,7 @@
 
 class QRemoteObjectNode;
 class QRemoteObjectReplica;
+class QRemoteObjectRegistryHost;
 
 /**
  * @brief LogosAPI provides a simplified interface for connecting to 
@@ -167,6 +168,8 @@ public:
      */
     void onEvent(QObject* originObject, QObject* destinationObject, const QString& eventName);
 
+    bool registerObject(const QString& name, QObject* object);
+
 public slots:
     /**
      * @brief Handle incoming event responses and trigger registered callbacks
@@ -189,6 +192,7 @@ private:
     QRemoteObjectNode* m_node;
     QString m_registryUrl;
     bool m_connected;
+    QRemoteObjectRegistryHost* m_registryHost;
 
     // Storage for string arguments to keep them alive during method calls
     mutable QList<QString> m_stringArgs;

@@ -13,6 +13,8 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core RemoteObjects)
 set(SDK_SOURCES
     logos_api.cpp
     logos_api.h
+    module_proxy.cpp
+    module_proxy.h
 )
 
 # Create the SDK library as STATIC instead of SHARED

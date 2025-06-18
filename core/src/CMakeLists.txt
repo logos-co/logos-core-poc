@@ -74,13 +74,18 @@ target_include_directories(logoscore PRIVATE
 # Create the logos host application
 add_executable(logos_host ${LOGOS_HOST_SOURCES})
 
-# Link the logos host with Qt libraries
-target_link_libraries(logos_host PRIVATE Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::RemoteObjects)
+# Link the logos host with Qt libraries and SDK
+target_link_libraries(logos_host PRIVATE 
+    Qt${QT_VERSION_MAJOR}::Core 
+    Qt${QT_VERSION_MAJOR}::RemoteObjects
+    logos_sdk
+)
 
 # Include directories for the logos host application
 target_include_directories(logos_host PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/..
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp
     ${Qt${QT_VERSION_MAJOR}_INCLUDE_DIRS}
 )
 
