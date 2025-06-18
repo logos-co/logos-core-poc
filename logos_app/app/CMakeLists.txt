@@ -81,10 +81,10 @@ elseif(UNIX AND NOT APPLE)
     endif()
 endif()
 
-# Copy the module_host executable from the core build directory
+# Copy the logos_host executable from the core build directory
 add_custom_command(TARGET LogosApp POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy ${LOGOS_CORE_DIR}/build/bin/module_host ${CMAKE_CURRENT_BINARY_DIR}/module_host
-    COMMENT "Copying module_host executable to app directory"
+    COMMAND ${CMAKE_COMMAND} -E copy ${LOGOS_CORE_DIR}/build/bin/logos_host ${CMAKE_CURRENT_BINARY_DIR}/logos_host
+    COMMENT "Copying logos_host executable to app directory"
 )
 
 # Create bin/plugins directory in build folder

@@ -4,4 +4,4 @@ This example demonstrates how to use the Logos Core library from Node.js using F
 
 WIP
 
-requires symlink to `module_host` the moment
+requires symlink to `logos_host` the moment

@@ -9,12 +9,12 @@
 int main(int argc, char *argv[])
 {
     QCoreApplication app(argc, argv);
-    app.setApplicationName("module_host");
+    app.setApplicationName("logos_host");
     app.setApplicationVersion("1.0");
 
     // Setup command line parser
     QCommandLineParser parser;
-    parser.setApplicationDescription("Module host for loading plugins in separate processes");
+    parser.setApplicationDescription("Logos host for loading plugins in separate processes");
     parser.addHelpOption();
     parser.addVersionOption();
 
@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    qDebug() << "Module host starting for plugin:" << pluginName;
+    qDebug() << "Logos host starting for plugin:" << pluginName;
     qDebug() << "Plugin path:" << pluginPath;
 
     // Create Qt Remote Object registry host with plugin-specific URL
@@ -97,14 +97,14 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    qDebug() << "Module host ready, entering event loop...";
+    qDebug() << "Logos host ready, entering event loop...";
     
     // Run the application event loop
     int result = app.exec();
 
     // Cleanup
     delete g_registry_host;
-    qDebug() << "Module host shutting down";
+    qDebug() << "Logos host shutting down";
     
     return result;
 } 

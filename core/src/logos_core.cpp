@@ -115,7 +115,7 @@ static QString processPlugin(const QString &pluginPath)
     return pluginName;
 }
 
-// Helper function to load a plugin by name using module_host in a separate process
+// Helper function to load a plugin by name using logos_host in a separate process
 static bool loadPlugin(const QString &pluginName)
 {
     if (!g_known_plugins.contains(pluginName)) {
@@ -132,17 +132,17 @@ static bool loadPlugin(const QString &pluginName)
         return false;
     }
 
-    // Find the module_host executable
-    QString moduleHostPath = QDir::cleanPath(QCoreApplication::applicationDirPath() + "/module_host");
+    // Find the logos_host executable
+    QString logosHostPath = QDir::cleanPath(QCoreApplication::applicationDirPath() + "/logos_host");
 #ifdef Q_OS_WIN
-    moduleHostPath += ".exe";
+    logosHostPath += ".exe";
 #endif
 
-    qDebug() << "Module host path:" << moduleHostPath;
+    qDebug() << "Logos host path:" << logosHostPath;
 
-    // Check if module_host exists
-    if (!QFile::exists(moduleHostPath)) {
-        qCritical() << "module_host executable not found at:" << moduleHostPath;
+    // Check if logos_host exists
+    if (!QFile::exists(logosHostPath)) {
+        qCritical() << "logos_host executable not found at:" << logosHostPath;
         return false;
     }
 
@@ -152,23 +152,23 @@ static bool loadPlugin(const QString &pluginName)
     // Set up the process to capture output (merge stdout and stderr)
     process->setProcessChannelMode(QProcess::MergedChannels);
     
-    // Set up arguments for module_host
+    // Set up arguments for logos_host
     QStringList arguments;
     arguments << "--name" << pluginName;
     arguments << "--path" << pluginPath;
 
-    qDebug() << "Starting module_host with arguments:" << arguments;
+    qDebug() << "Starting logos_host with arguments:" << arguments;
 
     // Start the process
-    process->start(moduleHostPath, arguments);
+    process->start(logosHostPath, arguments);
 
     if (!process->waitForStarted(5000)) { // Wait up to 5 seconds for the process to start
-        qCritical() << "Failed to start module_host process:" << process->errorString();
+        qCritical() << "Failed to start logos_host process:" << process->errorString();
         delete process;
         return false;
     }
 
-    qDebug() << "Module host process started successfully for plugin:" << pluginName;
+    qDebug() << "Logos host process started successfully for plugin:" << pluginName;
     qDebug() << "Process ID:" << process->processId();
 
     // Store the process
@@ -210,7 +210,7 @@ static bool loadPlugin(const QString &pluginName)
                          }
                      });
 
-    // Connect to output signals to forward logs from module_host to main process
+    // Connect to output signals to forward logs from logos_host to main process
     QObject::connect(process, &QProcess::readyReadStandardOutput,
                      [pluginName, process]() {
                          QByteArray output = process->readAllStandardOutput();
@@ -221,11 +221,11 @@ static bool loadPlugin(const QString &pluginName)
                              for (const QString &line : lines) {
                                  // Parse the Qt log level from the line and forward appropriately
                                  if (line.contains("qrc:") || line.contains("Warning:") || line.contains("WARNING:")) {
-                                     qWarning() << "[MODULE_HOST" << pluginName << "]:" << line;
+                                     qWarning() << "[LOGOS_HOST" << pluginName << "]:" << line;
                                  } else if (line.contains("Critical:") || line.contains("FAILED:") || line.contains("ERROR:")) {
-                                     qCritical() << "[MODULE_HOST" << pluginName << "]:" << line;
+                                     qCritical() << "[LOGOS_HOST" << pluginName << "]:" << line;
                                  } else {
-                                     qDebug() << "[MODULE_HOST" << pluginName << "]:" << line;
+                                     qDebug() << "[LOGOS_HOST" << pluginName << "]:" << line;
                                  }
                              }
                          }
@@ -240,7 +240,7 @@ static bool loadPlugin(const QString &pluginName)
                              QString logLine = QString::fromUtf8(output).trimmed();
                              QStringList lines = logLine.split('\n', Qt::SkipEmptyParts);
                              for (const QString &line : lines) {
-                                 qCritical() << "[MODULE_HOST" << pluginName << "] STDERR:" << line;
+                                 qCritical() << "[LOGOS_HOST" << pluginName << "] STDERR:" << line;
                              }
                          }
                      });
