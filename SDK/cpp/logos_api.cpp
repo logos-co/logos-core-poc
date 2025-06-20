@@ -1,4 +1,5 @@
 #include "logos_api.h"
+#include "module_proxy.h"
 #include <QRemoteObjectNode>
 #include <QRemoteObjectReplica>
 #include <QRemoteObjectPendingCall>
@@ -171,7 +172,47 @@ QVariant LogosAPI::callRemoteMethod(const QString& objectName, const QString& me
         return QVariant();
     }
 
-    // Prepare the method call
+    // Special handling for template_module - call the wrapped object directly
+    if (objectName == "template_module") {
+        // detect we're calling template_module
+        qDebug() << "LogosAPI: Special handling for template_module - calling template_module method:" << methodName;
+        
+        // Call callObjectMethod on the replica (which represents the ModuleProxy)
+        QRemoteObjectPendingCall pendingCall;
+        bool methodCallSuccess = QMetaObject::invokeMethod(
+            replica,
+            "callObjectMethod",
+            Qt::DirectConnection,
+            Q_RETURN_ARG(QRemoteObjectPendingCall, pendingCall),
+            Q_ARG(QString, objectName),
+            Q_ARG(QString, methodName),
+            Q_ARG(QVariantList, args)
+        );
+        
+        if (!methodCallSuccess) {
+            qWarning() << "LogosAPI: Failed to call callObjectMethod on template_module proxy";
+            delete replica;
+            return QVariant(false);
+        }
+        
+        // Wait for the result
+        pendingCall.waitForFinished(timeoutMs);
+        if (!pendingCall.isFinished() || pendingCall.error() != QRemoteObjectPendingCall::NoError) {
+            qWarning() << "LogosAPI: Remote call failed or timed out:" << pendingCall.error();
+            qDebug() << "LogosAPI: Remote call failed or timed out at" << QTime::currentTime().toString("hh:mm:ss.zzz");
+            qWarning() << "LogosAPI: Failed to invoke callObjectMethod on template_module";
+            delete replica;
+            return QVariant(false);
+        }
+
+        QVariant result = pendingCall.returnValue();
+        delete replica;
+        
+        qDebug() << "LogosAPI: Successfully called callObjectMethod on template_module proxy";
+        return result;
+    }
+
+    // Regular remote object handling
     QRemoteObjectPendingCall pendingCall;
     bool success = false;
 
@@ -390,6 +431,13 @@ bool LogosAPI::registerObject(const QString& name, QObject* object)
     if (name.isEmpty()) {
         qWarning() << "LogosAPI: Cannot register object with empty name";
         return false;
+    }
+
+    // Hardcoded special case for template_module
+    if (name == "template_module") {
+        qDebug() << "LogosAPI: Creating ModuleProxy for template_module wrapping the provided object";
+        ModuleProxy* proxy = new ModuleProxy(object, this);
+        object = proxy;
     }
 
     if (!m_registryHost) {
