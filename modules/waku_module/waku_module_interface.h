@@ -22,4 +22,4 @@ signals:
 };
 
 #define WakuModuleInterface_iid "org.logos.WakuModuleInterface"
-Q_DECLARE_INTERFACE(WakuModuleInterface, WakuModuleInterface_iid) 
+Q_DECLARE_INTERFACE(WakuModuleInterface, WakuModuleInterface_iid)

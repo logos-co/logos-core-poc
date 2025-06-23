@@ -114,6 +114,20 @@ else
     echo "  cd ../../modules && mkdir -p build && cd build && cmake .. && make"
 fi
 
+# Copy the logos_host executable from the core build directory
+LOGOS_HOST_SOURCE="../../core/build/bin/logos_host"
+LOGOS_HOST_DEST="bin/logos_host"
+
+if [ -f "$LOGOS_HOST_SOURCE" ]; then
+    echo "Copying logos_host executable..."
+    cp "$LOGOS_HOST_SOURCE" "$LOGOS_HOST_DEST"
+    echo "Successfully copied logos_host executable to: $LOGOS_HOST_DEST"
+else
+    echo "Error: logos_host executable not found at: $LOGOS_HOST_SOURCE"
+    echo "This is required for plugin loading. Make sure the core build completed successfully."
+    exit 1
+fi
+
 # Set up library paths for running the application
 if [[ "$(uname)" == "Darwin" ]]; then
     echo "Setting up library paths for macOS..."

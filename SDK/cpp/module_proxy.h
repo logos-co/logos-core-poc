@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QVariantList>
 #include <QGenericArgument>
+#include <QJsonArray>
 
 class ModuleProxy : public QObject
 {
@@ -18,8 +19,11 @@ public:
     
     // Q_INVOKABLE bool foo(const QString &bar);
     
-    Q_INVOKABLE bool callObjectMethod(const QString& objectName, const QString& methodName, 
-                                      const QVariantList& args);
+    Q_INVOKABLE QVariant callObjectMethod(const QString& objectName, const QString& methodName, 
+                                          const QVariantList& args);
+    
+    // Q_INVOKABLE QJsonArray callObjectMethodJson(const QString& objectName, const QString& methodName, 
+    //                                             const QVariantList& args);
 
 signals:
     void eventResponse(const QString& eventName, const QVariantList& data);
@@ -27,6 +31,10 @@ signals:
 private:
     // Helper function to create QGenericArgument from QVariant
     auto createArgument(const QVariant& variant);
+    
+    // Helper function to create QGenericReturnArgument for different return types
+    template<typename T>
+    auto createReturnArgument(T& returnValue);
     
     QObject* m_wrappedObject;
     QStringList m_stringArgs; // Storage for string arguments
