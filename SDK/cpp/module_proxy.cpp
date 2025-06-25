@@ -3,6 +3,7 @@
 #include <QMetaObject>
 #include <QMetaMethod>
 #include <QMetaType>
+#include <QJsonArray>
 
 ModuleProxy::ModuleProxy(QObject* module, QObject* parent)
     : QObject(parent)
@@ -160,6 +161,26 @@ bool ModuleProxy::invokeMethodByArgCount(const QString& methodName, const QVaria
                 qWarning() << "ModuleProxy: Currently supports 0-5 arguments. Got:" << args.size();
                 return false;
         }
+    } else if (strcmp(returnTypeName, "QJsonArray") == 0) {
+        // QJsonArray return type
+        QJsonArray* result = static_cast<QJsonArray*>(returnValue);
+        switch (args.size()) {
+            case 0:
+                return QMetaObject::invokeMethod(m_module, methodNameCStr, Qt::DirectConnection, Q_RETURN_ARG(QJsonArray, *result));
+            case 1:
+                return QMetaObject::invokeMethod(m_module, methodNameCStr, Qt::DirectConnection, Q_RETURN_ARG(QJsonArray, *result), createArgument(args[0]));
+            case 2:
+                return QMetaObject::invokeMethod(m_module, methodNameCStr, Qt::DirectConnection, Q_RETURN_ARG(QJsonArray, *result), createArgument(args[0]), createArgument(args[1]));
+            case 3:
+                return QMetaObject::invokeMethod(m_module, methodNameCStr, Qt::DirectConnection, Q_RETURN_ARG(QJsonArray, *result), createArgument(args[0]), createArgument(args[1]), createArgument(args[2]));
+            case 4:
+                return QMetaObject::invokeMethod(m_module, methodNameCStr, Qt::DirectConnection, Q_RETURN_ARG(QJsonArray, *result), createArgument(args[0]), createArgument(args[1]), createArgument(args[2]), createArgument(args[3]));
+            case 5:
+                return QMetaObject::invokeMethod(m_module, methodNameCStr, Qt::DirectConnection, Q_RETURN_ARG(QJsonArray, *result), createArgument(args[0]), createArgument(args[1]), createArgument(args[2]), createArgument(args[3]), createArgument(args[4]));
+            default:
+                qWarning() << "ModuleProxy: Currently supports 0-5 arguments. Got:" << args.size();
+                return false;
+        }
     } else {
         qWarning() << "ModuleProxy: Unsupported return type in invokeMethodByArgCount:" << returnTypeName;
         return false;
@@ -256,6 +277,15 @@ QVariant ModuleProxy::callRemoteMethod(const QString& methodName, const QVariant
         success = invokeMethodByArgCount(methodName, args, &variantResult, "QVariant");
         if (success) {
             result = variantResult;
+        }
+    } else if (returnType == QMetaType::fromType<QJsonArray>()) {
+        // QJsonArray return type
+        qDebug() << "ModuleProxy: Invoking QJsonArray method" << methodName;
+        QJsonArray jsonArrayResult;
+        success = invokeMethodByArgCount(methodName, args, &jsonArrayResult, "QJsonArray");
+        qDebug() << "ModuleProxy: QJsonArray method invocation result:" << success << "array size:" << jsonArrayResult.size();
+        if (success) {
+            result = QVariant(jsonArrayResult);
         }
     } else {
         qWarning() << "ModuleProxy: Unsupported return type:" << returnType.name() << "for method:" << methodName;

@@ -5,6 +5,8 @@
 #include <QCoreApplication>
 #include <QDebug>
 #include <QVariantList>
+#include <QJsonArray>
+#include <QJsonObject>
 #include "../../core/src/logos_core.h"
 #include "../../SDK/cpp/logos_api.h"
 
@@ -248,6 +250,151 @@ int main(int argc, char *argv[])
     
     qDebug() << "foo() method called successfully";
     
+    // Test the new bar method (void return type)
+    qDebug() << "\n=== Testing Template Module bar() Method ===";
+    QString barMessage = "Hello from bar method test!";
+    qDebug() << "Calling bar() remotely with message:" << barMessage;
+    
+    QVariant barResult = testAPI.invokeRemoteMethod("template_module", "bar", barMessage);
+    // For void methods, we expect the result to be valid (true) indicating successful call
+    if (barResult.isValid()) {
+        qDebug() << "bar() method called successfully";
+        PluginTester::printSuccess("SUCCESS: bar() method called successfully");
+    } else {
+        PluginTester::printError("CRITICAL: Failed to call bar() method");
+        logos_core_cleanup();
+        exit(1);
+    }
+    
+    // Test the stringToBool method
+    qDebug() << "\n=== Testing Template Module stringToBool() Method ===";
+    
+    // Test with "true"
+    qDebug() << "Testing stringToBool with 'true'";
+    QVariant trueResult = testAPI.invokeRemoteMethod("template_module", "stringToBool", QString("true"));
+    if (trueResult.isValid() && trueResult.toBool() == true) {
+        PluginTester::printSuccess("SUCCESS: stringToBool('true') returned true");
+    } else {
+        PluginTester::printError("CRITICAL: stringToBool('true') failed or returned wrong value");
+        logos_core_cleanup();
+        exit(1);
+    }
+    
+    // Test with "false"
+    qDebug() << "Testing stringToBool with 'false'";
+    QVariant falseResult = testAPI.invokeRemoteMethod("template_module", "stringToBool", QString("false"));
+    if (falseResult.isValid() && falseResult.toBool() == false) {
+        PluginTester::printSuccess("SUCCESS: stringToBool('false') returned false");
+    } else {
+        PluginTester::printError("CRITICAL: stringToBool('false') failed or returned wrong value");
+        logos_core_cleanup();
+        exit(1);
+    }
+    
+    // Test with "TRUE" (case insensitive)
+    qDebug() << "Testing stringToBool with 'TRUE' (case insensitive)";
+    QVariant trueCaseResult = testAPI.invokeRemoteMethod("template_module", "stringToBool", QString("TRUE"));
+    if (trueCaseResult.isValid() && trueCaseResult.toBool() == true) {
+        PluginTester::printSuccess("SUCCESS: stringToBool('TRUE') returned true (case insensitive)");
+    } else {
+        PluginTester::printError("CRITICAL: stringToBool('TRUE') failed or returned wrong value");
+        logos_core_cleanup();
+        exit(1);
+    }
+    
+    // Test with invalid input
+    qDebug() << "Testing stringToBool with 'invalid' (should default to false)";
+    QVariant invalidResult = testAPI.invokeRemoteMethod("template_module", "stringToBool", QString("invalid"));
+    if (invalidResult.isValid() && invalidResult.toBool() == false) {
+        PluginTester::printSuccess("SUCCESS: stringToBool('invalid') correctly defaulted to false");
+    } else {
+        PluginTester::printError("CRITICAL: stringToBool('invalid') failed or returned wrong value");
+        logos_core_cleanup();
+        exit(1);
+    }
+    
+    // Test the getJsonArray method
+    qDebug() << "\n=== Testing Template Module getJsonArray() Method ===";
+    
+    // Test with "numbers"
+    qDebug() << "Testing getJsonArray with 'numbers'";
+    QVariant numbersResult = testAPI.invokeRemoteMethod("template_module", "getJsonArray", QString("numbers"));
+    if (numbersResult.isValid() && numbersResult.canConvert<QJsonArray>()) {
+        QJsonArray numbersArray = numbersResult.toJsonArray();
+        if (numbersArray.size() == 5 && numbersArray[0].toInt() == 1 && numbersArray[3].toInt() == 42) {
+            PluginTester::printSuccess(QString("SUCCESS: getJsonArray('numbers') returned array with %1 elements").arg(numbersArray.size()));
+        } else {
+            PluginTester::printError("CRITICAL: getJsonArray('numbers') returned unexpected content");
+            logos_core_cleanup();
+            exit(1);
+        }
+    } else {
+        PluginTester::printError("CRITICAL: getJsonArray('numbers') failed or returned invalid result");
+        logos_core_cleanup();
+        exit(1);
+    }
+    
+    // Test with "strings"
+    qDebug() << "Testing getJsonArray with 'strings'";
+    QVariant stringsResult = testAPI.invokeRemoteMethod("template_module", "getJsonArray", QString("strings"));
+    if (stringsResult.isValid() && stringsResult.canConvert<QJsonArray>()) {
+        QJsonArray stringsArray = stringsResult.toJsonArray();
+        if (stringsArray.size() == 4 && stringsArray[0].toString() == "hello" && stringsArray[1].toString() == "world") {
+            PluginTester::printSuccess(QString("SUCCESS: getJsonArray('strings') returned array with %1 elements").arg(stringsArray.size()));
+        } else {
+            PluginTester::printError("CRITICAL: getJsonArray('strings') returned unexpected content");
+            logos_core_cleanup();
+            exit(1);
+        }
+    } else {
+        PluginTester::printError("CRITICAL: getJsonArray('strings') failed or returned invalid result");
+        logos_core_cleanup();
+        exit(1);
+    }
+    
+    // Test with "objects"
+    qDebug() << "Testing getJsonArray with 'objects'";
+    QVariant objectsResult = testAPI.invokeRemoteMethod("template_module", "getJsonArray", QString("objects"));
+    if (objectsResult.isValid() && objectsResult.canConvert<QJsonArray>()) {
+        QJsonArray objectsArray = objectsResult.toJsonArray();
+        if (objectsArray.size() == 3) {
+            QJsonObject firstPerson = objectsArray[0].toObject();
+            if (firstPerson["name"].toString() == "Alice" && firstPerson["age"].toInt() == 30) {
+                PluginTester::printSuccess(QString("SUCCESS: getJsonArray('objects') returned array with %1 person objects").arg(objectsArray.size()));
+            } else {
+                PluginTester::printError("CRITICAL: getJsonArray('objects') returned unexpected object content");
+                logos_core_cleanup();
+                exit(1);
+            }
+        } else {
+            PluginTester::printError("CRITICAL: getJsonArray('objects') returned unexpected array size");
+            logos_core_cleanup();
+            exit(1);
+        }
+    } else {
+        PluginTester::printError("CRITICAL: getJsonArray('objects') failed or returned invalid result");
+        logos_core_cleanup();
+        exit(1);
+    }
+    
+    // Test with empty result
+    qDebug() << "Testing getJsonArray with 'unknown' (should return empty array)";
+    QVariant emptyResult = testAPI.invokeRemoteMethod("template_module", "getJsonArray", QString("unknown"));
+    if (emptyResult.isValid() && emptyResult.canConvert<QJsonArray>()) {
+        QJsonArray emptyArray = emptyResult.toJsonArray();
+        if (emptyArray.size() == 0) {
+            PluginTester::printSuccess("SUCCESS: getJsonArray('unknown') correctly returned empty array");
+        } else {
+            PluginTester::printError("CRITICAL: getJsonArray('unknown') should return empty array");
+            logos_core_cleanup();
+            exit(1);
+        }
+    } else {
+        PluginTester::printError("CRITICAL: getJsonArray('unknown') failed or returned invalid result");
+        logos_core_cleanup();
+        exit(1);
+    }
+    
     // Process events briefly
     QCoreApplication::processEvents();
     
@@ -273,6 +420,9 @@ int main(int argc, char *argv[])
     qDebug() << "✓ Plugin loading tests passed";
     qDebug() << "✓ Event system tests passed";
     qDebug() << "✓ Template module foo() event trigger test passed";
+    qDebug() << "✓ Template module bar() void method test passed";
+    qDebug() << "✓ Template module stringToBool() conversion test passed";
+    qDebug() << "✓ Template module getJsonArray() return test passed";
 
     // // Clean up resources
     // logos_core_cleanup();
