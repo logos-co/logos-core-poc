@@ -36,6 +36,9 @@ static QHash<QString, QString> g_known_plugins;
 // Global hash to store plugin processes
 static QHash<QString, QProcess*> g_plugin_processes;
 
+// Global LogosAPI instance for core registry
+static LogosAPI* g_logos_api = nullptr;
+
 // Global Qt Remote Object registry host
 static QRemoteObjectRegistryHost* g_registry_host = nullptr;
 
@@ -311,19 +314,19 @@ static bool initializeCoreManager()
     
     // Create the core manager instance directly
     CoreManagerPlugin* coreManager = new CoreManagerPlugin();
-    
-    // Enable remote access for the core manager
-    if (g_registry_host) {
-        bool success = g_registry_host->enableRemoting(coreManager, coreManager->name());
+
+    // Register the core manager for remote access
+    if (g_logos_api) {
+        bool success = g_logos_api->registerObject(coreManager->name(), coreManager);
         if (success) {
-            qDebug() << "Core manager enabled for remote access with name:" << coreManager->name();
+            qDebug() << "Core manager registered for remote access with name:" << coreManager->name();
         } else {
-            qWarning() << "Failed to enable remote access for core manager";
+            qWarning() << "Failed to register core manager for remote access";
         }
     } else {
-        qWarning() << "Registry host not initialized, cannot enable remote access for core manager";
+        qWarning() << "LogosAPI not initialized, cannot register core manager for remote access";
     }
-    
+
     // Add to loaded plugins list
     g_loaded_plugins.append(coreManager->name());
     
@@ -355,6 +358,12 @@ void logos_core_start()
     
     // Clear the list of loaded plugins before loading new ones
     g_loaded_plugins.clear();
+
+    // Initialize LogosAPI for core registry
+    if (!g_logos_api) {
+        g_logos_api = new LogosAPI("core_registry");
+        qDebug() << "LogosAPI initialized for core registry";
+    }
     
     // Initialize Qt Remote Object registry host
     if (!g_registry_host) {
@@ -423,6 +432,13 @@ void logos_core_cleanup()
     }
     g_plugin_processes.clear();
     g_loaded_plugins.clear();
+
+    // Clean up LogosAPI
+    if (g_logos_api) {
+        delete g_logos_api;
+        g_logos_api = nullptr;
+        qDebug() << "LogosAPI cleaned up";
+    }
     
     // Clean up Qt Remote Object registry host
     if (g_registry_host) {

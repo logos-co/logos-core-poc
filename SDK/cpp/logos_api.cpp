@@ -1,7 +1,9 @@
 #include "logos_api.h"
+#include "module_proxy.h"
 #include <QRemoteObjectNode>
 #include <QRemoteObjectReplica>
 #include <QRemoteObjectPendingCall>
+#include <QRemoteObjectRegistryHost>
 #include <QDebug>
 #include <QUrl>
 #include <QMetaObject>
@@ -11,6 +13,7 @@
 LogosAPI::LogosAPI(const QString& module_name, QObject *parent)
     : QObject(parent)
     , m_node(nullptr)
+    , m_registryHost(nullptr)
     , m_registryUrl(QString("local:logos_%1").arg(module_name))
     , m_connected(false)
 {
@@ -27,7 +30,7 @@ LogosAPI::~LogosAPI()
     m_eventCallbacks.clear();
     m_connections.clear();
     
-    // QRemoteObjectNode will be deleted automatically as it's a child object
+    // QRemoteObjectNode and QRemoteObjectRegistryHost will be deleted automatically as child objects
 }
 
 // TODO: return of this could be a LogosModule to it's easier to abstract later
@@ -91,6 +94,45 @@ bool LogosAPI::reconnect()
     return connectToRegistry();
 }
 
+bool LogosAPI::registerObject(const QString& name, QObject* object)
+{
+    if (!object) {
+        qWarning() << "LogosAPI: Cannot register null object";
+        return false;
+    }
+
+    if (name.isEmpty()) {
+        qWarning() << "LogosAPI: Cannot register object with empty name";
+        return false;
+    }
+
+    // Hardcoded special case for template_module
+    if (name == "template_module") {
+    // if (true) {
+        qDebug() << "LogosAPI: Creating ModuleProxy for template_module wrapping the provided object";
+        ModuleProxy* proxy = new ModuleProxy(object, this);
+        object = proxy;
+    }
+
+    if (!m_registryHost) {
+        m_registryHost = new QRemoteObjectRegistryHost(QUrl(m_registryUrl));
+        if (!m_registryHost) {
+            qCritical() << "LogosAPI: Failed to create registry host";
+            return false;
+        }
+        qDebug() << "LogosAPI: Created registry host with URL:" << m_registryUrl;
+    }
+
+    bool success = m_registryHost->enableRemoting(object, name);
+    if (success) {
+        qDebug() << "LogosAPI: Successfully registered object with name:" << name;
+    } else {
+        qCritical() << "LogosAPI: Failed to register object with name:" << name;
+    }
+
+    return success;
+}
+
 bool LogosAPI::connectToRegistry()
 {
     if (!m_node) {
@@ -127,13 +169,15 @@ auto LogosAPI::createArgument(const QVariant& variant)
 {
     switch (variant.type()) {
         case QVariant::String: {
-            m_stringArgs.append(variant.toString());
-            return Q_ARG(QString, m_stringArgs.last());
+            static thread_local QString localString;
+            localString = variant.toString();
+            return Q_ARG(QString, localString);
         }
         default: {
             // For now, convert everything else to string as fallback
-            m_stringArgs.append(variant.toString());
-            return Q_ARG(QString, m_stringArgs.last());
+            static thread_local QString localString;
+            localString = variant.toString();
+            return Q_ARG(QString, localString);
         }
     }
 }
@@ -143,14 +187,59 @@ QVariant LogosAPI::invokeRemoteMethod(const QString& objectName, const QString& 
 {
     qWarning() << "\n\n== NEW: LogosAPI: Calling invokeRemoteMethod with params:" << objectName << methodName << args << timeoutMs;
 
-    return callRemoteMethod(objectName, methodName, args, timeoutMs);
+    // return callRemoteMethod(objectName, methodName, args, timeoutMs);
+    // return callRemoteMethod(objectName, methodName, args, timeoutMs);
+
+    // basically do what callRemoteMethod is doing, but call `callRemoteMethod` and params should `methodName` and args
+    QObject* replica = requestObject(objectName, timeoutMs);
+    if (!replica) {
+        qWarning() << "LogosAPI: Failed to acquire replica for object:" << objectName;
+        return QVariant();
+    }
+
+    // Try to cast to ModuleProxy first (in case the replica is a wrapped module)
+    ModuleProxy* moduleProxy = qobject_cast<ModuleProxy*>(replica);
+    if (moduleProxy) {
+        QVariant result = moduleProxy->callRemoteMethod(methodName, args);
+        delete replica;
+        return result;
+    }
+
+    // Fallback: use QMetaObject::invokeMethod directly
+    // Note: Remote objects' callRemoteMethod returns QRemoteObjectPendingCall, not QVariant
+    QRemoteObjectPendingCall pendingCall;
+    bool success = QMetaObject::invokeMethod(
+        replica,
+        "callRemoteMethod",
+        Qt::DirectConnection,
+        Q_RETURN_ARG(QRemoteObjectPendingCall, pendingCall),
+        Q_ARG(QString, methodName),
+        Q_ARG(QVariantList, args)
+    );
+
+    if (!success) {
+        qWarning() << "LogosAPI: Failed to invoke callRemoteMethod on replica for object:" << objectName;
+        delete replica;
+        return QVariant();
+    }
+
+    // Wait for the result
+    pendingCall.waitForFinished(timeoutMs);
+    delete replica;
+    
+    if (!pendingCall.isFinished() || pendingCall.error() != QRemoteObjectPendingCall::NoError) {
+        qWarning() << "LogosAPI: Remote callRemoteMethod failed or timed out:" << pendingCall.error();
+        return QVariant();
+    }
+
+    return pendingCall.returnValue();
 }
 
 // with one param
 QVariant LogosAPI::invokeRemoteMethod(const QString& objectName, const QString& methodName, 
                                    const QVariant& arg, int timeoutMs)
 {
-    return callRemoteMethod(objectName, methodName, QVariantList() << arg, timeoutMs);
+    return invokeRemoteMethod(objectName, methodName, QVariantList() << arg, timeoutMs);
 }
 
 QVariant LogosAPI::callRemoteMethod(const QString& objectName, const QString& methodName, 
@@ -167,9 +256,6 @@ QVariant LogosAPI::callRemoteMethod(const QString& objectName, const QString& me
     }
 
     qDebug() << "LogosAPI: Calling method" << methodName << "on object" << objectName;
-
-    // Clear string storage before each call
-    m_stringArgs.clear();
 
     // Get the replica
     QObject* replica = requestObject(objectName, timeoutMs);

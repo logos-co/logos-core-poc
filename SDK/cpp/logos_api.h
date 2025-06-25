@@ -14,6 +14,7 @@
 
 class QRemoteObjectNode;
 class QRemoteObjectReplica;
+class QRemoteObjectRegistryHost;
 
 /**
  * @brief LogosAPI provides a simplified interface for connecting to 
@@ -66,6 +67,14 @@ public:
      * @return true if reconnection successful, false otherwise
      */
     bool reconnect();
+
+    /**
+     * @brief Register an object to be available for remote access
+     * @param name The name to register the object under
+     * @param object The object to register
+     * @return true if registration successful, false otherwise
+     */
+    bool registerObject(const QString& name, QObject* object);
 
     /**
      * @brief Invoke a remote method on a remote object
@@ -209,11 +218,9 @@ public slots:
 
 private:
     QRemoteObjectNode* m_node;
+    QRemoteObjectRegistryHost* m_registryHost;
     QString m_registryUrl;
     bool m_connected;
-
-    // Storage for string arguments to keep them alive during method calls
-    mutable QList<QString> m_stringArgs;
 
     // Event listeners storage - maps event names to lists of callback functions
     QHash<QString, QList<std::function<void(const QVariantList&)>>> m_eventListeners;
