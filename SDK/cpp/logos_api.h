@@ -68,6 +68,28 @@ public:
     bool reconnect();
 
     /**
+     * @brief Invoke a remote method on a remote object
+     * @param objectName The name of the remote object
+     * @param methodName The name of the method to call
+     * @param args Arguments to pass to the method (supports 0-5 arguments)
+     * @param timeoutMs Timeout in milliseconds to wait for the result (default: 20000)
+     * @return QVariant containing the result, or invalid QVariant if failed
+     */
+    QVariant invokeRemoteMethod(const QString& objectName, const QString& methodName, 
+                             const QVariantList& args = QVariantList(), int timeoutMs = 20000);
+
+    /**
+     * @brief Invoke a remote method on a remote object with a single argument
+     * @param objectName The name of the remote object
+     * @param methodName The name of the method to call
+     * @param arg Argument to pass to the method
+     * @param timeoutMs Timeout in milliseconds to wait for the result (default: 20000)
+     * @return QVariant containing the result, or invalid QVariant if failed
+     */
+    QVariant invokeRemoteMethod(const QString& objectName, const QString& methodName, 
+                             const QVariant& arg, int timeoutMs = 20000);
+
+    /**
      * @brief Call a method on a remote object and wait for the result
      * @param objectName The name of the remote object
      * @param methodName The name of the method to call

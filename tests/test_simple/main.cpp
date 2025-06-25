@@ -239,7 +239,7 @@ int main(int argc, char *argv[])
     QVariant testParam = "hello_world";
     qDebug() << "Calling foo() remotely with parameter:" << testParam;
     
-    QVariant result = testAPI.callRemoteMethod("template_module", "foo", testParam);
+    QVariant result = testAPI.invokeRemoteMethod("template_module", "foo", testParam);
     if (!result.isValid() || !result.toBool()) {
         PluginTester::printError("CRITICAL: Failed to call foo() method or method returned false");
         logos_core_cleanup();
