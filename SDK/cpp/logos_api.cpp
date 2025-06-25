@@ -141,7 +141,6 @@ auto LogosAPI::createArgument(const QVariant& variant)
 QVariant LogosAPI::invokeRemoteMethod(const QString& objectName, const QString& methodName, 
                                    const QVariantList& args, int timeoutMs)
 {
-    // print calling invokeRemoteMethod with params etc...
     qWarning() << "\n\n== NEW: LogosAPI: Calling invokeRemoteMethod with params:" << objectName << methodName << args << timeoutMs;
 
     return callRemoteMethod(objectName, methodName, args, timeoutMs);
