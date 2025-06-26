@@ -20,6 +20,10 @@ public:
     QString version() const override { return "1.0.0"; }
     Q_INVOKABLE QJsonArray getPackages();
 
+signals:
+    // for now this is required for events, later it might not be necessary if using a proxy
+    void eventResponse(const QString& eventName, const QVariantList& data);
+
 private:
     QString m_pluginsDirectory;
 }; 

@@ -266,7 +266,7 @@ int main(int argc, char *argv[])
     qDebug() << "✓ Package file found, proceeding with installation...";
     
     // Call package_manager's installPlugin method
-    QVariant result = testAPI.callRemoteMethod("package_manager", "installPlugin", filePath);
+    QVariant result = testAPI.invokeRemoteMethod("package_manager", "installPlugin", filePath);
     bool installSuccess = result.toBool();
     
     if (installSuccess) {

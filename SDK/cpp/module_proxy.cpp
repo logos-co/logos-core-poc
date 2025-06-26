@@ -49,7 +49,13 @@ bool ModuleProxy::invokeMethodByArgCount(const QString& methodName, const QVaria
     // Store the UTF-8 data to ensure it stays in scope
     QByteArray methodNameBytes = methodName.toUtf8();
     const char* methodNameCStr = methodNameBytes.constData();
-    qDebug() << "ModuleProxy: invokeMethodByArgCount - method name:" << methodNameCStr;
+    qDebug() << "================================================";
+    qDebug() << "================================================";
+    qDebug() << "================================================";
+    qDebug() << "\n\n\n\nModuleProxy: invokeMethodByArgCount - method name:" << methodNameCStr;
+    qDebug() << "================================================";
+    qDebug() << "================================================";
+    qDebug() << "================================================";
     
     if (returnValue == nullptr) {
         // Void method - no return value
