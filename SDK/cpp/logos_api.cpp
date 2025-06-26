@@ -107,7 +107,7 @@ bool LogosAPI::registerObject(const QString& name, QObject* object)
     }
 
     // Hardcoded special case for template_module
-    if (name == "template_module" || name == "package_manager") {
+    if (name == "template_module" || name == "package_manager" || name == "core_manager") {
     // if (true) {
         qDebug() << "LogosAPI: Creating ModuleProxy for template_module wrapping the provided object";
         ModuleProxy* proxy = new ModuleProxy(object, this);
