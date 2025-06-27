@@ -14,6 +14,7 @@
 
 class QRemoteObjectNode;
 class QRemoteObjectReplica;
+class QRemoteObjectRegistryHost;
 
 /**
  * @brief LogosAPI provides a simplified interface for connecting to 
@@ -68,32 +69,37 @@ public:
     bool reconnect();
 
     /**
-     * @brief Call a method on a remote object and wait for the result
+     * @brief Register an object to be available for remote access
+     * @param name The name to register the object under
+     * @param object The object to register
+     * @return true if registration successful, false otherwise
+     */
+    bool registerObject(const QString& name, QObject* object);
+
+    /**
+     * @brief Invoke a remote method on a remote object
      * @param objectName The name of the remote object
      * @param methodName The name of the method to call
      * @param args Arguments to pass to the method (supports 0-5 arguments)
      * @param timeoutMs Timeout in milliseconds to wait for the result (default: 20000)
      * @return QVariant containing the result, or invalid QVariant if failed
-     * 
-     * @note This method handles the asynchronous nature of remote calls automatically
-     * @note Currently supports up to 5 string arguments
      */
-    QVariant callRemoteMethod(const QString& objectName, const QString& methodName, 
+    QVariant invokeRemoteMethod(const QString& objectName, const QString& methodName, 
                              const QVariantList& args = QVariantList(), int timeoutMs = 20000);
 
     /**
-     * @brief Call a method on a remote object with a single argument (convenience method)
+     * @brief Invoke a remote method on a remote object with a single argument
      * @param objectName The name of the remote object
      * @param methodName The name of the method to call
-     * @param arg Single argument to pass to the method
+     * @param arg Argument to pass to the method
      * @param timeoutMs Timeout in milliseconds to wait for the result (default: 20000)
      * @return QVariant containing the result, or invalid QVariant if failed
      */
-    QVariant callRemoteMethod(const QString& objectName, const QString& methodName, 
+    QVariant invokeRemoteMethod(const QString& objectName, const QString& methodName, 
                              const QVariant& arg, int timeoutMs = 20000);
 
     /**
-     * @brief Call a method on a remote object with two arguments (convenience method)
+     * @brief Invoke a remote method on a remote object with two arguments
      * @param objectName The name of the remote object
      * @param methodName The name of the method to call
      * @param arg1 First argument to pass to the method
@@ -101,11 +107,11 @@ public:
      * @param timeoutMs Timeout in milliseconds to wait for the result (default: 20000)
      * @return QVariant containing the result, or invalid QVariant if failed
      */
-    QVariant callRemoteMethod(const QString& objectName, const QString& methodName, 
+    QVariant invokeRemoteMethod(const QString& objectName, const QString& methodName, 
                              const QVariant& arg1, const QVariant& arg2, int timeoutMs = 20000);
 
     /**
-     * @brief Call a method on a remote object with three arguments (convenience method)
+     * @brief Invoke a remote method on a remote object with three arguments
      * @param objectName The name of the remote object
      * @param methodName The name of the method to call
      * @param arg1 First argument to pass to the method
@@ -114,11 +120,11 @@ public:
      * @param timeoutMs Timeout in milliseconds to wait for the result (default: 20000)
      * @return QVariant containing the result, or invalid QVariant if failed
      */
-    QVariant callRemoteMethod(const QString& objectName, const QString& methodName, 
+    QVariant invokeRemoteMethod(const QString& objectName, const QString& methodName, 
                              const QVariant& arg1, const QVariant& arg2, const QVariant& arg3, int timeoutMs = 20000);
 
     /**
-     * @brief Call a method on a remote object with four arguments (convenience method)
+     * @brief Invoke a remote method on a remote object with four arguments
      * @param objectName The name of the remote object
      * @param methodName The name of the method to call
      * @param arg1 First argument to pass to the method
@@ -128,12 +134,12 @@ public:
      * @param timeoutMs Timeout in milliseconds to wait for the result (default: 20000)
      * @return QVariant containing the result, or invalid QVariant if failed
      */
-    QVariant callRemoteMethod(const QString& objectName, const QString& methodName, 
+    QVariant invokeRemoteMethod(const QString& objectName, const QString& methodName, 
                              const QVariant& arg1, const QVariant& arg2, const QVariant& arg3, 
                              const QVariant& arg4, int timeoutMs = 20000);
 
     /**
-     * @brief Call a method on a remote object with five arguments (convenience method)
+     * @brief Invoke a remote method on a remote object with five arguments
      * @param objectName The name of the remote object
      * @param methodName The name of the method to call
      * @param arg1 First argument to pass to the method
@@ -144,7 +150,7 @@ public:
      * @param timeoutMs Timeout in milliseconds to wait for the result (default: 20000)
      * @return QVariant containing the result, or invalid QVariant if failed
      */
-    QVariant callRemoteMethod(const QString& objectName, const QString& methodName, 
+    QVariant invokeRemoteMethod(const QString& objectName, const QString& methodName, 
                              const QVariant& arg1, const QVariant& arg2, const QVariant& arg3, 
                              const QVariant& arg4, const QVariant& arg5, int timeoutMs = 20000);
 
@@ -187,6 +193,7 @@ public slots:
 
 private:
     QRemoteObjectNode* m_node;
+    QRemoteObjectRegistryHost* m_registryHost;
     QString m_registryUrl;
     bool m_connected;
 
@@ -208,13 +215,6 @@ private:
      * @return true if connection successful, false otherwise
      */
     bool connectToRegistry();
-
-    /**
-     * @brief Helper function to create QGenericArgument from QVariant
-     * @param variant The QVariant to convert
-     * @return QGenericArgument that can be used with QMetaObject::invokeMethod
-     */
-    auto createArgument(const QVariant& variant);
 
     /**
      * @brief Helper function to determine if a method returns void

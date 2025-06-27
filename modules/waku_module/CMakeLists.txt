@@ -23,6 +23,8 @@ set(PLUGIN_SOURCES
     ${CMAKE_SOURCE_DIR}/../core/interface.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/module_proxy.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/module_proxy.h
 )
 
 # Create the plugin library

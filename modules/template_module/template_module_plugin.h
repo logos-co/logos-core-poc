@@ -1,6 +1,8 @@
 #pragma once
 
 #include <QtCore/QObject>
+#include <QtCore/QJsonArray>
+#include <QtCore/QStringList>
 #include "template_module_interface.h"
 #include "../../SDK/cpp/logos_api.h"
 
@@ -15,6 +17,13 @@ public:
     ~TemplateModulePlugin();
 
     Q_INVOKABLE bool foo(const QString &bar) override;
+    Q_INVOKABLE void bar(const QString &message) override;
+    Q_INVOKABLE bool stringToBool(const QString &boolString) override;
+    Q_INVOKABLE QJsonArray getJsonArray(const QString &arrayType) override;
+    Q_INVOKABLE QString combineStrings(const QString &str1, const QString &str2) override;
+    Q_INVOKABLE QString formatMessage(const QString &prefix, const QString &message, const QString &suffix) override;
+    Q_INVOKABLE QStringList getStringList(const QString &listType) override;
+    Q_INVOKABLE QString processData(const QString &title, int value, const QString &unit) override;
     QString name() const override { return "template_module"; }
     QString version() const override { return "1.0.0"; }
 
