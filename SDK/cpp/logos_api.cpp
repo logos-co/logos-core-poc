@@ -1,7 +1,9 @@
 #include "logos_api.h"
+#include "module_proxy.h"
 #include <QRemoteObjectNode>
 #include <QRemoteObjectReplica>
 #include <QRemoteObjectPendingCall>
+#include <QRemoteObjectRegistryHost>
 #include <QDebug>
 #include <QUrl>
 #include <QMetaObject>
@@ -11,6 +13,7 @@
 LogosAPI::LogosAPI(const QString& module_name, QObject *parent)
     : QObject(parent)
     , m_node(nullptr)
+    , m_registryHost(nullptr)
     , m_registryUrl(QString("local:logos_%1").arg(module_name))
     , m_connected(false)
 {
@@ -91,6 +94,41 @@ bool LogosAPI::reconnect()
     return connectToRegistry();
 }
 
+bool LogosAPI::registerObject(const QString& name, QObject* object)
+{
+    if (!object) {
+        qWarning() << "LogosAPI: Cannot register null object";
+        return false;
+    }
+
+    if (name.isEmpty()) {
+        qWarning() << "LogosAPI: Cannot register object with empty name";
+        return false;
+    }
+
+    qDebug() << "LogosAPI: Creating ModuleProxy for" << name << "wrapping the provided object";
+    ModuleProxy* proxy = new ModuleProxy(object, this);
+    object = proxy;
+
+    if (!m_registryHost) {
+        m_registryHost = new QRemoteObjectRegistryHost(QUrl(m_registryUrl));
+        if (!m_registryHost) {
+            qCritical() << "LogosAPI: Failed to create registry host";
+            return false;
+        }
+        qDebug() << "LogosAPI: Created registry host with URL:" << m_registryUrl;
+    }
+
+    bool success = m_registryHost->enableRemoting(object, name);
+    if (success) {
+        qDebug() << "LogosAPI: Successfully registered object with name:" << name;
+    } else {
+        qCritical() << "LogosAPI: Failed to register object with name:" << name;
+    }
+
+    return success;
+}
+
 bool LogosAPI::connectToRegistry()
 {
     if (!m_node) {
@@ -122,180 +160,92 @@ bool LogosAPI::connectToRegistry()
     return m_connected;
 }
 
-// Helper function to create QGenericArgument from QVariant
-auto LogosAPI::createArgument(const QVariant& variant)
-{
-    switch (variant.type()) {
-        case QVariant::String: {
-            m_stringArgs.append(variant.toString());
-            return Q_ARG(QString, m_stringArgs.last());
-        }
-        default: {
-            // For now, convert everything else to string as fallback
-            m_stringArgs.append(variant.toString());
-            return Q_ARG(QString, m_stringArgs.last());
-        }
-    }
-}
-
-QVariant LogosAPI::callRemoteMethod(const QString& objectName, const QString& methodName, 
+QVariant LogosAPI::invokeRemoteMethod(const QString& objectName, const QString& methodName, 
                                    const QVariantList& args, int timeoutMs)
 {
-    if (!m_connected) {
-        qWarning() << "LogosAPI: Not connected to registry. Cannot call method:" << methodName;
-        return QVariant();
-    }
+    qDebug() << "LogosAPI: Calling invokeRemoteMethod with params:" << objectName << methodName << args << timeoutMs;
 
-    if (objectName.isEmpty() || methodName.isEmpty()) {
-        qWarning() << "LogosAPI: Object name and method name cannot be empty";
-        return QVariant();
-    }
-
-    qDebug() << "LogosAPI: Calling method" << methodName << "on object" << objectName;
-
-    // Clear string storage before each call
-    m_stringArgs.clear();
-
-    // Get the replica
+    // This method handles both ModuleProxy-wrapped modules (template_module, package_manager) 
+    // and direct remote object calls for other modules
     QObject* replica = requestObject(objectName, timeoutMs);
     if (!replica) {
         qWarning() << "LogosAPI: Failed to acquire replica for object:" << objectName;
         return QVariant();
     }
 
-    // Prepare the method call
-    QRemoteObjectPendingCall pendingCall;
-    bool success = false;
-
-    // Handle different argument counts
-    if (args.isEmpty()) {
-        success = QMetaObject::invokeMethod(
-            replica,
-            methodName.toUtf8().constData(),
-            Qt::DirectConnection,
-            Q_RETURN_ARG(QRemoteObjectPendingCall, pendingCall)
-        );
-    } else if (args.size() == 1) {
-        success = QMetaObject::invokeMethod(
-            replica,
-            methodName.toUtf8().constData(),
-            Qt::DirectConnection,
-            Q_RETURN_ARG(QRemoteObjectPendingCall, pendingCall),
-            createArgument(args[0])
-        );
-    } else if (args.size() == 2) {
-        success = QMetaObject::invokeMethod(
-            replica,
-            methodName.toUtf8().constData(),
-            Qt::DirectConnection,
-            Q_RETURN_ARG(QRemoteObjectPendingCall, pendingCall),
-            createArgument(args[0]),
-            createArgument(args[1])
-        );
-    } else if (args.size() == 3) {
-        // For void methods like sendMessage, don't expect a return value
-        success = QMetaObject::invokeMethod(
-            replica,
-            methodName.toUtf8().constData(),
-            Qt::DirectConnection,
-            createArgument(args[0]),
-            createArgument(args[1]),
-            createArgument(args[2])
-        );
-        
-        // For void methods, if the call succeeded, we're done
-        if (success) {
-            delete replica;
-            qDebug() << "LogosAPI: Successfully called void method" << methodName << "on object" << objectName;
-            return QVariant(true); // Return true to indicate success
-        }
-    } else if (args.size() == 4) {
-        success = QMetaObject::invokeMethod(
-            replica,
-            methodName.toUtf8().constData(),
-            Qt::DirectConnection,
-            Q_RETURN_ARG(QRemoteObjectPendingCall, pendingCall),
-            createArgument(args[0]),
-            createArgument(args[1]),
-            createArgument(args[2]),
-            createArgument(args[3])
-        );
-    } else if (args.size() == 5) {
-        success = QMetaObject::invokeMethod(
-            replica,
-            methodName.toUtf8().constData(),
-            Qt::DirectConnection,
-            Q_RETURN_ARG(QRemoteObjectPendingCall, pendingCall),
-            createArgument(args[0]),
-            createArgument(args[1]),
-            createArgument(args[2]),
-            createArgument(args[3]),
-            createArgument(args[4])
-        );
-    } else {
-        qWarning() << "LogosAPI: Currently supports 0-5 arguments. Got:" << args.size();
+    // Try to cast to ModuleProxy first (in case the replica is a wrapped module)
+    ModuleProxy* moduleProxy = qobject_cast<ModuleProxy*>(replica);
+    if (moduleProxy) {
+        QVariant result = moduleProxy->callRemoteMethod(methodName, args);
         delete replica;
-        return QVariant();
+        return result;
     }
 
+    // Fallback: use QMetaObject::invokeMethod directly
+    // Note: Remote objects' callRemoteMethod returns QRemoteObjectPendingCall, not QVariant
+    QRemoteObjectPendingCall pendingCall;
+    bool success = QMetaObject::invokeMethod(
+        replica,
+        "callRemoteMethod",
+        Qt::DirectConnection,
+        Q_RETURN_ARG(QRemoteObjectPendingCall, pendingCall),
+        Q_ARG(QString, methodName),
+        Q_ARG(QVariantList, args)
+    );
+
     if (!success) {
-        qWarning() << "LogosAPI: Failed to invoke method" << methodName << "on object" << objectName;
+        qWarning() << "LogosAPI: Failed to invoke callRemoteMethod on replica for object:" << objectName;
         delete replica;
         return QVariant();
     }
 
     // Wait for the result
     pendingCall.waitForFinished(timeoutMs);
+    delete replica;
+
     if (!pendingCall.isFinished() || pendingCall.error() != QRemoteObjectPendingCall::NoError) {
-        qWarning() << "LogosAPI: Remote call failed or timed out:" << pendingCall.error();
-        qDebug() << "LogosAPI: Remote call failed or timed out at" << QTime::currentTime().toString("hh:mm:ss.zzz");
-        qWarning() << "LogosAPI: Failed to invoke method" << methodName << "on object" << objectName;
-        delete replica;
+        qWarning() << "LogosAPI: Remote callRemoteMethod failed or timed out:" << pendingCall.error();
         return QVariant();
     }
 
-    QVariant result = pendingCall.returnValue();
-    delete replica;
-
-    qDebug() << "LogosAPI: Successfully called method" << methodName << "on object" << objectName;
-    return result;
+    return pendingCall.returnValue();
 }
 
-QVariant LogosAPI::callRemoteMethod(const QString& objectName, const QString& methodName, 
+// with one param
+QVariant LogosAPI::invokeRemoteMethod(const QString& objectName, const QString& methodName, 
                                    const QVariant& arg, int timeoutMs)
 {
-    // Simply delegate to the main method with a single-item list
-    return callRemoteMethod(objectName, methodName, QVariantList() << arg, timeoutMs);
+    return invokeRemoteMethod(objectName, methodName, QVariantList() << arg, timeoutMs);
 }
 
-QVariant LogosAPI::callRemoteMethod(const QString& objectName, const QString& methodName, 
+// with two params
+QVariant LogosAPI::invokeRemoteMethod(const QString& objectName, const QString& methodName, 
                                    const QVariant& arg1, const QVariant& arg2, int timeoutMs)
 {
-    // Delegate to the main method with a two-item list
-    return callRemoteMethod(objectName, methodName, QVariantList() << arg1 << arg2, timeoutMs);
+    return invokeRemoteMethod(objectName, methodName, QVariantList() << arg1 << arg2, timeoutMs);
 }
 
-QVariant LogosAPI::callRemoteMethod(const QString& objectName, const QString& methodName, 
+// with three params
+QVariant LogosAPI::invokeRemoteMethod(const QString& objectName, const QString& methodName, 
                                    const QVariant& arg1, const QVariant& arg2, const QVariant& arg3, int timeoutMs)
 {
-    // Delegate to the main method with a three-item list
-    return callRemoteMethod(objectName, methodName, QVariantList() << arg1 << arg2 << arg3, timeoutMs);
+    return invokeRemoteMethod(objectName, methodName, QVariantList() << arg1 << arg2 << arg3, timeoutMs);
 }
 
-QVariant LogosAPI::callRemoteMethod(const QString& objectName, const QString& methodName, 
+// with four params
+QVariant LogosAPI::invokeRemoteMethod(const QString& objectName, const QString& methodName, 
                                    const QVariant& arg1, const QVariant& arg2, const QVariant& arg3, 
                                    const QVariant& arg4, int timeoutMs)
 {
-    // Delegate to the main method with a four-item list
-    return callRemoteMethod(objectName, methodName, QVariantList() << arg1 << arg2 << arg3 << arg4, timeoutMs);
+    return invokeRemoteMethod(objectName, methodName, QVariantList() << arg1 << arg2 << arg3 << arg4, timeoutMs);
 }
 
-QVariant LogosAPI::callRemoteMethod(const QString& objectName, const QString& methodName, 
+// with five params
+QVariant LogosAPI::invokeRemoteMethod(const QString& objectName, const QString& methodName, 
                                    const QVariant& arg1, const QVariant& arg2, const QVariant& arg3, 
                                    const QVariant& arg4, const QVariant& arg5, int timeoutMs)
 {
-    // Delegate to the main method with a five-item list
-    return callRemoteMethod(objectName, methodName, QVariantList() << arg1 << arg2 << arg3 << arg4 << arg5, timeoutMs);
+    return invokeRemoteMethod(objectName, methodName, QVariantList() << arg1 << arg2 << arg3 << arg4 << arg5, timeoutMs);
 }
 
 // change from objectName to instead, originObject and destinationObject, and use QObject instead

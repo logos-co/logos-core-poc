@@ -328,6 +328,10 @@ bool encodeProto(const ChatMessage& msg, std::vector<uint8_t>& output) {
 
 // Function to send a message
 void sendMessage(LogosAPI* logosAPI, const std::string& channelName, const std::string& username, const std::string& message) {
+
+    // print method arguments
+    std::cout << "sendMessage called with channelName: " << channelName << ", username: " << username << ", message: " << message << std::endl;
+
     // Format the channel name into a content topic if not already formatted
     std::string contentTopic = channelName;
     if (channelName.find("/toy-chat/") == std::string::npos) {
@@ -359,7 +363,7 @@ void sendMessage(LogosAPI* logosAPI, const std::string& channelName, const std::
     std::cout << "Sending message as " << username << ": " << message << std::endl;
     std::cout << "Message JSON: " << messageJson << std::endl;
 
-    logosAPI->callRemoteMethod("waku_module", "relayPublish", QString::fromStdString(DEFAULT_PUBSUB_TOPIC), QString::fromStdString(messageJson));
+    logosAPI->invokeRemoteMethod("waku_module", "relayPublish", QString::fromStdString(DEFAULT_PUBSUB_TOPIC), QString::fromStdString(messageJson));
 }
 
 // Function to initialize and start a Waku node
@@ -390,7 +394,7 @@ void* initAndStart(LogosAPI* logosAPI, const std::string& relayTopic, MessageCal
     std::cout << "Found Waku Plugin, initializing" << std::endl;
     // Call initWaku on the plugin
     // wakuPlugin->initWaku(QString::fromStdString(configStr));
-    logosAPI->callRemoteMethod("waku_module", "initWaku", QString::fromStdString(configStr));
+    logosAPI->invokeRemoteMethod("waku_module", "initWaku", QString::fromStdString(configStr));
 
     std::this_thread::sleep_for(std::chrono::seconds(3));
 
@@ -511,9 +515,9 @@ void* initAndStart(LogosAPI* logosAPI, const std::string& relayTopic, MessageCal
         }
     });
 
-    logosAPI->callRemoteMethod("waku_module", "setEventCallback");
+    logosAPI->invokeRemoteMethod("waku_module", "setEventCallback");
 
-    logosAPI->callRemoteMethod("waku_module", "startWaku");
+    logosAPI->invokeRemoteMethod("waku_module", "startWaku");
 
     std::this_thread::sleep_for(std::chrono::seconds(2));
     std::cout << "Waku node started successfully" << std::endl;
@@ -536,7 +540,7 @@ bool joinChannel(LogosAPI* logosAPI, const std::string& channelName, const std::
 
     std::string contentTopics = "[\"" + contentTopic + "\"]";
 
-    logosAPI->callRemoteMethod("waku_module", "filterSubscribe", QString::fromStdString(relayTopic), QString::fromStdString(contentTopics));
+    logosAPI->invokeRemoteMethod("waku_module", "filterSubscribe", QString::fromStdString(relayTopic), QString::fromStdString(contentTopics));
     subscribedChannels.push_back(contentTopic);
 
     return true;
@@ -614,5 +618,5 @@ void retrieveHistory(LogosAPI* logosAPI, const std::string& channelName, Message
         }
     });
 
-    logosAPI->callRemoteMethod("waku_module", "storeQuery", QString::fromStdString(queryJson), QString::fromStdString(STORE_NODE), 30000);
+    logosAPI->invokeRemoteMethod("waku_module", "storeQuery", QString::fromStdString(queryJson), QString::fromStdString(STORE_NODE), 30000);
 } 

@@ -32,6 +32,8 @@ bool ChatPlugin::joinChannel(const QString& channelName) {
 }
 
 void ChatPlugin::sendMessage(const QString& channelName, const QString& username, const QString& message) {
+    // print method arguments
+    std::cout << "ChatPlugin::sendMessage called with channelName: " << channelName.toStdString() << ", username: " << username.toStdString() << ", message: " << message.toStdString() << std::endl;
     ::sendMessage(logosAPI, channelName.toStdString(), username.toStdString(), message.toStdString());
 }
 

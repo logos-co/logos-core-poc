@@ -5,6 +5,7 @@
 #include <QCommandLineParser>
 #include <QRemoteObjectRegistryHost>
 #include "../interface.h"
+#include "../../SDK/cpp/logos_api.h"
 
 int main(int argc, char *argv[])
 {
@@ -46,16 +47,15 @@ int main(int argc, char *argv[])
     qDebug() << "Logos host starting for plugin:" << pluginName;
     qDebug() << "Plugin path:" << pluginPath;
 
-    // Create Qt Remote Object registry host with plugin-specific URL
-    QString registryUrl = QString("local:logos_%1").arg(pluginName);
-    QRemoteObjectRegistryHost* g_registry_host = new QRemoteObjectRegistryHost(QUrl(registryUrl));
-    
-    if (!g_registry_host) {
-        qCritical() << "Failed to create registry host";
+    // Initialize LogosAPI for this plugin
+    LogosAPI* logos_api = new LogosAPI(pluginName);
+
+    if (!logos_api) {
+        qCritical() << "Failed to create LogosAPI instance";
         return 1;
     }
 
-    qDebug() << "Created registry host with URL:" << registryUrl;
+    qDebug() << "LogosAPI initialized for plugin:" << pluginName;
 
     // Load the plugin
     QPluginLoader loader(pluginPath);
@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
 
     if (!plugin) {
         qCritical() << "Failed to load plugin:" << loader.errorString();
-        delete g_registry_host;
+        delete logos_api;
         return 1;
     }
 
@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
     if (!basePlugin) {
         qCritical() << "Plugin does not implement the PluginInterface";
         delete plugin;
-        delete g_registry_host;
+        delete logos_api;
         return 1;
     }
 
@@ -86,14 +86,14 @@ int main(int argc, char *argv[])
     qDebug() << "Plugin name:" << basePlugin->name();
     qDebug() << "Plugin version:" << basePlugin->version();
 
-    // Enable remote access for the plugin
-    bool success = g_registry_host->enableRemoting(plugin, basePlugin->name());
+    // Register the plugin for remote access using LogosAPI
+    bool success = logos_api->registerObject(basePlugin->name(), plugin);
     if (success) {
-        qDebug() << "Plugin enabled for remote access with name:" << basePlugin->name();
+        qDebug() << "Plugin registered for remote access with name:" << basePlugin->name();
     } else {
-        qCritical() << "Failed to enable remote access for plugin:" << basePlugin->name();
+        qCritical() << "Failed to register plugin for remote access:" << basePlugin->name();
         delete plugin;
-        delete g_registry_host;
+        delete logos_api;
         return 1;
     }
 
@@ -103,8 +103,8 @@ int main(int argc, char *argv[])
     int result = app.exec();
 
     // Cleanup
-    delete g_registry_host;
+    delete logos_api;
     qDebug() << "Logos host shutting down";
-    
+
     return result;
 } 

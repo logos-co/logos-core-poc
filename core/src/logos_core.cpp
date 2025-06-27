@@ -312,16 +312,17 @@ static bool initializeCoreManager()
     // Create the core manager instance directly
     CoreManagerPlugin* coreManager = new CoreManagerPlugin();
     
-    // Enable remote access for the core manager
-    if (g_registry_host) {
-        bool success = g_registry_host->enableRemoting(coreManager, coreManager->name());
-        if (success) {
-            qDebug() << "Core manager enabled for remote access with name:" << coreManager->name();
-        } else {
-            qWarning() << "Failed to enable remote access for core manager";
-        }
+    // Create LogosAPI instance for core manager registration
+    LogosAPI* coreAPI = new LogosAPI("core_registry");
+    
+    // Register the core manager using the new API (which will wrap it with ModuleProxy)
+    bool success = coreAPI->registerObject(coreManager->name(), coreManager);
+    if (success) {
+        qDebug() << "Core manager registered using new API with name:" << coreManager->name();
     } else {
-        qWarning() << "Registry host not initialized, cannot enable remote access for core manager";
+        qWarning() << "Failed to register core manager using new API";
+        delete coreAPI;
+        return false;
     }
     
     // Add to loaded plugins list
@@ -804,7 +805,7 @@ void logos_core_call_plugin_method_async(
                     qDebug() << "LogosAPI connected, making remote method call";
                     
                     // Make the remote method call
-                    QVariant result = logosAPI->callRemoteMethod(pluginNameStr, methodNameStr, args);
+                    QVariant result = logosAPI->invokeRemoteMethod(pluginNameStr, methodNameStr, args);
                     
                     QString resultMessage;
                     if (result.isValid()) {

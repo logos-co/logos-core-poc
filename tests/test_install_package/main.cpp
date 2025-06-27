@@ -266,7 +266,7 @@ int main(int argc, char *argv[])
     qDebug() << "✓ Package file found, proceeding with installation...";
     
     // Call package_manager's installPlugin method
-    QVariant result = testAPI.callRemoteMethod("package_manager", "installPlugin", filePath);
+    QVariant result = testAPI.invokeRemoteMethod("package_manager", "installPlugin", filePath);
     bool installSuccess = result.toBool();
     
     if (installSuccess) {
@@ -309,7 +309,7 @@ int main(int argc, char *argv[])
         QVariant testParam = "hello_world";
         qDebug() << "Calling foo() remotely with parameter:" << testParam;
         
-        QVariant eventResult = eventTestAPI.callRemoteMethod("template_module", "foo", testParam);
+        QVariant eventResult = eventTestAPI.invokeRemoteMethod("template_module", "foo", testParam);
         if (!eventResult.isValid() || !eventResult.toBool()) {
             PluginTester::printError("CRITICAL: Failed to call foo() method or method returned false");
             logos_core_cleanup();

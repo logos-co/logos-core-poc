@@ -5,6 +5,8 @@
 #include <QCoreApplication>
 #include <QDebug>
 #include <QVariantList>
+#include <QJsonArray>
+#include <QJsonObject>
 #include "../../core/src/logos_core.h"
 #include "../../SDK/cpp/logos_api.h"
 
@@ -239,7 +241,7 @@ int main(int argc, char *argv[])
     QVariant testParam = "hello_world";
     qDebug() << "Calling foo() remotely with parameter:" << testParam;
     
-    QVariant result = testAPI.callRemoteMethod("template_module", "foo", testParam);
+    QVariant result = testAPI.invokeRemoteMethod("template_module", "foo", testParam);
     if (!result.isValid() || !result.toBool()) {
         PluginTester::printError("CRITICAL: Failed to call foo() method or method returned false");
         logos_core_cleanup();
@@ -268,11 +270,382 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+    // Test the new bar() method
+    qDebug() << "\n=== Testing bar() method ===";
+    EventTracker::eventReceived = false;
+    testAPI.onEvent(templateModuleObj, nullptr, "barTriggered", EventTracker::onEvent);
+    
+    QString barMessage = "Hello from bar method!";
+    qDebug() << "Calling bar() remotely with message:" << barMessage;
+    
+    QVariant barResult = testAPI.invokeRemoteMethod("template_module", "bar", barMessage);
+    if (!barResult.isValid()) {
+        PluginTester::printError("CRITICAL: Failed to call bar() method");
+        logos_core_cleanup();
+        exit(1);
+    }
+    
+    qDebug() << "bar() method called successfully";
+    QCoreApplication::processEvents();
+    
+    if (EventTracker::eventReceived) {
+        PluginTester::printSuccess("SUCCESS: bar() event received!");
+        if (EventTracker::lastEventData.size() > 0 && 
+            EventTracker::lastEventData[0].toString() == barMessage) {
+            PluginTester::printSuccess(QString("SUCCESS: bar() event contains correct message: %1").arg(barMessage));
+        } else {
+            PluginTester::printError("CRITICAL: bar() event parameter mismatch");
+            logos_core_cleanup();
+            exit(1);
+        }
+    } else {
+        PluginTester::printError("CRITICAL: No bar() event received");
+        logos_core_cleanup();
+        exit(1);
+    }
+
+    // Test the stringToBool() method
+    qDebug() << "\n=== Testing stringToBool() method ===";
+    EventTracker::eventReceived = false;
+    testAPI.onEvent(templateModuleObj, nullptr, "stringToBoolTriggered", EventTracker::onEvent);
+    
+    // Test true values
+    QStringList trueValues = {"true", "TRUE", "True", "1", "yes", "YES", "on", "ON"};
+    for (const QString& value : trueValues) {
+        qDebug() << "Testing stringToBool() with:" << value;
+        QVariant boolResult = testAPI.invokeRemoteMethod("template_module", "stringToBool", value);
+        if (!boolResult.isValid() || !boolResult.toBool()) {
+            PluginTester::printError(QString("CRITICAL: stringToBool() failed for true value: %1").arg(value));
+            logos_core_cleanup();
+            exit(1);
+        }
+        PluginTester::printSuccess(QString("PASS: stringToBool('%1') = true").arg(value));
+    }
+    
+    // Test false values
+    QStringList falseValues = {"false", "FALSE", "False", "0", "no", "NO", "off", "OFF", "random", ""};
+    for (const QString& value : falseValues) {
+        qDebug() << "Testing stringToBool() with:" << value;
+        QVariant boolResult = testAPI.invokeRemoteMethod("template_module", "stringToBool", value);
+        if (!boolResult.isValid() || boolResult.toBool()) {
+            PluginTester::printError(QString("CRITICAL: stringToBool() failed for false value: %1").arg(value));
+            logos_core_cleanup();
+            exit(1);
+        }
+        PluginTester::printSuccess(QString("PASS: stringToBool('%1') = false").arg(value));
+    }
+
+    // Test the getJsonArray() method
+    qDebug() << "\n=== Testing getJsonArray() method ===";
+    EventTracker::eventReceived = false;
+    testAPI.onEvent(templateModuleObj, nullptr, "getJsonArrayTriggered", EventTracker::onEvent);
+    
+    // Test different array types
+    QStringList arrayTypes = {"numbers", "strings", "mixed", "objects", "unknown"};
+    QList<int> expectedSizes = {5, 4, 4, 2, 0}; // Expected array sizes for each type
+    
+    for (int i = 0; i < arrayTypes.size(); i++) {
+        const QString& arrayType = arrayTypes[i];
+        int expectedSize = expectedSizes[i];
+        
+        qDebug() << "Testing getJsonArray() with arrayType:" << arrayType;
+        QVariant arrayResult = testAPI.invokeRemoteMethod("template_module", "getJsonArray", arrayType);
+        
+        if (!arrayResult.isValid()) {
+            PluginTester::printError(QString("CRITICAL: getJsonArray() failed for type: %1").arg(arrayType));
+            logos_core_cleanup();
+            exit(1);
+        }
+        
+        // Convert QVariant to QJsonArray
+        QJsonArray jsonArray = arrayResult.toJsonArray();
+        if (jsonArray.size() != expectedSize) {
+            PluginTester::printError(QString("CRITICAL: getJsonArray('%1') size mismatch. Expected: %2, Got: %3")
+                                   .arg(arrayType).arg(expectedSize).arg(jsonArray.size()));
+            logos_core_cleanup();
+            exit(1);
+        }
+        
+        PluginTester::printSuccess(QString("PASS: getJsonArray('%1') returned array of size %2")
+                                 .arg(arrayType).arg(jsonArray.size()));
+        
+        // Print array contents for verification
+        qDebug() << "Array contents:" << jsonArray;
+    }
+
+    // Test specific array content validation
+    qDebug() << "\n=== Validating specific array contents ===";
+    
+    // Test numbers array
+    QVariant numbersResult = testAPI.invokeRemoteMethod("template_module", "getJsonArray", "numbers");
+    QJsonArray numbersArray = numbersResult.toJsonArray();
+    for (int i = 0; i < 5; i++) {
+        if (numbersArray[i].toInt() != i + 1) {
+            PluginTester::printError(QString("CRITICAL: Numbers array validation failed at index %1").arg(i));
+            logos_core_cleanup();
+            exit(1);
+        }
+    }
+    PluginTester::printSuccess("PASS: Numbers array content validation");
+    
+    // Test strings array
+    QVariant stringsResult = testAPI.invokeRemoteMethod("template_module", "getJsonArray", "strings");
+    QJsonArray stringsArray = stringsResult.toJsonArray();
+    QStringList expectedStrings = {"apple", "banana", "cherry", "date"};
+    for (int i = 0; i < expectedStrings.size(); i++) {
+        if (stringsArray[i].toString() != expectedStrings[i]) {
+            PluginTester::printError(QString("CRITICAL: Strings array validation failed at index %1").arg(i));
+            logos_core_cleanup();
+            exit(1);
+        }
+    }
+    PluginTester::printSuccess("PASS: Strings array content validation");
+    
+    // Test objects array
+    QVariant objectsResult = testAPI.invokeRemoteMethod("template_module", "getJsonArray", "objects");
+    QJsonArray objectsArray = objectsResult.toJsonArray();
+    QJsonObject firstObj = objectsArray[0].toObject();
+    if (firstObj["name"].toString() != "John" || firstObj["age"].toInt() != 30) {
+        PluginTester::printError("CRITICAL: Objects array validation failed for first object");
+        logos_core_cleanup();
+        exit(1);
+    }
+    PluginTester::printSuccess("PASS: Objects array content validation");
+
+    // Test the new getStringList() method
+    qDebug() << "\n=== Testing getStringList() method ===";
+    EventTracker::eventReceived = false;
+    testAPI.onEvent(templateModuleObj, nullptr, "getStringListTriggered", EventTracker::onEvent);
+    
+    // Test different list types
+    QStringList listTypes = {"fruits", "colors", "countries", "programming", "numbers", "unknown"};
+    QList<int> expectedListSizes = {5, 4, 4, 5, 5, 0}; // Expected list sizes for each type
+    
+    for (int i = 0; i < listTypes.size(); i++) {
+        const QString& listType = listTypes[i];
+        int expectedSize = expectedListSizes[i];
+        
+        qDebug() << "Testing getStringList() with listType:" << listType;
+        QVariant listResult = testAPI.invokeRemoteMethod("template_module", "getStringList", listType);
+        
+        if (!listResult.isValid()) {
+            PluginTester::printError(QString("CRITICAL: getStringList() failed for type: %1").arg(listType));
+            logos_core_cleanup();
+            exit(1);
+        }
+        
+        // Convert QVariant to QStringList
+        QStringList stringList = listResult.toStringList();
+        if (stringList.size() != expectedSize) {
+            PluginTester::printError(QString("CRITICAL: getStringList('%1') size mismatch. Expected: %2, Got: %3")
+                                   .arg(listType).arg(expectedSize).arg(stringList.size()));
+            logos_core_cleanup();
+            exit(1);
+        }
+        
+        PluginTester::printSuccess(QString("PASS: getStringList('%1') returned list of size %2")
+                                 .arg(listType).arg(stringList.size()));
+        
+        // Print list contents for verification
+        qDebug() << "List contents:" << stringList;
+    }
+    
+    // Test specific list content validation
+    qDebug() << "\n=== Validating specific list contents ===";
+    
+    // Test fruits list
+    QVariant fruitsResult = testAPI.invokeRemoteMethod("template_module", "getStringList", "fruits");
+    QStringList fruitsList = fruitsResult.toStringList();
+    QStringList expectedFruits = {"apple", "banana", "cherry", "date", "elderberry"};
+    for (int i = 0; i < expectedFruits.size(); i++) {
+        if (fruitsList[i] != expectedFruits[i]) {
+            PluginTester::printError(QString("CRITICAL: Fruits list validation failed at index %1").arg(i));
+            logos_core_cleanup();
+            exit(1);
+        }
+    }
+    PluginTester::printSuccess("PASS: Fruits list content validation");
+    
+    // Test colors list
+    QVariant colorsResult = testAPI.invokeRemoteMethod("template_module", "getStringList", "colors");
+    QStringList colorsList = colorsResult.toStringList();
+    QStringList expectedColors = {"red", "green", "blue", "yellow"};
+    for (int i = 0; i < expectedColors.size(); i++) {
+        if (colorsList[i] != expectedColors[i]) {
+            PluginTester::printError(QString("CRITICAL: Colors list validation failed at index %1").arg(i));
+            logos_core_cleanup();
+            exit(1);
+        }
+    }
+    PluginTester::printSuccess("PASS: Colors list content validation");
+
+    // Test the new processData() method with 3 parameters (string, int, string)
+    qDebug() << "\n=== Testing processData() method ===";
+    EventTracker::eventReceived = false;
+    testAPI.onEvent(templateModuleObj, nullptr, "processDataTriggered", EventTracker::onEvent);
+    
+    QString title = "Temperature";
+    int value = 23;
+    QString unit = "°C";
+    QString expectedProcessResult = QString("%1: %2 %3").arg(title).arg(value).arg(unit); // "Temperature: 23 °C"
+    
+    qDebug() << "Calling processData() with:" << title << value << unit;
+    QVariant processResult = testAPI.invokeRemoteMethod("template_module", "processData", title, value, unit);
+    
+    if (!processResult.isValid()) {
+        PluginTester::printError("CRITICAL: Failed to call processData() method");
+        logos_core_cleanup();
+        exit(1);
+    }
+    
+    QString actualProcessResult = processResult.toString();
+    if (actualProcessResult != expectedProcessResult) {
+        PluginTester::printError(QString("CRITICAL: processData() result mismatch. Expected: '%1', Got: '%2'")
+                               .arg(expectedProcessResult).arg(actualProcessResult));
+        logos_core_cleanup();
+        exit(1);
+    }
+    
+    PluginTester::printSuccess(QString("PASS: processData() returned correct result: '%1'").arg(actualProcessResult));
+    
+    // Process events and check for event
+    QCoreApplication::processEvents();
+    
+    if (EventTracker::eventReceived) {
+        PluginTester::printSuccess("SUCCESS: processData() event received!");
+        if (EventTracker::lastEventData.size() >= 4 && 
+            EventTracker::lastEventData[0].toString() == title &&
+            EventTracker::lastEventData[1].toInt() == value &&
+            EventTracker::lastEventData[2].toString() == unit &&
+            EventTracker::lastEventData[3].toString() == expectedProcessResult) {
+            PluginTester::printSuccess("SUCCESS: processData() event contains correct parameters");
+        } else {
+            PluginTester::printError("CRITICAL: processData() event parameter mismatch");
+            qDebug() << "Expected:" << title << value << unit << expectedProcessResult;
+            qDebug() << "Got:" << EventTracker::lastEventData;
+            logos_core_cleanup();
+            exit(1);
+        }
+    } else {
+        PluginTester::printError("CRITICAL: No processData() event received");
+        logos_core_cleanup();
+        exit(1);
+    }
+
+    // Test the new combineStrings() method
+    qDebug() << "\n=== Testing combineStrings() method ===";
+    EventTracker::eventReceived = false;
+    testAPI.onEvent(templateModuleObj, nullptr, "combineStringsTriggered", EventTracker::onEvent);
+    
+    QString str1 = "Hello";
+    QString str2 = "World";
+    QString expectedResult = str1 + " + " + str2; // "Hello + World"
+    
+    qDebug() << "Calling combineStrings() with:" << str1 << "and" << str2;
+    QVariant combineResult = testAPI.invokeRemoteMethod("template_module", "combineStrings", str1, str2);
+    
+    if (!combineResult.isValid()) {
+        PluginTester::printError("CRITICAL: Failed to call combineStrings() method");
+        logos_core_cleanup();
+        exit(1);
+    }
+    
+    QString actualResult = combineResult.toString();
+    if (actualResult != expectedResult) {
+        PluginTester::printError(QString("CRITICAL: combineStrings() result mismatch. Expected: '%1', Got: '%2'")
+                               .arg(expectedResult).arg(actualResult));
+        logos_core_cleanup();
+        exit(1);
+    }
+    
+    PluginTester::printSuccess(QString("PASS: combineStrings() returned correct result: '%1'").arg(actualResult));
+    
+    // Process events and check for event
+    QCoreApplication::processEvents();
+    
+    if (EventTracker::eventReceived) {
+        PluginTester::printSuccess("SUCCESS: combineStrings() event received!");
+        if (EventTracker::lastEventData.size() >= 3 && 
+            EventTracker::lastEventData[0].toString() == str1 &&
+            EventTracker::lastEventData[1].toString() == str2 &&
+            EventTracker::lastEventData[2].toString() == expectedResult) {
+            PluginTester::printSuccess("SUCCESS: combineStrings() event contains correct parameters");
+        } else {
+            PluginTester::printError("CRITICAL: combineStrings() event parameter mismatch");
+            logos_core_cleanup();
+            exit(1);
+        }
+    } else {
+        PluginTester::printError("CRITICAL: No combineStrings() event received");
+        logos_core_cleanup();
+        exit(1);
+    }
+
+    // Test the new formatMessage() method with 3 arguments
+    qDebug() << "\n=== Testing formatMessage() method ===";
+    EventTracker::eventReceived = false;
+    testAPI.onEvent(templateModuleObj, nullptr, "formatMessageTriggered", EventTracker::onEvent);
+    
+    QString prefix = "INFO";
+    QString message = "System started successfully";
+    QString suffix = "OK";
+    QString expectedResult_2 = QString("[%1] %2 [%3]").arg(prefix).arg(message).arg(suffix); // "[INFO] System started successfully [OK]"
+    
+    qDebug() << "Calling formatMessage() with:" << prefix << message << suffix;
+    QVariant formatResult = testAPI.invokeRemoteMethod("template_module", "formatMessage", prefix, message, suffix);
+    
+    if (!formatResult.isValid()) {
+        PluginTester::printError("CRITICAL: Failed to call formatMessage() method");
+        logos_core_cleanup();
+        exit(1);
+    }
+    
+    QString actualResult_2 = formatResult.toString();
+    if (actualResult_2 != expectedResult_2) {
+        PluginTester::printError(QString("CRITICAL: formatMessage() result mismatch. Expected: '%1', Got: '%2'")
+                               .arg(expectedResult_2).arg(actualResult_2));
+        logos_core_cleanup();
+        exit(1);
+    }
+    
+    PluginTester::printSuccess(QString("PASS: formatMessage() returned correct result: '%1'").arg(actualResult));
+    
+    // Process events and check for event
+    QCoreApplication::processEvents();
+    
+    if (EventTracker::eventReceived) {
+        PluginTester::printSuccess("SUCCESS: formatMessage() event received!");
+
+        if (EventTracker::lastEventData.size() >= 4 && 
+            EventTracker::lastEventData[0].toString() == prefix &&
+            EventTracker::lastEventData[1].toString() == message &&
+            EventTracker::lastEventData[2].toString() == suffix &&
+            EventTracker::lastEventData[3].toString() == expectedResult_2) {
+            PluginTester::printSuccess("SUCCESS: formatMessage() event contains correct parameters");
+        } else {
+            PluginTester::printError("CRITICAL: formatMessage() event parameter mismatch");
+            logos_core_cleanup();
+            exit(1);
+        }
+    } else {
+        PluginTester::printError("CRITICAL: No formatMessage() event received");
+        logos_core_cleanup();
+        exit(1);
+    }
+
     // All assertions passed - test completed successfully
     qDebug() << "\n=== All Tests Completed Successfully ===";
     qDebug() << "✓ Plugin loading tests passed";
     qDebug() << "✓ Event system tests passed";
     qDebug() << "✓ Template module foo() event trigger test passed";
+    qDebug() << "✓ Template module bar() method test passed";
+    qDebug() << "✓ Template module stringToBool() method test passed";
+    qDebug() << "✓ Template module getJsonArray() method test passed";
+    qDebug() << "✓ Array content validation tests passed";
+    qDebug() << "✓ Template module combineStrings() method test passed";
+    qDebug() << "✓ Template module getStringList() method test passed";
+    qDebug() << "✓ Template module processData() method test passed";
+    qDebug() << "✓ Template module formatMessage() method test passed";
 
     // // Clean up resources
     // logos_core_cleanup();

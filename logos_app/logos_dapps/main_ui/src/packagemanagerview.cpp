@@ -388,7 +388,7 @@ void PackageManagerView::scanPackagesFolder()
 
     QJsonArray packagesArray;
     if (m_logosAPI && m_logosAPI->isConnected()) {
-        QVariant result = m_logosAPI->callRemoteMethod("package_manager", "getPackages");
+        QVariant result = m_logosAPI->invokeRemoteMethod("package_manager", "getPackages");
         packagesArray = result.toJsonArray();
         qDebug() << "LogosAPI: Retrieved" << packagesArray.size() << "packages from package_manager";
     } else {
@@ -565,7 +565,7 @@ void PackageManagerView::onApplyClicked()
         // Use LogosAPI to call installPlugin on the package_manager object
         bool installSuccess = false;
         if (m_logosAPI && m_logosAPI->isConnected()) {
-            QVariant result = m_logosAPI->callRemoteMethod("package_manager", "installPlugin", filePath);
+            QVariant result = m_logosAPI->invokeRemoteMethod("package_manager", "installPlugin", filePath);
             installSuccess = result.toBool();
         } else {
             qDebug() << "LogosAPI not connected, cannot install plugin:" << packageName;

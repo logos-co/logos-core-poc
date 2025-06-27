@@ -142,7 +142,7 @@ bool PackageManagerPlugin::installPlugin(const QString& pluginPath)
     }
     
     qDebug() << "Calling processPlugin with destinationPath:" << destinationPath;
-    QVariant result = api.callRemoteMethod("core_manager", "processPlugin", destinationPath);
+    QVariant result = api.invokeRemoteMethod("core_manager", "processPlugin", destinationPath);
     if (!result.isValid()) {
         qDebug() << "ERROR: --------------------------------";
         qWarning() << "Failed to process installed plugin:" << destinationPath;
