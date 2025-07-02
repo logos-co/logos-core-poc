@@ -33,17 +33,19 @@ public:
 
     /**
      * @brief Call a method on the proxied module
+     * @param authToken Authentication token for secure access
      * @param methodName The name of the method to call
      * @param args Arguments to pass to the method
      * @return QVariant containing the result, or invalid QVariant if failed
      */
-    Q_INVOKABLE QVariant callRemoteMethod(const QString& methodName, const QVariantList& args = QVariantList());
+    Q_INVOKABLE QVariant callRemoteMethod(const QString& authToken, const QString& methodName, const QVariantList& args = QVariantList());
 
 signals:
     void eventResponse(const QString& eventName, const QVariantList& data);
 
 private:
     QObject* m_module;
+    QString m_authToken;
     
     // Storage for string arguments to keep them alive during method calls
     // Key: GUID for method call, Value: list of string arguments for that call

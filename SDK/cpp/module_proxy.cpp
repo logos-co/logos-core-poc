@@ -9,6 +9,7 @@
 ModuleProxy::ModuleProxy(QObject* module, QObject* parent)
     : QObject(parent)
     , m_module(module)
+    , m_authToken("abc")
 {
     qDebug() << "ModuleProxy: Created for module:" << module;
     // Connect to the wrapped object's eventResponse signal to forward events
@@ -127,8 +128,14 @@ bool ModuleProxy::invokeMethodByArgCount(const QString& methodName, const QVaria
     }
 }
 
-QVariant ModuleProxy::callRemoteMethod(const QString& methodName, const QVariantList& args)
+QVariant ModuleProxy::callRemoteMethod(const QString& authToken, const QString& methodName, const QVariantList& args)
 {
+    // Validate authentication token first
+    if (authToken != m_authToken) {
+        qWarning() << "ModuleProxy: Invalid authentication token provided";
+        return QVariant();
+    }
+
     if (!m_module) {
         qWarning() << "ModuleProxy: Cannot call method on null module:" << methodName;
         return QVariant();

@@ -10,6 +10,8 @@
 #include <QTime>
 #include <string>
 
+const QString AUTH_TOKEN = "abc";
+
 LogosAPI::LogosAPI(const QString& module_name, QObject *parent)
     : QObject(parent)
     , m_node(nullptr)
@@ -176,7 +178,7 @@ QVariant LogosAPI::invokeRemoteMethod(const QString& objectName, const QString& 
     // Try to cast to ModuleProxy first (in case the replica is a wrapped module)
     ModuleProxy* moduleProxy = qobject_cast<ModuleProxy*>(replica);
     if (moduleProxy) {
-        QVariant result = moduleProxy->callRemoteMethod(methodName, args);
+        QVariant result = moduleProxy->callRemoteMethod(AUTH_TOKEN, methodName, args);
         delete replica;
         return result;
     }
@@ -189,6 +191,7 @@ QVariant LogosAPI::invokeRemoteMethod(const QString& objectName, const QString& 
         "callRemoteMethod",
         Qt::DirectConnection,
         Q_RETURN_ARG(QRemoteObjectPendingCall, pendingCall),
+        Q_ARG(QString, AUTH_TOKEN),
         Q_ARG(QString, methodName),
         Q_ARG(QVariantList, args)
     );
