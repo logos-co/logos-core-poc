@@ -22,9 +22,10 @@ public:
     /**
      * @brief Construct a new ModuleProxy
      * @param module The module object to proxy
+     * @param authToken Authentication token for this proxy instance
      * @param parent Parent QObject
      */
-    explicit ModuleProxy(QObject* module, QObject* parent = nullptr);
+    explicit ModuleProxy(QObject* module, const QString& authToken, QObject* parent = nullptr);
 
     /**
      * @brief Destructor

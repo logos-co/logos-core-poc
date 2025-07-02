@@ -96,7 +96,7 @@ bool LogosAPI::reconnect()
     return connectToRegistry();
 }
 
-bool LogosAPI::registerObject(const QString& name, QObject* object)
+bool LogosAPI::registerObject(const QString& name, QObject* object, const QString& authToken)
 {
     if (!object) {
         qWarning() << "LogosAPI: Cannot register null object";
@@ -108,8 +108,13 @@ bool LogosAPI::registerObject(const QString& name, QObject* object)
         return false;
     }
 
+    if (authToken.isEmpty()) {
+        qWarning() << "LogosAPI: Cannot register object with empty auth token";
+        return false;
+    }
+
     qDebug() << "LogosAPI: Creating ModuleProxy for" << name << "wrapping the provided object";
-    ModuleProxy* proxy = new ModuleProxy(object, this);
+    ModuleProxy* proxy = new ModuleProxy(object, authToken, this);
     object = proxy;
 
     if (!m_registryHost) {

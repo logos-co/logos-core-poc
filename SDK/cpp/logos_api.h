@@ -69,12 +69,13 @@ public:
     bool reconnect();
 
     /**
-     * @brief Register an object to be available for remote access
+     * @brief Register an object with the remote object registry
      * @param name The name to register the object under
      * @param object The object to register
-     * @return true if registration successful, false otherwise
+     * @param authToken Authentication token for this object
+     * @return true if registration succeeded, false otherwise
      */
-    bool registerObject(const QString& name, QObject* object);
+    bool registerObject(const QString& name, QObject* object, const QString& authToken);
 
     /**
      * @brief Invoke a remote method on a remote object

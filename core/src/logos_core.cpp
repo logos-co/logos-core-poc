@@ -156,6 +156,7 @@ static bool loadPlugin(const QString &pluginName)
     QStringList arguments;
     arguments << "--name" << pluginName;
     arguments << "--path" << pluginPath;
+    arguments << "--token" << "abc";
 
     qDebug() << "Starting logos_host with arguments:" << arguments;
 
@@ -316,7 +317,7 @@ static bool initializeCoreManager()
     LogosAPI* coreAPI = new LogosAPI("core_registry");
     
     // Register the core manager using the new API (which will wrap it with ModuleProxy)
-    bool success = coreAPI->registerObject(coreManager->name(), coreManager);
+    bool success = coreAPI->registerObject(coreManager->name(), coreManager, "abc");
     if (success) {
         qDebug() << "Core manager registered using new API with name:" << coreManager->name();
     } else {

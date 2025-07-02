@@ -6,10 +6,10 @@
 #include <QJsonArray>
 #include <QStringList>
 
-ModuleProxy::ModuleProxy(QObject* module, QObject* parent)
+ModuleProxy::ModuleProxy(QObject* module, const QString& authToken, QObject* parent)
     : QObject(parent)
     , m_module(module)
-    , m_authToken("abc")
+    , m_authToken(authToken)
 {
     qDebug() << "ModuleProxy: Created for module:" << module;
     // Connect to the wrapped object's eventResponse signal to forward events

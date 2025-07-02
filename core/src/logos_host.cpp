@@ -31,16 +31,23 @@ int main(int argc, char *argv[])
                                        "plugin_path");
     parser.addOption(pluginPathOption);
 
+    // Add auth token option
+    QCommandLineOption authTokenOption(QStringList() << "t" << "token",
+                                     "Authentication token for the plugin",
+                                     "auth_token");
+    parser.addOption(authTokenOption);
+
     // Process the command line arguments
     parser.process(app);
 
-    // Get plugin name and path
+    // Get plugin name, path, and auth token
     QString pluginName = parser.value(pluginNameOption);
     QString pluginPath = parser.value(pluginPathOption);
+    QString authToken = parser.value(authTokenOption);
 
-    if (pluginName.isEmpty() || pluginPath.isEmpty()) {
-        qCritical() << "Both plugin name and path must be specified";
-        qCritical() << "Usage:" << argv[0] << "--name <plugin_name> --path <plugin_path>";
+    if (pluginName.isEmpty() || pluginPath.isEmpty() || authToken.isEmpty()) {
+        qCritical() << "Plugin name, path, and auth token must all be specified";
+        qCritical() << "Usage:" << argv[0] << "--name <plugin_name> --path <plugin_path> --token <auth_token>";
         return 1;
     }
 
@@ -87,7 +94,7 @@ int main(int argc, char *argv[])
     qDebug() << "Plugin version:" << basePlugin->version();
 
     // Register the plugin for remote access using LogosAPI
-    bool success = logos_api->registerObject(basePlugin->name(), plugin);
+    bool success = logos_api->registerObject(basePlugin->name(), plugin, authToken);
     if (success) {
         qDebug() << "Plugin registered for remote access with name:" << basePlugin->name();
     } else {
