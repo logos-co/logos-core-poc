@@ -4,6 +4,9 @@
 #include <QDebug>
 #include <QCommandLineParser>
 #include <QRemoteObjectRegistryHost>
+#include <QLocalServer>
+#include <QLocalSocket>
+#include <QThread>
 #include "../interface.h"
 #include "../../SDK/cpp/logos_api.h"
 
@@ -31,28 +34,58 @@ int main(int argc, char *argv[])
                                        "plugin_path");
     parser.addOption(pluginPathOption);
 
-    // Add auth token option
-    QCommandLineOption authTokenOption(QStringList() << "t" << "token",
-                                     "Authentication token for the plugin",
-                                     "auth_token");
-    parser.addOption(authTokenOption);
-
     // Process the command line arguments
     parser.process(app);
 
-    // Get plugin name, path, and auth token
+    // Get plugin name and path
     QString pluginName = parser.value(pluginNameOption);
     QString pluginPath = parser.value(pluginPathOption);
-    QString authToken = parser.value(authTokenOption);
 
-    if (pluginName.isEmpty() || pluginPath.isEmpty() || authToken.isEmpty()) {
-        qCritical() << "Plugin name, path, and auth token must all be specified";
-        qCritical() << "Usage:" << argv[0] << "--name <plugin_name> --path <plugin_path> --token <auth_token>";
+    if (pluginName.isEmpty() || pluginPath.isEmpty()) {
+        qCritical() << "Both plugin name and path must be specified";
+        qCritical() << "Usage:" << argv[0] << "--name <plugin_name> --path <plugin_path>";
         return 1;
     }
 
     qDebug() << "Logos host starting for plugin:" << pluginName;
     qDebug() << "Plugin path:" << pluginPath;
+
+    // Set up IPC server to receive auth token securely
+    QString socketName = QString("logos_token_%1").arg(pluginName);
+    QLocalServer* tokenServer = new QLocalServer();
+    
+    // Remove any existing socket file
+    QLocalServer::removeServer(socketName);
+    
+    if (!tokenServer->listen(socketName)) {
+        qCritical() << "Failed to start token server:" << tokenServer->errorString();
+        return 1;
+    }
+    
+    qDebug() << "Token server started, waiting for auth token...";
+    
+    // Wait for connection and receive token
+    QString authToken;
+    if (tokenServer->waitForNewConnection(10000)) { // Wait up to 10 seconds
+        QLocalSocket* clientSocket = tokenServer->nextPendingConnection();
+        if (clientSocket->waitForReadyRead(5000)) {
+            QByteArray tokenData = clientSocket->readAll();
+            authToken = QString::fromUtf8(tokenData);
+            qDebug() << "Auth token received securely";
+        }
+        clientSocket->deleteLater();
+    } else {
+        qCritical() << "Timeout waiting for auth token";
+        tokenServer->deleteLater();
+        return 1;
+    }
+    
+    tokenServer->deleteLater();
+    
+    if (authToken.isEmpty()) {
+        qCritical() << "No auth token received";
+        return 1;
+    }
 
     // Initialize LogosAPI for this plugin
     LogosAPI* logos_api = new LogosAPI(pluginName);

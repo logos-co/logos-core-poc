@@ -17,6 +17,8 @@
 #include "../interface.h"
 #include "core_manager/core_manager.h"
 #include "../../SDK/cpp/logos_api.h"
+#include <QLocalSocket>
+#include <QThread>
 
 // Declare QObject* as a metatype so it can be stored in QVariant
 Q_DECLARE_METATYPE(QObject*)
@@ -156,7 +158,7 @@ static bool loadPlugin(const QString &pluginName)
     QStringList arguments;
     arguments << "--name" << pluginName;
     arguments << "--path" << pluginPath;
-    arguments << "--token" << "abc";
+    // Note: Token will be passed via IPC after process starts
 
     qDebug() << "Starting logos_host with arguments:" << arguments;
 
@@ -171,6 +173,38 @@ static bool loadPlugin(const QString &pluginName)
 
     qDebug() << "Logos host process started successfully for plugin:" << pluginName;
     qDebug() << "Process ID:" << process->processId();
+
+    // Set up IPC to securely send the auth token
+    QString socketName = QString("logos_token_%1").arg(pluginName);
+    QLocalSocket* tokenSocket = new QLocalSocket();
+    
+    // Try to connect to the socket (with retries since the process might need time to set up)
+    bool connected = false;
+    for (int i = 0; i < 10; ++i) { // Try for up to 1 second
+        tokenSocket->connectToServer(socketName);
+        if (tokenSocket->waitForConnected(100)) {
+            connected = true;
+            break;
+        }
+        QThread::msleep(100); // Wait 100ms before retry
+    }
+    
+    if (!connected) {
+        qCritical() << "Failed to connect to token socket for plugin:" << pluginName;
+        tokenSocket->deleteLater();
+        process->terminate();
+        delete process;
+        return false;
+    }
+    
+    // Send the auth token securely via IPC
+    QByteArray tokenData = QString("abc").toUtf8();
+    tokenSocket->write(tokenData);
+    tokenSocket->waitForBytesWritten(1000);
+    tokenSocket->disconnectFromServer();
+    tokenSocket->deleteLater();
+    
+    qDebug() << "Auth token sent securely to plugin:" << pluginName;
 
     // Store the process
     g_plugin_processes.insert(pluginName, process);
