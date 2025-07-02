@@ -20,7 +20,7 @@ if [ -d "build" ]; then
 fi
 mkdir -p build
 cd build
-cmake ..
+cmake -DCMAKE_BUILD_TYPE=Debug ..
 if command -v nproc >/dev/null 2>&1; then
     JOBS=$(nproc)
 elif command -v sysctl >/dev/null 2>&1; then
@@ -40,7 +40,7 @@ if [ -d "build" ]; then
 fi
 mkdir -p build
 cd build
-cmake ..
+cmake -DCMAKE_BUILD_TYPE=Debug ..
 make -j$JOBS template_module_plugin
 echo "Template module build completed!"
 
@@ -53,7 +53,7 @@ cd build
 
 # Configure with CMake
 echo "Configuring with CMake..."
-cmake ..
+cmake -DCMAKE_BUILD_TYPE=Debug ..
 
 # Build the application
 echo "Building test_simple application..."
@@ -127,4 +127,4 @@ echo "Running Test Simple application..."
 echo "Press Ctrl+C to stop the application."
 echo "=================================="
 cd bin
-./test_simple 
+./test_simple
