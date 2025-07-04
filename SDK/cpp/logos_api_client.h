@@ -164,6 +164,13 @@ public:
      */
     void onEvent(QObject* originObject, QObject* destinationObject, const QString& eventName);
 
+    /**
+     * @brief Save a token associated with a module name
+     * @param to_module_name The module name to associate with the token
+     * @param token The token string to save
+     */
+    void saveToken(const QString& to_module_name, const QString& token);
+
 public slots:
     /**
      * @brief Helper slot to invoke stored callbacks
@@ -189,6 +196,9 @@ private:
     // Track existing connections by origin object to avoid duplicates
     // Since we always connect to 'this' LogosAPIClient instance, we only need to track origin objects
     QHash<QObject*, QMetaObject::Connection> m_connections;
+
+    // Storage for tokens by module name
+    QHash<QString, QString> m_tokens;
 
     /**
      * @brief Internal method to establish connection to the registry

@@ -267,5 +267,18 @@ void LogosAPIClient::onEvent(QObject* originObject, QObject* destinationObject, 
                     destinationObject, SLOT(onEventResponse(QString, QVariantList)), Qt::AutoConnection);
 }
 
+void LogosAPIClient::saveToken(const QString& to_module_name, const QString& token)
+{
+    qDebug() << "LogosAPIClient: Saving token for module:" << to_module_name;
+    
+    if (to_module_name.isEmpty()) {
+        qWarning() << "LogosAPIClient: Module name cannot be empty when saving token";
+        return;
+    }
+    
+    m_tokens[to_module_name] = token;
+    qDebug() << "LogosAPIClient: Token saved for module:" << to_module_name;
+}
+
 // Include MOC for template instantiation
 #include "moc_logos_api_client.cpp" 

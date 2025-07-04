@@ -6,6 +6,7 @@
 #include <QUrl>
 #include <QVariant>
 #include <QVariantList>
+#include <QHash>
 #include <QDebug>
 
 class QRemoteObjectRegistryHost;
@@ -50,6 +51,13 @@ public:
      */
     QString registryUrl() const;
 
+    /**
+     * @brief Save a token associated with a module name
+     * @param from_module_name The module name to associate with the token
+     * @param token The token string to save
+     */
+    void saveToken(const QString& from_module_name, const QString& token);
+
 public slots:
     /**
      * @brief Handle incoming event responses and trigger registered callbacks
@@ -65,6 +73,9 @@ public slots:
 private:
     QRemoteObjectRegistryHost* m_registryHost;
     QString m_registryUrl;
+    
+    // Storage for tokens by module name
+    QHash<QString, QString> m_tokens;
 };
 
 #endif // LOGOS_API_PROVIDER_H 

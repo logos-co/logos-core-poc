@@ -82,5 +82,18 @@ void LogosAPIProvider::onEventResponse(QObject* replica, const QString& eventNam
     // QMetaObject::invokeMethod(replica, "eventResponse_another", Qt::DirectConnection, Q_ARG(QString, eventName), Q_ARG(QVariantList, data));
 }
 
+void LogosAPIProvider::saveToken(const QString& from_module_name, const QString& token)
+{
+    qDebug() << "LogosAPIProvider: Saving token for module:" << from_module_name;
+    
+    if (from_module_name.isEmpty()) {
+        qWarning() << "LogosAPIProvider: Module name cannot be empty when saving token";
+        return;
+    }
+    
+    m_tokens[from_module_name] = token;
+    qDebug() << "LogosAPIProvider: Token saved for module:" << from_module_name;
+}
+
 // Include MOC for template instantiation
 #include "moc_logos_api_provider.cpp" 
