@@ -8,8 +8,8 @@ WakuModulePlugin::WakuModulePlugin() : logosAPI(nullptr), wakuCtx(nullptr)
 {
     qDebug() << "WakuModulePlugin: Initializing...";
 
-    // Initialize the Logos API
-    logosAPI = new LogosAPI("core_registry", this);
+    // Initialize the LogosAPIProvider
+    logosAPI = new LogosAPIProvider("core_registry", this);
 
     qDebug() << "WakuModulePlugin: Initialized successfully";
 }

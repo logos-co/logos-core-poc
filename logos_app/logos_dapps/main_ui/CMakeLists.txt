@@ -36,8 +36,8 @@ set(SOURCES
     src/pluginmethodsview.cpp
     src/packagemanagerview.cpp
     src/main_ui_resources.qrc
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp/logos_api.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp/logos_api.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp/logos_api_client.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp/logos_api_client.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp/module_proxy.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp/module_proxy.h
 )

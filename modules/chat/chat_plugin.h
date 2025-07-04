@@ -4,7 +4,8 @@
 #include <functional>
 #include "chat_interface.h"
 #include "src/chat_api.h"
-#include "../../SDK/cpp/logos_api.h"
+#include "../../SDK/cpp/logos_api_client.h"
+#include "../../SDK/cpp/logos_api_provider.h"
 
 class ChatPlugin : public QObject, public ChatInterface {
     Q_OBJECT
@@ -32,5 +33,6 @@ signals:
 
 private:
     std::string currentRelayTopic;
-    LogosAPI* logosAPI;
+    LogosAPIClient* logosAPIClient;
+    LogosAPIProvider* logosAPIProvider;
 }; 

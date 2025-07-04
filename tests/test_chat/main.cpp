@@ -6,7 +6,7 @@
 #include <QDebug>
 #include <QVariantList>
 #include "../../core/src/logos_core.h"
-#include "../../SDK/cpp/logos_api.h"
+#include "../../SDK/cpp/logos_api_client.h"
 #include <QTimer>
 #include <QDateTime>
 
@@ -232,7 +232,7 @@ int main(int argc, char *argv[])
     qDebug() << "\n=== Testing Chat and Waku Modules ===";
 
     // Initialize LogosAPI for testing waku
-    LogosAPI wakuAPI("waku");
+    LogosAPIClient wakuAPI("waku");
 
     // Get waku object for testing
     QObject* wakuObj = wakuAPI.requestObject("waku_module");
@@ -242,7 +242,7 @@ int main(int argc, char *argv[])
         PluginTester::printSuccess("Successfully got waku object from registry");
     }
     // Initialize LogosAPI for testing chat
-    LogosAPI chatAPI("chat");
+    LogosAPIClient chatAPI("chat");
 
     // Get chat object for testing
     QObject* chatObj = chatAPI.requestObject("chat");

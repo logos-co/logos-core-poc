@@ -35,14 +35,14 @@ PackageManagerView::PackageManagerView(QWidget *parent)
     , m_mainWindow(nullptr)
     , m_logosAPI(nullptr)
 {
-    m_logosAPI = new LogosAPI("package_manager", this);
+    m_logosAPI = new LogosAPIClient("package_manager", this);
     
     setupUi();
 }
 
 PackageManagerView::~PackageManagerView()
 {
-    // LogosAPI will be automatically deleted as it's a child object
+    // LogosAPIClient will be automatically deleted as it's a child object
 }
 
 void PackageManagerView::setupUi()
@@ -390,9 +390,9 @@ void PackageManagerView::scanPackagesFolder()
     if (m_logosAPI && m_logosAPI->isConnected()) {
         QVariant result = m_logosAPI->invokeRemoteMethod("package_manager", "getPackages");
         packagesArray = result.toJsonArray();
-        qDebug() << "LogosAPI: Retrieved" << packagesArray.size() << "packages from package_manager";
+        qDebug() << "LogosAPIClient: Retrieved" << packagesArray.size() << "packages from package_manager";
     } else {
-        qDebug() << "LogosAPI not connected, cannot get packages from package_manager";
+        qDebug() << "LogosAPIClient not connected, cannot get packages from package_manager";
         addFallbackPackages();
         return;
     }
@@ -562,13 +562,13 @@ void PackageManagerView::onApplyClicked()
         //     Q_ARG(QString, filePath)
         // );
 
-        // Use LogosAPI to call installPlugin on the package_manager object
+        // Use LogosAPIClient to call installPlugin on the package_manager object
         bool installSuccess = false;
         if (m_logosAPI && m_logosAPI->isConnected()) {
             QVariant result = m_logosAPI->invokeRemoteMethod("package_manager", "installPlugin", filePath);
             installSuccess = result.toBool();
         } else {
-            qDebug() << "LogosAPI not connected, cannot install plugin:" << packageName;
+            qDebug() << "LogosAPIClient not connected, cannot install plugin:" << packageName;
         }
 
         if (!installSuccess) {

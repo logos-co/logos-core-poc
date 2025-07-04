@@ -1,6 +1,6 @@
 #include "chat_api.h"
 #include <unordered_set> // Add for storing message hashes
-#include "logos_api.h"
+#include "logos_api_client.h"
 
 // Constants
 const std::string TOY_CHAT_CONTENT_TOPIC = "/toy-chat/2/baixa-chiado/proto";
@@ -327,7 +327,7 @@ bool encodeProto(const ChatMessage& msg, std::vector<uint8_t>& output) {
 }
 
 // Function to send a message
-void sendMessage(LogosAPI* logosAPI, const std::string& channelName, const std::string& username, const std::string& message) {
+void sendMessage(LogosAPIClient* logosAPI, const std::string& channelName, const std::string& username, const std::string& message) {
 
     // print method arguments
     std::cout << "sendMessage called with channelName: " << channelName << ", username: " << username << ", message: " << message << std::endl;
@@ -367,7 +367,7 @@ void sendMessage(LogosAPI* logosAPI, const std::string& channelName, const std::
 }
 
 // Function to initialize and start a Waku node
-void* initAndStart(LogosAPI* logosAPI, const std::string& relayTopic, MessageCallback messageCallback) {
+void* initAndStart(LogosAPIClient* logosAPI, const std::string& relayTopic, MessageCallback messageCallback) {
     // Create appropriate Waku config
     std::string configStr = R"({
         "host": "0.0.0.0",
@@ -528,7 +528,7 @@ void* initAndStart(LogosAPI* logosAPI, const std::string& relayTopic, MessageCal
 }
 
 // Function to join a chat channel
-bool joinChannel(LogosAPI* logosAPI, const std::string& channelName, const std::string& relayTopic) {
+bool joinChannel(LogosAPIClient* logosAPI, const std::string& channelName, const std::string& relayTopic) {
     // Format the channel name into a content topic if not already formatted
     std::string contentTopic = channelName;
     if (channelName.find("/toy-chat/") == std::string::npos) {
@@ -547,7 +547,7 @@ bool joinChannel(LogosAPI* logosAPI, const std::string& channelName, const std::
 }
 
 // Function to retrieve message history from store node
-void retrieveHistory(LogosAPI* logosAPI, const std::string& channelName, MessageCallback callback) {
+void retrieveHistory(LogosAPIClient* logosAPI, const std::string& channelName, MessageCallback callback) {
     // Format the channel name into a content topic if not already formatted
     std::string contentTopic = channelName;
     if (channelName.find("/toy-chat/") == std::string::npos) {

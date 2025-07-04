@@ -8,7 +8,7 @@
 #include <QLocalSocket>
 #include <QThread>
 #include "../interface.h"
-#include "../../SDK/cpp/logos_api.h"
+#include "../../SDK/cpp/logos_api_provider.h"
 
 int main(int argc, char *argv[])
 {
@@ -87,15 +87,15 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    // Initialize LogosAPI for this plugin
-    LogosAPI* logos_api = new LogosAPI(pluginName);
+    // Initialize LogosAPIProvider for this plugin
+    LogosAPIProvider* logos_api = new LogosAPIProvider(pluginName);
 
     if (!logos_api) {
-        qCritical() << "Failed to create LogosAPI instance";
+        qCritical() << "Failed to create LogosAPIProvider instance";
         return 1;
     }
 
-    qDebug() << "LogosAPI initialized for plugin:" << pluginName;
+    qDebug() << "LogosAPIProvider initialized for plugin:" << pluginName;
 
     // Load the plugin
     QPluginLoader loader(pluginPath);
@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
     qDebug() << "Plugin name:" << basePlugin->name();
     qDebug() << "Plugin version:" << basePlugin->version();
 
-    // Register the plugin for remote access using LogosAPI
+    // Register the plugin for remote access using LogosAPIProvider
     bool success = logos_api->registerObject(basePlugin->name(), plugin, authToken);
     if (success) {
         qDebug() << "Plugin registered for remote access with name:" << basePlugin->name();

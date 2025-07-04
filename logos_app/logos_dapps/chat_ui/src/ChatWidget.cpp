@@ -5,7 +5,7 @@
 #include <iostream>
 #include <csignal>
 #include <QTimer>
-#include "logos_api.h"
+#include "logos_api_client.h"
 
 // Static pointer to the active ChatWidget for callbacks
 static ChatWidget* activeWidget = nullptr;
@@ -33,7 +33,7 @@ ChatWidget::ChatWidget(QWidget* parent)
     // Set as the active widget
     activeWidget = this;
     
-    m_logosAPI = new LogosAPI("chat", this);
+    m_logosAPI = new LogosAPIClient("chat", this);
     
     // Generate random username with 2 digits that will persist during this class lifetime
     int randomNum = rand() % 100;
@@ -204,7 +204,7 @@ void ChatWidget::onJoinChannelClicked() {
 
         // Call retrieveHistory - history messages will come via historyMessage events
         QVariant historyResult = m_logosAPI->invokeRemoteMethod("chat", "retrieveHistory", currentChannel);
-        qDebug() << "LogosAPI retrieveHistory result:" << historyResult;
+        qDebug() << "LogosAPIClient retrieveHistory result:" << historyResult;
     } else {
         updateStatus("Failed to join channel: " + currentChannel);
         QMessageBox::warning(this, "Channel Error", "Failed to join channel: " + currentChannel);
@@ -227,9 +227,9 @@ void ChatWidget::onSendButtonClicked() {
 
     if (m_logosAPI && m_logosAPI->isConnected()) {
         QVariant result = m_logosAPI->invokeRemoteMethod("chat", "sendMessage", currentChannel, username, message);
-        qDebug() << "LogosAPI sendMessage result:" << result;
+        qDebug() << "LogosAPIClient sendMessage result:" << result;
     } else {
-        qDebug() << "LogosAPI not connected";
+        qDebug() << "LogosAPIClient not connected";
     }
 
     // Clear input field

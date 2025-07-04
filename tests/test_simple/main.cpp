@@ -8,7 +8,7 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include "../../core/src/logos_core.h"
-#include "../../SDK/cpp/logos_api.h"
+#include "../../SDK/cpp/logos_api_client.h"
 
 // Qt-style plugin testing utility class
 class PluginTester {
@@ -223,7 +223,7 @@ int main(int argc, char *argv[])
 
     // Initialize LogosAPI for testing
     // LogosAPI testAPI("core_registry");
-    LogosAPI testAPI("template_module");
+    LogosAPIClient testAPI("template_module");
 
     // Get template_module object for event listening
     QObject* templateModuleObj = testAPI.requestObject("template_module");

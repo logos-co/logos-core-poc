@@ -10,8 +10,8 @@ TemplateModulePlugin::TemplateModulePlugin() : logosAPI(nullptr)
 {
     qDebug() << "TemplateModulePlugin: Initializing...";
     
-    // Initialize the Logos API
-    logosAPI = new LogosAPI("core_registry", this);
+    // Initialize the LogosAPIProvider
+    logosAPI = new LogosAPIProvider("core_registry", this);
     
     qDebug() << "TemplateModulePlugin: Initialized successfully";
 }

@@ -11,7 +11,7 @@
 #include <QRemoteObjectNode>
 #include <QRemoteObjectReplica>
 #include <QRemoteObjectPendingCall>
-#include "logos_api.h"
+#include "logos_api_client.h"
 
 PackageManagerPlugin::PackageManagerPlugin()
 {
@@ -134,8 +134,8 @@ bool PackageManagerPlugin::installPlugin(const QString& pluginPath)
         }
     }
     
-    // Use LogosAPI to call the remote method
-    LogosAPI api;
+    // Use LogosAPIClient to call the remote method
+    LogosAPIClient api;
     if (!api.isConnected()) {
         qWarning() << "Failed to connect to Logos Core registry.";
         return false;

@@ -16,7 +16,8 @@
 #include <QProcess>
 #include "../interface.h"
 #include "core_manager/core_manager.h"
-#include "../../SDK/cpp/logos_api.h"
+#include "../../SDK/cpp/logos_api_client.h"
+#include "../../SDK/cpp/logos_api_provider.h"
 #include <QLocalSocket>
 #include <QThread>
 
@@ -347,8 +348,8 @@ static bool initializeCoreManager()
     // Create the core manager instance directly
     CoreManagerPlugin* coreManager = new CoreManagerPlugin();
     
-    // Create LogosAPI instance for core manager registration
-    LogosAPI* coreAPI = new LogosAPI("core_registry");
+    // Create LogosAPIProvider instance for core manager registration
+    LogosAPIProvider* coreAPI = new LogosAPIProvider("core_registry");
     
     // Register the core manager using the new API (which will wrap it with ModuleProxy)
     bool success = coreAPI->registerObject(coreManager->name(), coreManager, "abc");
@@ -827,8 +828,8 @@ void logos_core_call_plugin_method_async(
             
             qDebug() << "Converted parameters to QVariantList, count:" << args.size();
             
-            // Create LogosAPI instance to make the remote call
-            LogosAPI* logosAPI = new LogosAPI(pluginNameStr);
+                // Create LogosAPIClient instance to make the remote call
+    LogosAPIClient* logosAPI = new LogosAPIClient(pluginNameStr);
             
             // Use a longer delay to ensure connection is established
             QTimer* connectionTimer = new QTimer();
@@ -836,8 +837,8 @@ void logos_core_call_plugin_method_async(
             connectionTimer->setInterval(2000); // 2 second delay
             
             QObject::connect(connectionTimer, &QTimer::timeout, [=]() {
-                if (logosAPI->isConnected()) {
-                    qDebug() << "LogosAPI connected, making remote method call";
+                        if (logosAPI->isConnected()) {
+            qDebug() << "LogosAPIClient connected, making remote method call";
                     
                     // Make the remote method call
                     QVariant result = logosAPI->invokeRemoteMethod(pluginNameStr, methodNameStr, args);
@@ -930,8 +931,8 @@ void logos_core_register_event_listener(
     setupTimer->setInterval(1000); // Give plugin time to be ready
         
         QObject::connect(setupTimer, &QTimer::timeout, [=]() {
-        // Create LogosAPI instance to connect to the plugin
-        LogosAPI* logosAPI = new LogosAPI(pluginNameStr);
+            // Create LogosAPIClient instance to connect to the plugin
+    LogosAPIClient* logosAPI = new LogosAPIClient(pluginNameStr);
         
         // Use a delay to ensure connection is established
         QTimer* connectionTimer = new QTimer();
@@ -939,8 +940,8 @@ void logos_core_register_event_listener(
         connectionTimer->setInterval(2000); // 2 second delay
         
         QObject::connect(connectionTimer, &QTimer::timeout, [=]() {
-            if (logosAPI->isConnected()) {
-                qDebug() << "LogosAPI connected for event listener, setting up event listener for" << eventNameStr;
+                    if (logosAPI->isConnected()) {
+            qDebug() << "LogosAPIClient connected for event listener, setting up event listener for" << eventNameStr;
                 
                 // Get the replica object to set up event listener
                 QObject* replica = logosAPI->requestObject(pluginNameStr);
@@ -965,10 +966,10 @@ void logos_core_register_event_listener(
                     qWarning() << "Failed to get replica for event listener setup";
                 }
             } else {
-                qWarning() << "Failed to connect LogosAPI for event listener:" << pluginNameStr;
+                qWarning() << "Failed to connect LogosAPIClient for event listener:" << pluginNameStr;
             }
             
-            // Clean up timers but keep LogosAPI alive for the event listener
+            // Clean up timers but keep LogosAPIClient alive for the event listener
             connectionTimer->deleteLater();
         });
         

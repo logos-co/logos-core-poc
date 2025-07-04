@@ -9,8 +9,8 @@ set(PLUGIN_SOURCES
     template_module_plugin.h
     template_module_interface.h
     ${CMAKE_SOURCE_DIR}/../core/interface.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api_provider.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api_provider.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/module_proxy.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/module_proxy.h
 )

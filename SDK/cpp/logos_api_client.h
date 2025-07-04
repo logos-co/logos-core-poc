@@ -1,5 +1,5 @@
-#ifndef LOGOS_API_H
-#define LOGOS_API_H
+#ifndef LOGOS_API_CLIENT_H
+#define LOGOS_API_CLIENT_H
 
 #include <QObject>
 #include <QString>
@@ -14,31 +14,30 @@
 
 class QRemoteObjectNode;
 class QRemoteObjectReplica;
-class QRemoteObjectRegistryHost;
 
 /**
- * @brief LogosAPI provides a simplified interface for connecting to 
+ * @brief LogosAPIClient provides a simplified interface for connecting to 
  * and acquiring remote objects from the Logos Core registry.
  * 
  * This class abstracts the Qt Remote Objects functionality, making it easier
  * to connect to the core registry and request remote object replicas by name.
  */
-class LogosAPI : public QObject
+class LogosAPIClient : public QObject
 {
     Q_OBJECT
 
 public:
     /**
-     * @brief Construct a new LogosAPI
+     * @brief Construct a new LogosAPIClient
      * @param module_name The name of the module to connect to (default: "core_registry")
      * @param parent Parent QObject
      */
-    explicit LogosAPI(const QString& module_name = "core_registry", QObject *parent = nullptr);
+    explicit LogosAPIClient(const QString& module_name = "core_registry", QObject *parent = nullptr);
     
     /**
      * @brief Destructor - cleans up the remote object node
      */
-    ~LogosAPI();
+    ~LogosAPIClient();
 
     /**
      * @brief Request a remote object replica by name
@@ -67,15 +66,6 @@ public:
      * @return true if reconnection successful, false otherwise
      */
     bool reconnect();
-
-    /**
-     * @brief Register an object with the remote object registry
-     * @param name The name to register the object under
-     * @param object The object to register
-     * @param authToken Authentication token for this object
-     * @return true if registration succeeded, false otherwise
-     */
-    bool registerObject(const QString& name, QObject* object, const QString& authToken);
 
     /**
      * @brief Invoke a remote method on a remote object
@@ -176,16 +166,6 @@ public:
 
 public slots:
     /**
-     * @brief Handle incoming event responses and trigger registered callbacks
-     * @param eventName The name of the event that was triggered
-     * @param data The event data to pass to the callbacks
-     * 
-     * This slot is typically connected to signals from remote objects to handle
-     * events and notifications from the Logos Core system.
-     */
-    void onEventResponse(QObject* replica, const QString& eventName, const QVariantList& data);
-    
-    /**
      * @brief Helper slot to invoke stored callbacks
      * @param eventName The name of the event that was triggered
      * @param data The event data to pass to the callback
@@ -194,7 +174,6 @@ public slots:
 
 private:
     QRemoteObjectNode* m_node;
-    QRemoteObjectRegistryHost* m_registryHost;
     QString m_registryUrl;
     bool m_connected;
 
@@ -208,7 +187,7 @@ private:
     QHash<QString, QList<std::function<void(const QString&, const QVariantList&)>>> m_eventCallbacks;
     
     // Track existing connections by origin object to avoid duplicates
-    // Since we always connect to 'this' LogosAPI instance, we only need to track origin objects
+    // Since we always connect to 'this' LogosAPIClient instance, we only need to track origin objects
     QHash<QObject*, QMetaObject::Connection> m_connections;
 
     /**
@@ -216,15 +195,6 @@ private:
      * @return true if connection successful, false otherwise
      */
     bool connectToRegistry();
-
-    /**
-     * @brief Helper function to determine if a method returns void
-     * @param replica The replica object
-     * @param methodName The method name to check
-     * @param args The arguments for the method
-     * @return true if the method is likely to return void, false otherwise
-     */
-    static bool isVoidMethod(QObject* replica, const QString& methodName, const QVariantList& args);
 };
 
-#endif // LOGOS_API_H 
+#endif // LOGOS_API_CLIENT_H 

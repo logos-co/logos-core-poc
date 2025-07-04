@@ -36,26 +36,44 @@ echo "Using Qt includes: $QT_INCLUDES"
 # Compiler flags
 CXXFLAGS="-std=c++17 -fPIC"
 
-# Try to compile the header (syntax check)
+# Try to compile the headers (syntax check)
 echo "Checking header syntax..."
-g++ $CXXFLAGS $QT_INCLUDES -c -x c++-header logos_api.h -o /tmp/logos_api.h.gch
+g++ $CXXFLAGS $QT_INCLUDES -c -x c++-header logos_api_client.h -o /tmp/logos_api_client.h.gch
 if [ $? -eq 0 ]; then
-    echo "✅ Header syntax OK"
-    rm -f /tmp/logos_api.h.gch
+    echo "✅ Client header syntax OK"
+    rm -f /tmp/logos_api_client.h.gch
 else
-    echo "❌ Header has syntax errors"
+    echo "❌ Client header has syntax errors"
     exit 1
 fi
 
-# Try to compile the implementation (without linking)
+g++ $CXXFLAGS $QT_INCLUDES -c -x c++-header logos_api_provider.h -o /tmp/logos_api_provider.h.gch
+if [ $? -eq 0 ]; then
+    echo "✅ Provider header syntax OK"
+    rm -f /tmp/logos_api_provider.h.gch
+else
+    echo "❌ Provider header has syntax errors"
+    exit 1
+fi
+
+# Try to compile the implementations (without linking)
 echo "Checking implementation syntax..."
-g++ $CXXFLAGS $QT_INCLUDES -c logos_api.cpp -o /tmp/logos_api.o
+g++ $CXXFLAGS $QT_INCLUDES -c logos_api_client.cpp -o /tmp/logos_api_client.o
 if [ $? -eq 0 ]; then
-    echo "✅ Implementation compiles OK"
-    rm -f /tmp/logos_api.o
+    echo "✅ Client implementation compiles OK"
+    rm -f /tmp/logos_api_client.o
 else
-    echo "❌ Implementation has compilation errors"
+    echo "❌ Client implementation has compilation errors"
     exit 1
 fi
 
-echo "🎉 LogosAPI compilation test passed!" 
+g++ $CXXFLAGS $QT_INCLUDES -c logos_api_provider.cpp -o /tmp/logos_api_provider.o
+if [ $? -eq 0 ]; then
+    echo "✅ Provider implementation compiles OK"
+    rm -f /tmp/logos_api_provider.o
+else
+    echo "❌ Provider implementation has compilation errors"
+    exit 1
+fi
+
+echo "🎉 LogosAPI Client and Provider compilation test passed!" 
