@@ -1,36 +1,43 @@
-#ifndef LOGOS_API_CLIENT_H
-#define LOGOS_API_CLIENT_H
+#ifndef LOGOS_API_CONSUMER_H
+#define LOGOS_API_CONSUMER_H
 
 #include <QObject>
 #include <QString>
+#include <QUrl>
 #include <QVariant>
 #include <QVariantList>
+#include <QList>
+#include <QMap>
+#include <QHash>
+#include <QDebug>
 #include <functional>
 
-class LogosAPIConsumer;
+class QRemoteObjectNode;
+class QRemoteObjectReplica;
 
 /**
- * @brief LogosAPIClient provides a simplified interface for connecting to 
+ * @brief LogosAPIConsumer provides a simplified interface for connecting to 
  * and acquiring remote objects from the Logos Core registry.
  * 
- * This class serves as a facade that delegates all operations to LogosAPIConsumer.
+ * This class abstracts the Qt Remote Objects functionality, making it easier
+ * to connect to the core registry and request remote object replicas by name.
  */
-class LogosAPIClient : public QObject
+class LogosAPIConsumer : public QObject
 {
     Q_OBJECT
 
 public:
     /**
-     * @brief Construct a new LogosAPIClient
+     * @brief Construct a new LogosAPIConsumer
      * @param module_name The name of the module to connect to (default: "core_registry")
      * @param parent Parent QObject
      */
-    explicit LogosAPIClient(const QString& module_name = "core_registry", QObject *parent = nullptr);
+    explicit LogosAPIConsumer(const QString& module_name = "core_registry", QObject *parent = nullptr);
     
     /**
-     * @brief Destructor - cleans up the consumer
+     * @brief Destructor - cleans up the remote object node
      */
-    ~LogosAPIClient();
+    ~LogosAPIConsumer();
 
     /**
      * @brief Request a remote object replica by name
@@ -180,7 +187,31 @@ public slots:
     void invokeCallback(const QString& eventName, const QVariantList& data);
 
 private:
-    LogosAPIConsumer* m_consumer;
+    QRemoteObjectNode* m_node;
+    QString m_registryUrl;
+    bool m_connected;
+
+    // Storage for string arguments to keep them alive during method calls
+    mutable QList<QString> m_stringArgs;
+
+    // Event listeners storage - maps event names to lists of callback functions
+    QHash<QString, QList<std::function<void(const QVariantList&)>>> m_eventListeners;
+    
+    // Store callbacks by event name for the new callback-based approach
+    QHash<QString, QList<std::function<void(const QString&, const QVariantList&)>>> m_eventCallbacks;
+    
+    // Track existing connections by origin object to avoid duplicates
+    // Since we always connect to 'this' LogosAPIConsumer instance, we only need to track origin objects
+    QHash<QObject*, QMetaObject::Connection> m_connections;
+
+    // Storage for tokens by module name
+    QHash<QString, QString> m_tokens;
+
+    /**
+     * @brief Internal method to establish connection to the registry
+     * @return true if connection successful, false otherwise
+     */
+    bool connectToRegistry();
 };
 
-#endif // LOGOS_API_CLIENT_H 
+#endif // LOGOS_API_CONSUMER_H 

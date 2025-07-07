@@ -124,6 +124,13 @@ QString CoreManagerPlugin::processPlugin(const QString& filePath) {
     return pluginName;
 }
 
+QString CoreManagerPlugin::requestModule(const QString& moduleName) {
+    qDebug() << "CoreManager: Requesting module:" << moduleName;
+    
+    // For now, return hardcoded value
+    return "abcdef";
+}
+
 // TODO: unclear if in use but it needs to be updated
 // TODO: this should NOT be in liblogos in any case and should be moved to its own module
 QJsonArray CoreManagerPlugin::getPluginMethods(const QString& pluginName) {

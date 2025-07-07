@@ -20,6 +20,7 @@
 #include "../../SDK/cpp/logos_api_provider.h"
 #include <QLocalSocket>
 #include <QThread>
+#include <QUuid>
 
 // Declare QObject* as a metatype so it can be stored in QVariant
 Q_DECLARE_METATYPE(QObject*)
@@ -52,6 +53,9 @@ struct EventListener {
 
 // Global list to store registered event listeners
 static QList<EventListener> g_event_listeners;
+
+// Static CoreManagerPlugin instance (private to this file)
+static CoreManagerPlugin* g_core_manager = nullptr;
 
 // Helper function to process a plugin and extract its metadata
 static QString processPlugin(const QString &pluginPath)
@@ -197,14 +201,19 @@ static bool loadPlugin(const QString &pluginName)
         delete process;
         return false;
     }
-    
+
+    // generate a guid and print it
+    QUuid authToken = QUuid::createUuid();
+    QString authTokenString = authToken.toString(QUuid::WithoutBraces);
+    qDebug() << "Generated auth token:" << authTokenString;
+
     // Send the auth token securely via IPC
-    QByteArray tokenData = QString("abc").toUtf8();
+    QByteArray tokenData = QString(authTokenString).toUtf8();
     tokenSocket->write(tokenData);
     tokenSocket->waitForBytesWritten(1000);
     tokenSocket->disconnectFromServer();
     tokenSocket->deleteLater();
-    
+
     qDebug() << "Auth token sent securely to plugin:" << pluginName;
 
     // Store the process
@@ -345,16 +354,16 @@ static bool initializeCoreManager()
 {
     qDebug() << "\n=== Initializing Core Manager ===";
     
-    // Create the core manager instance directly
-    CoreManagerPlugin* coreManager = new CoreManagerPlugin();
+    // Create the core manager instance directly and store it in the static variable
+    g_core_manager = new CoreManagerPlugin();
     
     // Create LogosAPIProvider instance for core manager registration
     LogosAPIProvider* coreAPI = new LogosAPIProvider("core_registry");
     
     // Register the core manager using the new API (which will wrap it with ModuleProxy)
-    bool success = coreAPI->registerObject(coreManager->name(), coreManager, "abc");
+    bool success = coreAPI->registerObject(g_core_manager->name(), g_core_manager, "abc");
     if (success) {
-        qDebug() << "Core manager registered using new API with name:" << coreManager->name();
+        qDebug() << "Core manager registered using new API with name:" << g_core_manager->name();
     } else {
         qWarning() << "Failed to register core manager using new API";
         delete coreAPI;
@@ -362,7 +371,7 @@ static bool initializeCoreManager()
     }
     
     // Add to loaded plugins list
-    g_loaded_plugins.append(coreManager->name());
+    g_loaded_plugins.append(g_core_manager->name());
     
     qDebug() << "Core manager initialized successfully";
     return true;
@@ -395,8 +404,8 @@ void logos_core_start()
     
     // Initialize Qt Remote Object registry host
     if (!g_registry_host) {
-        g_registry_host = new QRemoteObjectRegistryHost(QUrl(QStringLiteral("local:logos_core_registry")));
-        qDebug() << "Qt Remote Object registry host initialized at: local:logos_core_registry";
+        g_registry_host = new QRemoteObjectRegistryHost(QUrl(QStringLiteral("local:logos_core_manager")));
+        qDebug() << "Qt Remote Object registry host initialized at: local:logos_core_manager";
     }
     
     // First initialize the core manager
@@ -460,6 +469,13 @@ void logos_core_cleanup()
     }
     g_plugin_processes.clear();
     g_loaded_plugins.clear();
+    
+    // Clean up core manager instance
+    if (g_core_manager) {
+        delete g_core_manager;
+        g_core_manager = nullptr;
+        qDebug() << "Core manager instance cleaned up";
+    }
     
     // Clean up Qt Remote Object registry host
     if (g_registry_host) {

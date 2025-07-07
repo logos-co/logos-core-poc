@@ -35,6 +35,7 @@ public:
     Q_INVOKABLE bool loadPlugin(const QString& pluginName);
     Q_INVOKABLE bool unloadPlugin(const QString& pluginName);
     Q_INVOKABLE QString processPlugin(const QString& filePath);
+    Q_INVOKABLE QString requestModule(const QString& moduleName);
 
 private:
     QString m_pluginsDirectory;

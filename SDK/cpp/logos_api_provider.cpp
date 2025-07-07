@@ -38,6 +38,9 @@ bool LogosAPIProvider::registerObject(const QString& name, QObject* object, cons
     ModuleProxy* proxy = new ModuleProxy(object, authToken, this);
     object = proxy;
 
+    // save the token which core_manager can communicate with it
+    saveToken("core_manager", authToken);
+
     if (!m_registryHost) {
         m_registryHost = new QRemoteObjectRegistryHost(QUrl(m_registryUrl));
         if (!m_registryHost) {
