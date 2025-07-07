@@ -418,8 +418,8 @@ void* initAndStart(LogosAPIClient* logosAPI, const std::string& relayTopic, Mess
 
                     // If we've already processed this message, skip it
                     if (processedMessageHashes.find(messageHash) != processedMessageHashes.end()) {
-                        std::cout << "🔄 DUPLICATE MESSAGE - Hash already processed: " << messageHash << std::endl;
-                        std::cout << "⏭️ Skipping duplicate message processing" << std::endl;
+                        // std::cout << "🔄 DUPLICATE MESSAGE - Hash already processed: " << messageHash << std::endl;
+                        // std::cout << "⏭️ Skipping duplicate message processing" << std::endl;
                         return;
                     }
 

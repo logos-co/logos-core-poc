@@ -59,6 +59,22 @@ QVariant LogosAPIClient::invokeRemoteMethod(const QString& objectName, const QSt
     //    // return result;
     //}
 
+    // let's do a test, if objectName is "chat" and methodName is "joinChannel" then do a lot of prints and call package_manager getPackages and print them
+    if (objectName == "chat" && methodName == "joinChannel") {
+        qDebug() << "LogosAPIClient: joining channel";
+        // initiative new logosapi consumer to connect to package_manager
+        qDebug() << "\n\n==============================================\n\n";
+        LogosAPIConsumer* packageManagerConsumer = new LogosAPIConsumer("package_manager", this);
+        qDebug() << "\n\n==============================================\n\n";
+        qDebug() << "\n\n==============================================\n\n";
+        QVariant result = packageManagerConsumer->invokeRemoteMethod("package_manager", "getPackages", QVariantList());
+        qDebug() << "LogosAPIClient: getPackages result:" << result.toString();
+        qDebug() << "================================================";
+        qDebug() << "================================================";
+        qDebug() << "================================================";
+        qDebug() << "LogosAPIClient: getPackages result:" << result.toString();
+    }
+
     return m_consumer->invokeRemoteMethod(objectName, methodName, args, timeoutMs);
 }
 

@@ -267,7 +267,7 @@ void LogosAPIConsumer::onEvent(QObject* originObject, QObject* destinationObject
 
 void LogosAPIConsumer::invokeCallback(const QString& eventName, const QVariantList& data)
 {
-    qDebug() << "LogosAPIConsumer: invokeCallback called for event:" << eventName;
+    // qDebug() << "LogosAPIConsumer: invokeCallback called for event:" << eventName;
     
     // Call all registered callbacks
     // Note: This will call all callbacks for any event. In a more sophisticated implementation,
@@ -280,7 +280,7 @@ void LogosAPIConsumer::invokeCallback(const QString& eventName, const QVariantLi
         }
     }
     
-    qDebug() << "LogosAPIConsumer: Called" << m_eventCallbacks[eventName].size() << "callbacks for event:" << eventName;
+    // qDebug() << "LogosAPIConsumer: Called" << m_eventCallbacks[eventName].size() << "callbacks for event:" << eventName;
 }
 
 void LogosAPIConsumer::onEvent(QObject* originObject, QObject* destinationObject, const QString& eventName)

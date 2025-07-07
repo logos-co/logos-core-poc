@@ -24,7 +24,7 @@ bool ChatPlugin::initialize() {
         QVariantList data;
         data << QString::fromStdString(timestamp) << QString::fromStdString(nick) << QString::fromStdString(message);
 
-        logosAPIProvider->onEventResponse(this, "chatMessage", data);
+        // logosAPIProvider->onEventResponse(this, "chatMessage", data);
     };
 
     void* result = ::initAndStart(logosAPIClient, currentRelayTopic, actualCallback);
@@ -47,7 +47,7 @@ bool ChatPlugin::retrieveHistory(const std::string& channelName) {
         QVariantList data;
         data << QString::fromStdString(timestamp) << QString::fromStdString(nick) << QString::fromStdString(message);
 
-        logosAPIProvider->onEventResponse(this, "historyMessage", data);
+        // logosAPIProvider->onEventResponse(this, "historyMessage", data);
     };
 
     ::retrieveHistory(logosAPIClient, channelName, actualCallback);
