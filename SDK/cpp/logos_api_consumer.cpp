@@ -201,42 +201,42 @@ QVariant LogosAPIConsumer::invokeRemoteMethod(const QString& objectName, const Q
     return pendingCall.returnValue();
 }
 
-// with one param
-QVariant LogosAPIConsumer::invokeRemoteMethod(const QString& objectName, const QString& methodName, 
-                                   const QVariant& arg, int timeoutMs)
-{
-    return invokeRemoteMethod(objectName, methodName, QVariantList() << arg, timeoutMs);
-}
-
-// with two params
-QVariant LogosAPIConsumer::invokeRemoteMethod(const QString& objectName, const QString& methodName, 
-                                   const QVariant& arg1, const QVariant& arg2, int timeoutMs)
-{
-    return invokeRemoteMethod(objectName, methodName, QVariantList() << arg1 << arg2, timeoutMs);
-}
-
-// with three params
-QVariant LogosAPIConsumer::invokeRemoteMethod(const QString& objectName, const QString& methodName, 
-                                   const QVariant& arg1, const QVariant& arg2, const QVariant& arg3, int timeoutMs)
-{
-    return invokeRemoteMethod(objectName, methodName, QVariantList() << arg1 << arg2 << arg3, timeoutMs);
-}
-
-// with four params
-QVariant LogosAPIConsumer::invokeRemoteMethod(const QString& objectName, const QString& methodName, 
-                                   const QVariant& arg1, const QVariant& arg2, const QVariant& arg3, 
-                                   const QVariant& arg4, int timeoutMs)
-{
-    return invokeRemoteMethod(objectName, methodName, QVariantList() << arg1 << arg2 << arg3 << arg4, timeoutMs);
-}
-
-// with five params
-QVariant LogosAPIConsumer::invokeRemoteMethod(const QString& objectName, const QString& methodName, 
-                                   const QVariant& arg1, const QVariant& arg2, const QVariant& arg3, 
-                                   const QVariant& arg4, const QVariant& arg5, int timeoutMs)
-{
-    return invokeRemoteMethod(objectName, methodName, QVariantList() << arg1 << arg2 << arg3 << arg4 << arg5, timeoutMs);
-}
+// // with one param
+// QVariant LogosAPIConsumer::invokeRemoteMethod(const QString& objectName, const QString& methodName, 
+//                                    const QVariant& arg, int timeoutMs)
+// {
+//     return invokeRemoteMethod(objectName, methodName, QVariantList() << arg, timeoutMs);
+// }
+// 
+// // with two params
+// QVariant LogosAPIConsumer::invokeRemoteMethod(const QString& objectName, const QString& methodName, 
+//                                    const QVariant& arg1, const QVariant& arg2, int timeoutMs)
+// {
+//     return invokeRemoteMethod(objectName, methodName, QVariantList() << arg1 << arg2, timeoutMs);
+// }
+// 
+// // with three params
+// QVariant LogosAPIConsumer::invokeRemoteMethod(const QString& objectName, const QString& methodName, 
+//                                    const QVariant& arg1, const QVariant& arg2, const QVariant& arg3, int timeoutMs)
+// {
+//     return invokeRemoteMethod(objectName, methodName, QVariantList() << arg1 << arg2 << arg3, timeoutMs);
+// }
+// 
+// // with four params
+// QVariant LogosAPIConsumer::invokeRemoteMethod(const QString& objectName, const QString& methodName, 
+//                                    const QVariant& arg1, const QVariant& arg2, const QVariant& arg3, 
+//                                    const QVariant& arg4, int timeoutMs)
+// {
+//     return invokeRemoteMethod(objectName, methodName, QVariantList() << arg1 << arg2 << arg3 << arg4, timeoutMs);
+// }
+// 
+// // with five params
+// QVariant LogosAPIConsumer::invokeRemoteMethod(const QString& objectName, const QString& methodName, 
+//                                    const QVariant& arg1, const QVariant& arg2, const QVariant& arg3, 
+//                                    const QVariant& arg4, const QVariant& arg5, int timeoutMs)
+// {
+//     return invokeRemoteMethod(objectName, methodName, QVariantList() << arg1 << arg2 << arg3 << arg4 << arg5, timeoutMs);
+// }
 
 // change from objectName to instead, originObject and destinationObject, and use QObject instead
 void LogosAPIConsumer::onEvent(QObject* originObject, QObject* destinationObject, const QString& eventName, std::function<void(const QString&, const QVariantList&)> callback)
