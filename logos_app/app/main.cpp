@@ -64,6 +64,17 @@ int main(int argc, char *argv[])
         qWarning() << "Failed to load package_manager plugin by default.";
     }
 
+    // Load capability_module by default
+    QString capabilityPluginPath = pluginsDir + "/capability_module_plugin" + pluginExtension;
+    logos_core_process_plugin(capabilityPluginPath.toUtf8().constData());
+    bool capabilityLoaded = logos_core_load_plugin("capability_module");
+
+    if (capabilityLoaded) {
+        qInfo() << "capability_module plugin loaded by default.";
+    } else {
+        qWarning() << "Failed to load capability_module plugin by default.";
+    }
+
     // Print loaded plugins initially
     char** loadedPlugins = logos_core_get_loaded_plugins();
     QStringList plugins = convertPluginsToStringList(loadedPlugins);

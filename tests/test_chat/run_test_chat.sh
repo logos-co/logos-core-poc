@@ -31,8 +31,8 @@ fi
 make -j$JOBS
 echo "Core build completed!"
 
-# Build chat and waku modules
-echo "Building chat and waku modules..."
+# Build chat, waku, and capability modules
+echo "Building chat, waku, and capability modules..."
 cd ../../modules
 if [ -d "build" ]; then
     echo "Cleaning existing modules build..."
@@ -41,8 +41,8 @@ fi
 mkdir -p build
 cd build
 cmake ..
-make -j$JOBS chat waku_module_plugin
-echo "Chat and Waku modules build completed!"
+make -j$JOBS chat waku_module_plugin capability_module_plugin
+echo "Chat, Waku, and capability modules build completed!"
 
 # Navigate to the tests directory
 cd ../../tests
@@ -106,6 +106,20 @@ if [ -f "$WAKU_MODULE_SOURCE" ]; then
     echo "Successfully copied waku plugin to: $WAKU_MODULE_DEST"
 else
     echo "Warning: waku plugin not found at: $WAKU_MODULE_SOURCE"
+    echo "You may need to build the modules first by running:"
+    echo "  cd ../../modules && mkdir -p build && cd build && cmake .. && make"
+fi
+
+# Copy the capability_module plugin from the modules build directory
+CAPABILITY_MODULE_SOURCE="../../modules/build/modules/capability_module_plugin.$LIB_EXT"
+CAPABILITY_MODULE_DEST="bin/modules/capability_module_plugin.$LIB_EXT"
+
+if [ -f "$CAPABILITY_MODULE_SOURCE" ]; then
+    echo "Copying capability_module plugin..."
+    cp "$CAPABILITY_MODULE_SOURCE" "$CAPABILITY_MODULE_DEST"
+    echo "Successfully copied capability_module plugin to: $CAPABILITY_MODULE_DEST"
+else
+    echo "Warning: capability_module plugin not found at: $CAPABILITY_MODULE_SOURCE"
     echo "You may need to build the modules first by running:"
     echo "  cd ../../modules && mkdir -p build && cd build && cmake .. && make"
 fi

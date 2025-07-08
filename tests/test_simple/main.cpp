@@ -210,12 +210,22 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+    // Load the capability_module plugin specifically
+    qDebug() << "\n=== Loading capability_module plugin ===";
+    if (logos_core_load_plugin("capability_module")) {
+        PluginTester::printSuccess("Successfully loaded capability_module plugin");
+    } else {
+        PluginTester::printError("CRITICAL: Failed to load capability_module plugin");
+        logos_core_cleanup();
+        exit(1);
+    }
+
     // Show and verify final plugin state
     qDebug() << "\n=== Final Plugin State ===";
     PluginTester::printLoadedPlugins("Final plugins");
     
     // Multiple assertion examples:
-    PluginTester::assertEqual(QStringList{"core_manager", "template_module"}, 3, 
+    PluginTester::assertEqual(QStringList{"core_manager", "template_module", "capability_module"}, 3, 
                              "Final state - exact match");
 
     // Test the event system
@@ -633,6 +643,43 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+    // Test the capability_module
+    qDebug() << "\n=== Testing Capability Module ===";
+    
+    // Initialize LogosAPI for testing capability_module
+    LogosAPIClient capabilityAPI("capability_module");
+    
+    // Get capability_module object for testing
+    QObject* capabilityModuleObj = capabilityAPI.requestObject("capability_module");
+    if (!capabilityModuleObj) {
+        PluginTester::printError("CRITICAL: Failed to get capability_module from registry");
+        logos_core_cleanup();
+        exit(1);
+    }
+    
+    // Test the requestModule method
+    QString testModuleName = "test_module";
+    qDebug() << "Calling requestModule() with parameter:" << testModuleName;
+    
+    QVariant requestResult = capabilityAPI.invokeRemoteMethod("capability_module", "requestModule", testModuleName);
+    if (!requestResult.isValid()) {
+        PluginTester::printError("CRITICAL: Failed to call requestModule() method");
+        logos_core_cleanup();
+        exit(1);
+    }
+    
+    QString actualCapabilityResult = requestResult.toString();
+    QString expectedCapabilityResult = "abc"; // The hardcoded return value
+    
+    if (actualCapabilityResult != expectedCapabilityResult) {
+        PluginTester::printError(QString("CRITICAL: requestModule() result mismatch. Expected: '%1', Got: '%2'")
+                               .arg(expectedCapabilityResult).arg(actualCapabilityResult));
+        logos_core_cleanup();
+        exit(1);
+    }
+    
+    PluginTester::printSuccess(QString("PASS: requestModule() returned correct result: '%1'").arg(actualCapabilityResult));
+
     // All assertions passed - test completed successfully
     qDebug() << "\n=== All Tests Completed Successfully ===";
     qDebug() << "✓ Plugin loading tests passed";
@@ -646,6 +693,7 @@ int main(int argc, char *argv[])
     qDebug() << "✓ Template module getStringList() method test passed";
     qDebug() << "✓ Template module processData() method test passed";
     qDebug() << "✓ Template module formatMessage() method test passed";
+    qDebug() << "✓ Capability module requestModule() method test passed";
 
     // // Clean up resources
     // logos_core_cleanup();

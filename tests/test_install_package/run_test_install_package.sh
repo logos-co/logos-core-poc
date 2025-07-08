@@ -41,7 +41,7 @@ fi
 mkdir -p build
 cd build
 cmake ..
-make -j$JOBS template_module_plugin package_manager_plugin
+make -j$JOBS template_module_plugin package_manager_plugin capability_module_plugin
 echo "Modules build completed!"
 
 # Navigate to the tests directory
@@ -96,8 +96,8 @@ else
     echo "  cd ../../modules && mkdir -p build && cd build && cmake .. && make"
 fi
 
-# Create modules directory and install package_manager
-echo "Setting up modules directory and installing package_manager..."
+# Create modules directory and install package_manager and capability_module
+echo "Setting up modules directory and installing package_manager and capability_module..."
 mkdir -p bin/modules
 
 # Copy the package_manager plugin to modules directory (pre-installed)
@@ -110,6 +110,20 @@ if [ -f "$PACKAGE_MANAGER_SOURCE" ]; then
     echo "Successfully installed package_manager plugin to: $PACKAGE_MANAGER_DEST"
 else
     echo "Warning: package_manager plugin not found at: $PACKAGE_MANAGER_SOURCE"
+    echo "You may need to build the modules first by running:"
+    echo "  cd ../../modules && mkdir -p build && cd build && cmake .. && make"
+fi
+
+# Copy the capability_module plugin to modules directory (pre-installed)
+CAPABILITY_MODULE_SOURCE="../../modules/build/modules/capability_module_plugin.$LIB_EXT"
+CAPABILITY_MODULE_DEST="bin/modules/capability_module_plugin.$LIB_EXT"
+
+if [ -f "$CAPABILITY_MODULE_SOURCE" ]; then
+    echo "Installing capability_module plugin..."
+    cp "$CAPABILITY_MODULE_SOURCE" "$CAPABILITY_MODULE_DEST"
+    echo "Successfully installed capability_module plugin to: $CAPABILITY_MODULE_DEST"
+else
+    echo "Warning: capability_module plugin not found at: $CAPABILITY_MODULE_SOURCE"
     echo "You may need to build the modules first by running:"
     echo "  cd ../../modules && mkdir -p build && cd build && cmake .. && make"
 fi

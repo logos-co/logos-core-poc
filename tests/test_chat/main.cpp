@@ -220,12 +220,22 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+    // Load the capability_module plugin specifically
+    qDebug() << "\n=== Loading capability_module plugin ===";
+    if (logos_core_load_plugin("capability_module")) {
+        PluginTester::printSuccess("Successfully loaded capability_module plugin");
+    } else {
+        PluginTester::printError("CRITICAL: Failed to load capability_module plugin");
+        logos_core_cleanup();
+        exit(1);
+    }
+
     // Show and verify final plugin state
     qDebug() << "\n=== Final Plugin State ===";
     PluginTester::printLoadedPlugins("Final plugins");
 
     // Multiple assertion examples:
-    PluginTester::assertEqual(QStringList{"core_manager", "chat", "waku_module"}, 3, 
+    PluginTester::assertEqual(QStringList{"core_manager", "chat", "waku_module", "capability_module"}, 3, 
                              "Final state - exact match");
 
     // Test the chat and waku modules
