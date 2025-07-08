@@ -1,0 +1,13 @@
+{
+  "name": "capability_module",
+  "version": "1.0.0",
+  "description": "Capability module for module request handling",
+  "author": "Logos Core Team",
+  "type": "core",
+  "category": "capability",
+  "main": "capability_module_plugin",
+  "dependencies": [],
+  "capabilities": [
+    "module_request"
+  ]
+} 
