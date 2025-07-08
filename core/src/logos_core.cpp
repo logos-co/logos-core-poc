@@ -377,6 +377,30 @@ static bool initializeCoreManager()
     return true;
 }
 
+// Helper function to initialize capability module
+static bool initializeCapabilityModule()
+{
+    qDebug() << "\n=== Initializing Capability Module ===";
+    
+    // Check if capability_module is available in known plugins
+    if (!g_known_plugins.contains("capability_module")) {
+        qDebug() << "Capability module not found in known plugins, skipping initialization";
+        return false;
+    }
+    
+    qDebug() << "Capability module found, attempting to load...";
+    
+    // Load the capability module
+    bool success = loadPlugin("capability_module");
+    if (success) {
+        qDebug() << "Capability module loaded successfully";
+        return true;
+    } else {
+        qWarning() << "Failed to load capability module";
+        return false;
+    }
+}
+
 void logos_core_init(int argc, char *argv[])
 {
     // Create the application instance
@@ -437,6 +461,9 @@ void logos_core_start()
             // loadAndProcessPlugin(pluginPath);
             processPlugin(pluginPath);
         }
+        
+        // Initialize capability module if available
+        initializeCapabilityModule();
     }
 }
 

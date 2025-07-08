@@ -198,7 +198,7 @@ int main(int argc, char *argv[])
     PluginTester::printLoadedPlugins("Initial plugins");
     
     // Assert that core_manager plugin is loaded initially
-    PluginTester::assertEqual(QStringList{"core_manager"}, 1, "Initial state check");
+    PluginTester::assertEqual(QStringList{"core_manager", "capability_module"}, 1, "Initial state check");
 
     // Load the template_module plugin specifically
     qDebug() << "\n=== Loading template_module plugin ===";
@@ -211,14 +211,14 @@ int main(int argc, char *argv[])
     }
 
     // Load the capability_module plugin specifically
-    qDebug() << "\n=== Loading capability_module plugin ===";
-    if (logos_core_load_plugin("capability_module")) {
-        PluginTester::printSuccess("Successfully loaded capability_module plugin");
-    } else {
-        PluginTester::printError("CRITICAL: Failed to load capability_module plugin");
-        logos_core_cleanup();
-        exit(1);
-    }
+    //qDebug() << "\n=== Loading capability_module plugin ===";
+    //if (logos_core_load_plugin("capability_module")) {
+    //    PluginTester::printSuccess("Successfully loaded capability_module plugin");
+    //} else {
+    //    PluginTester::printError("CRITICAL: Failed to load capability_module plugin");
+    //    logos_core_cleanup();
+    //    exit(1);
+    //}
 
     // Show and verify final plugin state
     qDebug() << "\n=== Final Plugin State ===";
