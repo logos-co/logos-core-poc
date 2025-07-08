@@ -36,9 +36,9 @@ namespace {
             : arg(a), deleter(std::move(d)) {}
 
         ~ScopedQArg() {
-            if (deleter) {
-                deleter(arg.data);
-            }
+            // if (deleter) {
+            //     deleter(arg.data);
+            // }
         }
 
         ScopedQArg(ScopedQArg&&) = default;
