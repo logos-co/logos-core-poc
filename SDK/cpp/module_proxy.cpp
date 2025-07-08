@@ -36,13 +36,16 @@ namespace {
             : arg(a), deleter(std::move(d)) {}
 
         ~ScopedQArg() {
-            // if (deleter) {
-            //     deleter(arg.data);
-            // }
+            if (deleter) {
+                deleter(arg.data);
+            }
         }
 
-        ScopedQArg(ScopedQArg&&) = default;
-        ScopedQArg& operator=(ScopedQArg&&) = default;
+        ScopedQArg(ScopedQArg&& other)
+            : arg(std::move(other.arg)), deleter(std::move(other.deleter)) {
+                other.deleter = nullptr;
+        }
+        ScopedQArg& operator=(ScopedQArg&&) = delete;
         ScopedQArg(const ScopedQArg&) = delete;
         ScopedQArg& operator=(const ScopedQArg&) = delete;
 
