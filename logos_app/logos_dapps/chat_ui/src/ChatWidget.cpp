@@ -33,7 +33,7 @@ ChatWidget::ChatWidget(QWidget* parent)
     // Set as the active widget
     activeWidget = this;
     
-    m_logosAPI = new LogosAPIClient("chat", this);
+    m_logosAPI = new LogosAPIClient("chat", "app", this);
     
     // Generate random username with 2 digits that will persist during this class lifetime
     int randomNum = rand() % 100;

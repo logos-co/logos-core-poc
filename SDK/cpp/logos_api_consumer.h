@@ -29,10 +29,13 @@ class LogosAPIConsumer : public QObject
 public:
     /**
      * @brief Construct a new LogosAPIConsumer
-     * @param module_name The name of the module to connect to (default: "core_registry")
+     * @param module_to_talk_to The name of the module to connect to (default: "core_registry")
+     * @param origin_module The name of the origin module making the connection
      * @param parent Parent QObject
      */
-    explicit LogosAPIConsumer(const QString& module_name = "core_registry", QObject *parent = nullptr);
+    explicit LogosAPIConsumer(const QString& module_to_talk_to = "core_registry", 
+                             const QString& origin_module = "origin_module", 
+                             QObject *parent = nullptr);
     
     /**
      * @brief Destructor - cleans up the remote object node

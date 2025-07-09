@@ -136,7 +136,7 @@ QString CoreManagerPlugin::requestModule(const QString& moduleName) {
 QJsonArray CoreManagerPlugin::getPluginMethods(const QString& pluginName) {
     QJsonArray methodsArray;
 
-    auto m_logosAPI = new LogosAPIClient(pluginName, this);
+    auto m_logosAPI = new LogosAPIClient(pluginName, "core_manager", this);
 
     // Get the plugin using LogosAPIClient instead of PluginRegistry
     QObject* plugin = nullptr;

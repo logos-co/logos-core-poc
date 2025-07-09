@@ -35,7 +35,7 @@ PackageManagerView::PackageManagerView(QWidget *parent)
     , m_mainWindow(nullptr)
     , m_logosAPI(nullptr)
 {
-    m_logosAPI = new LogosAPIClient("package_manager", this);
+    m_logosAPI = new LogosAPIClient("package_manager", "app", this);
     
     setupUi();
 }

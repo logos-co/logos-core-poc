@@ -16,7 +16,7 @@ public:
     CapabilityModulePlugin();
     ~CapabilityModulePlugin();
 
-    Q_INVOKABLE QString requestModule(const QString &moduleName) override;
+    Q_INVOKABLE QString requestModule(const QString &fromModuleName, const QString &moduleName) override;
     QString name() const override { return "capability_module"; }
     QString version() const override { return "1.0.0"; }
 

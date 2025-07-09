@@ -41,12 +41,33 @@ public:
      */
     Q_INVOKABLE QVariant callRemoteMethod(const QString& authToken, const QString& methodName, const QVariantList& args = QVariantList());
 
+    /**
+     * @brief Save a token from a module
+     * @param authToken Authentication token to verify access
+     * @param from_module_name Name of the module providing the token
+     * @param token The token to save
+     * @return bool indicating success or failure
+     */
+    bool saveToken(const QString& from_module_name, const QString& token);
+
+    /**
+     * @brief Inform the proxy about a module token
+     * @param authToken Authentication token to verify access
+     * @param moduleName Name of the module the token is for
+     * @param token The token to save
+     * @return bool indicating success or failure
+     */
+    Q_INVOKABLE bool informModuleToken(const QString& authToken, const QString& moduleName, const QString& token);
+
 signals:
     void eventResponse(const QString& eventName, const QVariantList& data);
 
 private:
     QObject* m_module;
     QString m_authToken;
+    
+    // Storage for tokens from modules
+    QHash<QString, QString> m_tokens;
     
     // Storage for string arguments to keep them alive during method calls
     // Key: GUID for method call, Value: list of string arguments for that call

@@ -22,10 +22,13 @@ class LogosAPIClient : public QObject
 public:
     /**
      * @brief Construct a new LogosAPIClient
-     * @param module_name The name of the module to connect to (default: "core_registry")
+     * @param module_to_talk_to The name of the module to connect to (default: "core_registry")
+     * @param origin_module The name of the origin module making the connection
      * @param parent Parent QObject
      */
-    explicit LogosAPIClient(const QString& module_name = "core_registry", QObject *parent = nullptr);
+    explicit LogosAPIClient(const QString& module_to_talk_to = "core_registry", 
+                           const QString& origin_module = "origin_module", 
+                           QObject *parent = nullptr);
     
     /**
      * @brief Destructor - cleans up the consumer
@@ -171,6 +174,14 @@ public:
      */
     QString getToken(const QString& module_name);
 
+    /**
+     * @brief Inform a module about another module's token
+     * @param module_to_inform The module to inform about the token
+     * @param module_name The module the token belongs to
+     * @param module_token The token to inform about
+     */
+    void informModuleToken(const QString& module_to_inform, const QString& module_name, const QString& module_token);
+
 public slots:
     /**
      * @brief Helper slot to invoke stored callbacks
@@ -181,6 +192,7 @@ public slots:
 
 private:
     LogosAPIConsumer* m_consumer;
+    QHash<QString, QString> m_tokens;  // Local token storage for this client
 };
 
 #endif // LOGOS_API_CLIENT_H 

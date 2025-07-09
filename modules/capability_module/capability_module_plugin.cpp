@@ -5,6 +5,7 @@
 #include <QDateTime>
 #include <QJsonArray>
 #include <QJsonObject>
+#include "../../SDK/cpp/logos_api_client.h"
 
 CapabilityModulePlugin::CapabilityModulePlugin() : logosAPI(nullptr)
 {
@@ -25,14 +26,18 @@ CapabilityModulePlugin::~CapabilityModulePlugin()
     }
 }
 
-QString CapabilityModulePlugin::requestModule(const QString &moduleName)
+QString CapabilityModulePlugin::requestModule(const QString &fromModuleName, const QString &moduleName)
 {
-    qDebug() << "CapabilityModulePlugin::requestModule called with:" << moduleName;
+    qDebug() << "CapabilityModulePlugin::requestModule called with fromModuleName:" << fromModuleName << "moduleName:" << moduleName;
     
     // Hardcoded return value as requested
     QString result = "abc";
     
     qDebug() << "CapabilityModulePlugin::requestModule returning:" << result;
+    
+    // Use LogosAPIClient to call informModuleToken on capability_module
+    LogosAPIClient* client = new LogosAPIClient("capability_module", "capability_module", this);
+    client->informModuleToken("capability_module", moduleName, result);
     
     // Create event data with the module name parameter
     QVariantList eventData;

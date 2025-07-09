@@ -3,7 +3,7 @@
 #include <QDateTime>
 
 ChatPlugin::ChatPlugin() : currentRelayTopic("/waku/2/rs/16/32"), logosAPIClient(nullptr), logosAPIProvider(nullptr) {
-    logosAPIClient = new LogosAPIClient("waku_module", this);
+    logosAPIClient = new LogosAPIClient("waku_module", "app", this);
     logosAPIProvider = new LogosAPIProvider("waku_module", this);
 }
 

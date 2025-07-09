@@ -11,10 +11,10 @@
 
 const QString AUTH_TOKEN = "abc";
 
-LogosAPIConsumer::LogosAPIConsumer(const QString& module_name, QObject *parent)
+LogosAPIConsumer::LogosAPIConsumer(const QString& module_to_talk_to, const QString& origin_module, QObject *parent)
     : QObject(parent)
     , m_node(nullptr)
-    , m_registryUrl(QString("local:logos_%1").arg(module_name))
+    , m_registryUrl(QString("local:logos_%1").arg(module_to_talk_to))
     , m_connected(false)
 {
     m_node = new QRemoteObjectNode(this);

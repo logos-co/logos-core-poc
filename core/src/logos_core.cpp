@@ -872,7 +872,7 @@ void logos_core_call_plugin_method_async(
             qDebug() << "Converted parameters to QVariantList, count:" << args.size();
             
                 // Create LogosAPIClient instance to make the remote call
-    LogosAPIClient* logosAPI = new LogosAPIClient(pluginNameStr);
+    LogosAPIClient* logosAPI = new LogosAPIClient(pluginNameStr, "app");
             
             // Use a longer delay to ensure connection is established
             QTimer* connectionTimer = new QTimer();
@@ -975,7 +975,7 @@ void logos_core_register_event_listener(
         
         QObject::connect(setupTimer, &QTimer::timeout, [=]() {
             // Create LogosAPIClient instance to connect to the plugin
-    LogosAPIClient* logosAPI = new LogosAPIClient(pluginNameStr);
+    LogosAPIClient* logosAPI = new LogosAPIClient(pluginNameStr, "origin_module");
         
         // Use a delay to ensure connection is established
         QTimer* connectionTimer = new QTimer();

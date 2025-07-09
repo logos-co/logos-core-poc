@@ -661,7 +661,7 @@ int main(int argc, char *argv[])
     QString testModuleName = "test_module";
     qDebug() << "Calling requestModule() with parameter:" << testModuleName;
     
-    QVariant requestResult = capabilityAPI.invokeRemoteMethod("capability_module", "requestModule", testModuleName);
+    QVariant requestResult = capabilityAPI.invokeRemoteMethod("capability_module", "requestModule", "app", testModuleName);
     if (!requestResult.isValid()) {
         PluginTester::printError("CRITICAL: Failed to call requestModule() method");
         logos_core_cleanup();

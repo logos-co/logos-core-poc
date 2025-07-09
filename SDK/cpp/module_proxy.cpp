@@ -263,5 +263,44 @@ QVariant ModuleProxy::callRemoteMethod(const QString& authToken, const QString& 
     return result;
 }
 
+bool ModuleProxy::saveToken(const QString& from_module_name, const QString& token)
+{
+    qDebug() << "ModuleProxy: saveToken called with from_module_name:" << from_module_name 
+             << "token:" << token;
+
+    if (from_module_name.isEmpty()) {
+        qWarning() << "ModuleProxy: Module name cannot be empty";
+        return false;
+    }
+
+    if (token.isEmpty()) {
+        qWarning() << "ModuleProxy: Token cannot be empty";
+        return false;
+    }
+
+    // Save the token in the hash
+    m_tokens[from_module_name] = token;
+    qDebug() << "ModuleProxy: Successfully saved token for module:" << from_module_name;
+    qDebug() << "ModuleProxy: Total tokens stored:" << m_tokens.size();
+
+    return true;
+}
+
+bool ModuleProxy::informModuleToken(const QString& authToken, const QString& moduleName, const QString& token)
+{
+    qDebug() << "ModuleProxy: informModuleToken called with authToken:" << authToken 
+             << "moduleName:" << moduleName 
+             << "token:" << token;
+
+    // Verify authToken is valid (hardcoded check for "abc")
+    if (authToken != "abc") {
+        qWarning() << "ModuleProxy: Invalid authentication token for informModuleToken:" << authToken;
+        return false;
+    }
+
+    // Call saveToken to actually save the token
+    return saveToken(moduleName, token);
+}
+
 // Include MOC for template instantiation
 #include "moc_module_proxy.cpp" 

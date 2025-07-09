@@ -1,9 +1,9 @@
 #include "logos_api_client.h"
 #include "logos_api_consumer.h"
 
-LogosAPIClient::LogosAPIClient(const QString& module_name, QObject *parent)
+LogosAPIClient::LogosAPIClient(const QString& module_to_talk_to, const QString& origin_module, QObject *parent)
     : QObject(parent)
-    , m_consumer(new LogosAPIConsumer(module_name, this))
+    , m_consumer(new LogosAPIConsumer(module_to_talk_to, origin_module, this))
 {
 }
 
@@ -77,7 +77,7 @@ QVariant LogosAPIClient::invokeRemoteMethod(const QString& objectName, const QSt
 
     if (objectName != "capability_module") {
         qDebug() << "LogosAPIClient: calling requestModule for" << objectName;
-        LogosAPIConsumer* packageManagerConsumer = new LogosAPIConsumer("capability_module", this);
+        LogosAPIConsumer* packageManagerConsumer = new LogosAPIConsumer("capability_module", "origin_module", this);
         QVariant result = packageManagerConsumer->invokeRemoteMethod("capability_module", "requestModule", QVariantList() << objectName, timeoutMs);
         qDebug() << "================================================";
         qDebug() << "================================================";
@@ -140,17 +140,45 @@ void LogosAPIClient::onEvent(QObject* originObject, QObject* destinationObject, 
 
 void LogosAPIClient::saveToken(const QString& to_module_name, const QString& token)
 {
-    m_consumer->saveToken(to_module_name, token);
+    qDebug() << "LogosAPIClient: Saving token locally for module:" << to_module_name;
+    
+    if (to_module_name.isEmpty()) {
+        qWarning() << "LogosAPIClient: Module name cannot be empty when saving token";
+        return;
+    }
+    
+    if (token.isEmpty()) {
+        qWarning() << "LogosAPIClient: Token cannot be empty";
+        return;
+    }
+    
+    // Store token locally in this client instance
+    m_tokens[to_module_name] = token;
+    qDebug() << "LogosAPIClient: Token saved locally for module:" << to_module_name;
+    qDebug() << "LogosAPIClient: Total tokens stored locally:" << m_tokens.size();
 }
 
 QString LogosAPIClient::getToken(const QString& module_name)
 {
+    if (m_tokens.contains(module_name)) {
+        qDebug() << "LogosAPIClient: Using locally stored token for module:" << module_name;
+        return m_tokens[module_name];
+    }
+    qDebug() << "LogosAPIClient: No locally stored token for module:" << module_name << "- delegating to consumer";
     return m_consumer->getToken(module_name);
 }
 
 void LogosAPIClient::invokeCallback(const QString& eventName, const QVariantList& data)
 {
     m_consumer->invokeCallback(eventName, data);
+}
+
+void LogosAPIClient::informModuleToken(const QString& module_to_inform, const QString& module_name, const QString& module_token)
+{
+    qDebug() << "LogosAPIClient: informModuleToken called with:";
+    qDebug() << "  module_to_inform:" << module_to_inform;
+    qDebug() << "  module_name:" << module_name;
+    qDebug() << "  module_token:" << module_token;
 }
 
 // Include MOC for template instantiation
