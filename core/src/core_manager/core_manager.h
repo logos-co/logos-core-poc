@@ -8,7 +8,7 @@
 #include "../../interface.h"
 
 // Forward declaration
-class LogosAPI;
+class LogosAPIClient;
 
 class CoreManagerPlugin : public QObject, public PluginInterface {
     Q_OBJECT
@@ -39,7 +39,7 @@ public:
 private:
     QString m_pluginsDirectory;
     QStringList m_loadedPlugins;
-    LogosAPI* m_logosAPI;
+    LogosAPIClient* m_logosAPI;
 };
 
 #endif // CORE_MANAGER_PLUGIN_H 

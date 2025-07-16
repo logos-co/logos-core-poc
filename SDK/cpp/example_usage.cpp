@@ -6,7 +6,7 @@
  * to the Logos Core registry and request remote objects.
  */
 
-#include "logos_api.h"
+#include "logos_api_client.h"
 #include <QMetaObject>
 #include <QRemoteObjectReplica>
 #include <QDebug>
@@ -14,7 +14,7 @@
 void exampleUsage()
 {
     // Create a client instance (uses default registry URL)
-    LogosAPI client;
+    LogosAPIClient client("core_manager", "example");
     
     // Check if connected
     if (!client.isConnected()) {

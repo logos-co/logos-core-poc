@@ -5,7 +5,7 @@
 #include <iostream>
 #include <csignal>
 #include <QTimer>
-#include "logos_api.h"
+#include "logos_api_client.h"
 
 // Static pointer to the active ChatWidget for callbacks
 static ChatWidget* activeWidget = nullptr;
@@ -33,7 +33,7 @@ ChatWidget::ChatWidget(QWidget* parent)
     // Set as the active widget
     activeWidget = this;
     
-    m_logosAPI = new LogosAPI("chat", this);
+    m_logosAPI = new LogosAPIClient("chat", "chat_ui", this);
     
     // Generate random username with 2 digits that will persist during this class lifetime
     int randomNum = rand() % 100;

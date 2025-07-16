@@ -19,12 +19,14 @@ class ModuleProxy : public QObject
     Q_OBJECT
 
 public:
+
     /**
-     * @brief Construct a new ModuleProxy
+     * @brief Construct a new ModuleProxy with authentication token
      * @param module The module object to proxy
+     * @param authToken Authentication token for the module
      * @param parent Parent QObject
      */
-    explicit ModuleProxy(QObject* module, QObject* parent = nullptr);
+    explicit ModuleProxy(QObject* module, const QString& authToken, QObject* parent = nullptr);
 
     /**
      * @brief Destructor

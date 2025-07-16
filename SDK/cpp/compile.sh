@@ -17,6 +17,20 @@ else
     exit 1
 fi
 
+# Find MOC binary
+if [ -f "$QT_PATH/bin/moc" ]; then
+    MOC_BIN="$QT_PATH/bin/moc"
+elif [ -f "$QT_PATH/libexec/moc" ]; then
+    MOC_BIN="$QT_PATH/libexec/moc"
+elif command -v moc >/dev/null 2>&1; then
+    MOC_BIN="moc"
+else
+    echo "Error: MOC (Meta-Object Compiler) not found. Please ensure Qt development tools are installed."
+    exit 1
+fi
+
+echo "Using MOC: $MOC_BIN"
+
 # Set Qt include paths - handle both Qt5 and Qt6 on different platforms
 if [ -d "$QT_PATH/lib" ]; then
     # Qt6 style with lib directory (common on macOS)
@@ -36,26 +50,113 @@ echo "Using Qt includes: $QT_INCLUDES"
 # Compiler flags
 CXXFLAGS="-std=c++17 -fPIC"
 
-# Try to compile the header (syntax check)
+# Generate MOC files for headers with Q_OBJECT
+echo "Generating MOC files..."
+
+# List of headers that need MOC processing (contain Q_OBJECT)
+MOC_HEADERS=(
+    "logos_api_client.h"
+    "logos_api_provider.h" 
+    "logos_api_consumer.h"
+    "module_proxy.h"
+)
+
+for header in "${MOC_HEADERS[@]}"; do
+    if [ -f "$header" ]; then
+        echo "Generating MOC for $header..."
+        $MOC_BIN $header -o "moc_${header%.h}.cpp"
+        if [ $? -ne 0 ]; then
+            echo "❌ MOC generation failed for $header"
+            exit 1
+        fi
+    fi
+done
+
+# Try to compile the headers (syntax check)
 echo "Checking header syntax..."
-g++ $CXXFLAGS $QT_INCLUDES -c -x c++-header logos_api.h -o /tmp/logos_api.h.gch
+
+g++ $CXXFLAGS $QT_INCLUDES -c -x c++-header logos_api_client.h -o /tmp/logos_api_client.h.gch
 if [ $? -eq 0 ]; then
-    echo "✅ Header syntax OK"
-    rm -f /tmp/logos_api.h.gch
+    echo "✅ Client header syntax OK"
+    rm -f /tmp/logos_api_client.h.gch
 else
-    echo "❌ Header has syntax errors"
+    echo "❌ Client header has syntax errors"
     exit 1
 fi
 
-# Try to compile the implementation (without linking)
+g++ $CXXFLAGS $QT_INCLUDES -c -x c++-header logos_api_provider.h -o /tmp/logos_api_provider.h.gch
+if [ $? -eq 0 ]; then
+    echo "✅ Provider header syntax OK"
+    rm -f /tmp/logos_api_provider.h.gch
+else
+    echo "❌ Provider header has syntax errors"
+    exit 1
+fi
+
+g++ $CXXFLAGS $QT_INCLUDES -c -x c++-header logos_api_consumer.h -o /tmp/logos_api_consumer.h.gch
+if [ $? -eq 0 ]; then
+    echo "✅ Consumer header syntax OK"
+    rm -f /tmp/logos_api_consumer.h.gch
+else
+    echo "❌ Consumer header has syntax errors"
+    exit 1
+fi
+
+g++ $CXXFLAGS $QT_INCLUDES -c -x c++-header module_proxy.h -o /tmp/module_proxy.h.gch
+if [ $? -eq 0 ]; then
+    echo "✅ Module proxy header syntax OK"
+    rm -f /tmp/module_proxy.h.gch
+else
+    echo "❌ Module proxy header has syntax errors"
+    exit 1
+fi
+
+# Try to compile the implementations (without linking)
 echo "Checking implementation syntax..."
-g++ $CXXFLAGS $QT_INCLUDES -c logos_api.cpp -o /tmp/logos_api.o
+
+g++ $CXXFLAGS $QT_INCLUDES -c logos_api_client.cpp -o /tmp/logos_api_client.o
 if [ $? -eq 0 ]; then
-    echo "✅ Implementation compiles OK"
-    rm -f /tmp/logos_api.o
+    echo "✅ Client implementation compiles OK"
+    rm -f /tmp/logos_api_client.o
 else
-    echo "❌ Implementation has compilation errors"
+    echo "❌ Client implementation has compilation errors"
     exit 1
 fi
 
-echo "🎉 LogosAPI compilation test passed!" 
+g++ $CXXFLAGS $QT_INCLUDES -c logos_api_provider.cpp -o /tmp/logos_api_provider.o
+if [ $? -eq 0 ]; then
+    echo "✅ Provider implementation compiles OK"
+    rm -f /tmp/logos_api_provider.o
+else
+    echo "❌ Provider implementation has compilation errors"
+    exit 1
+fi
+
+g++ $CXXFLAGS $QT_INCLUDES -c logos_api_consumer.cpp -o /tmp/logos_api_consumer.o
+if [ $? -eq 0 ]; then
+    echo "✅ Consumer implementation compiles OK"
+    rm -f /tmp/logos_api_consumer.o
+else
+    echo "❌ Consumer implementation has compilation errors"
+    exit 1
+fi
+
+g++ $CXXFLAGS $QT_INCLUDES -c module_proxy.cpp -o /tmp/module_proxy.o
+if [ $? -eq 0 ]; then
+    echo "✅ Module proxy implementation compiles OK"
+    rm -f /tmp/module_proxy.o
+else
+    echo "❌ Module proxy implementation has compilation errors"
+    exit 1
+fi
+
+# Clean up generated MOC files
+echo "Cleaning up generated MOC files..."
+for header in "${MOC_HEADERS[@]}"; do
+    moc_file="moc_${header%.h}.cpp"
+    if [ -f "$moc_file" ]; then
+        rm -f "$moc_file"
+    fi
+done
+
+echo "🎉 LogosAPI compilation test passed for all components!" 

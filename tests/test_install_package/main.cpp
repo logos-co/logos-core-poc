@@ -7,7 +7,7 @@
 #include <QVariantList>
 #include <QFile>
 #include "../../core/src/logos_core.h"
-#include "../../SDK/cpp/logos_api.h"
+#include "../../SDK/cpp/logos_api_client.h"
 
 // Qt-style plugin testing utility class
 class PluginTester {
@@ -237,8 +237,8 @@ int main(int argc, char *argv[])
         // Test package installation via package_manager
     qDebug() << "\n=== Testing Package Installation ===";
     
-    // Initialize LogosAPI for testing
-    LogosAPI testAPI("package_manager");
+            // Initialize LogosAPI for testing
+        LogosAPIClient testAPI("package_manager", "test_install_package");
     
     // Determine the correct file extension for this platform
     QString libExt;
@@ -291,7 +291,7 @@ int main(int argc, char *argv[])
         qDebug() << "\n=== Testing Template Module Events ===";
 
         // Initialize LogosAPI for testing
-        LogosAPI eventTestAPI("template_module");
+        LogosAPIClient eventTestAPI("template_module", "test_install_package");
 
         // Get template_module object for event listening
         QObject* templateModuleObj = eventTestAPI.requestObject("template_module");
