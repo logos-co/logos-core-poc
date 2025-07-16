@@ -9,7 +9,7 @@
 #include <QStackedWidget>
 #include <QFileDialog>
 #include <QMessageBox>
-#include "logos_api.h"
+#include "logos_api_client.h"
 #include "pluginmethodsview.h"
 #include <QJsonArray>
 #include <QJsonObject>
@@ -172,7 +172,7 @@ void CoreModuleView::updatePluginList()
     qDebug() << "\n\n----------> Updating plugin list\n\n";
     
     // Use LogosAPI to get the list of known plugins
-    LogosAPI api;
+    LogosAPIClient api("core_manager", "main_ui");
     QVariant result = api.invokeRemoteMethod("core_manager", "getKnownPlugins");
     
     if (!result.isValid()) {
@@ -279,7 +279,7 @@ void CoreModuleView::onLoadPluginClicked()
     qDebug() << "Loading plugin:" << pluginName;
 
     // Use LogosAPI to load the plugin
-    LogosAPI api;
+    LogosAPIClient api("core_manager", "main_ui");
     QVariant result = api.invokeRemoteMethod("core_manager", "loadPlugin", pluginName);
 
     bool success = result.toBool();
@@ -308,7 +308,7 @@ void CoreModuleView::onUnloadPluginClicked()
     qDebug() << "Unloading plugin:" << pluginName;
 
     // Use LogosAPI to unload the plugin
-    LogosAPI api;
+    LogosAPIClient api("core_manager", "main_ui");
     QVariant result = api.invokeRemoteMethod("core_manager", "unloadPlugin", pluginName);
 
     bool success = result.toBool();
@@ -391,7 +391,7 @@ void CoreModuleView::onAddPluginClicked()
     qDebug() << "Selected plugin file:" << filePath;
 
     // Use LogosAPI to install the plugin
-    LogosAPI api;
+    LogosAPIClient api("core_manager", "main_ui");
     QVariant result = api.invokeRemoteMethod("core_manager", "installPlugin", filePath);
 
     bool success = result.toBool();

@@ -9,7 +9,7 @@
 #include <QFileInfo>
 #include <QFile>
 #include "logos_core.h"
-#include "logos_api.h"
+#include "logos_api_client.h"
 
 CoreManagerPlugin::CoreManagerPlugin() {
     qDebug() << "CoreManager plugin created";
@@ -129,7 +129,7 @@ QString CoreManagerPlugin::processPlugin(const QString& filePath) {
 QJsonArray CoreManagerPlugin::getPluginMethods(const QString& pluginName) {
     QJsonArray methodsArray;
 
-    auto m_logosAPI = new LogosAPI(pluginName, this);
+    auto m_logosAPI = new LogosAPIClient(pluginName, "core_manager", this);
 
     // Get the plugin using LogosAPI instead of PluginRegistry
     QObject* plugin = nullptr;

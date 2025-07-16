@@ -5,7 +5,7 @@
 #include <QTreeWidgetItem>
 #include <QDebug>
 #include <QMessageBox>
-#include "logos_api.h"
+#include "logos_api_client.h"
 
 PluginMethodsView::PluginMethodsView(const QString& pluginName, QWidget* parent)
     : QWidget(parent)
@@ -117,7 +117,7 @@ void PluginMethodsView::setupUi()
 
 void PluginMethodsView::loadPluginMethods()
 {
-    LogosAPI api;
+    LogosAPIClient api("core_manager", "main_ui");
     QVariant result = api.invokeRemoteMethod("core_manager", "getPluginMethods", m_pluginName);
 
     if (!result.isValid()) {

@@ -8,7 +8,7 @@
 #include <QLineEdit>
 #include <QLabel>
 #include <string>
-#include "logos_api.h"
+#include "logos_api_client.h"
 
 class ChatWidget : public QWidget {
     Q_OBJECT
@@ -40,7 +40,7 @@ private:
     QLabel* statusLabel;
     
     // LogosAPI instance for remote method calls
-    LogosAPI* m_logosAPI;
+    LogosAPIClient* m_logosAPI;
     
     // Connection status
     bool isWakuInitialized;

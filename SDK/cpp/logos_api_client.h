@@ -1,52 +1,45 @@
-#ifndef LOGOS_API_H
-#define LOGOS_API_H
+#ifndef LOGOS_API_CLIENT_H
+#define LOGOS_API_CLIENT_H
 
 #include <QObject>
 #include <QString>
-#include <QUrl>
 #include <QVariant>
 #include <QVariantList>
-#include <QList>
 #include <QMap>
-#include <QHash>
-#include <QDebug>
 #include <functional>
 
-class QRemoteObjectNode;
-class QRemoteObjectReplica;
-class QRemoteObjectRegistryHost;
+class LogosAPIConsumer;
 
 /**
- * @brief LogosAPI provides a simplified interface for connecting to 
- * and acquiring remote objects from the Logos Core registry.
+ * @brief LogosAPIClient provides a high-level interface for remote method calls
  * 
- * This class abstracts the Qt Remote Objects functionality, making it easier
- * to connect to the core registry and request remote object replicas by name.
+ * This class serves as a facade over LogosAPIConsumer, providing a clean interface
+ * for applications that need to call remote methods and handle events. It includes
+ * additional logic like token management and request routing.
  */
-class LogosAPI : public QObject
+class LogosAPIClient : public QObject
 {
     Q_OBJECT
 
 public:
     /**
-     * @brief Construct a new LogosAPI
-     * @param module_name The name of the module to connect to (default: "core_registry")
+     * @brief Construct a new LogosAPIClient
+     * @param module_to_talk_to The name of the module to connect to
+     * @param origin_module The name of the originating module
      * @param parent Parent QObject
      */
-    explicit LogosAPI(const QString& module_name = "core_registry", QObject *parent = nullptr);
+    explicit LogosAPIClient(const QString& module_to_talk_to, const QString& origin_module, QObject *parent = nullptr);
     
     /**
-     * @brief Destructor - cleans up the remote object node
+     * @brief Destructor
      */
-    ~LogosAPI();
+    ~LogosAPIClient();
 
     /**
      * @brief Request a remote object replica by name
      * @param objectName The name of the remote object to acquire
-     * @param timeoutMs Timeout in milliseconds to wait for the replica to be ready (default: 20000)
+     * @param timeoutMs Timeout in milliseconds to wait for the replica to be ready
      * @return QObject* pointer to the replica, or nullptr if failed
-     * 
-     * @note The caller is responsible for deleting the returned replica when done
      */
     QObject* requestObject(const QString& objectName, int timeoutMs = 20000);
 
@@ -63,25 +56,17 @@ public:
     QString registryUrl() const;
 
     /**
-     * @brief Reconnect to the registry (useful if connection was lost)
+     * @brief Reconnect to the registry
      * @return true if reconnection successful, false otherwise
      */
     bool reconnect();
 
     /**
-     * @brief Register an object to be available for remote access
-     * @param name The name to register the object under
-     * @param object The object to register
-     * @return true if registration successful, false otherwise
-     */
-    bool registerObject(const QString& name, QObject* object);
-
-    /**
      * @brief Invoke a remote method on a remote object
      * @param objectName The name of the remote object
      * @param methodName The name of the method to call
-     * @param args Arguments to pass to the method (supports 0-5 arguments)
-     * @param timeoutMs Timeout in milliseconds to wait for the result (default: 20000)
+     * @param args Arguments to pass to the method
+     * @param timeoutMs Timeout in milliseconds to wait for the result
      * @return QVariant containing the result, or invalid QVariant if failed
      */
     QVariant invokeRemoteMethod(const QString& objectName, const QString& methodName, 
@@ -92,7 +77,7 @@ public:
      * @param objectName The name of the remote object
      * @param methodName The name of the method to call
      * @param arg Argument to pass to the method
-     * @param timeoutMs Timeout in milliseconds to wait for the result (default: 20000)
+     * @param timeoutMs Timeout in milliseconds to wait for the result
      * @return QVariant containing the result, or invalid QVariant if failed
      */
     QVariant invokeRemoteMethod(const QString& objectName, const QString& methodName, 
@@ -104,7 +89,7 @@ public:
      * @param methodName The name of the method to call
      * @param arg1 First argument to pass to the method
      * @param arg2 Second argument to pass to the method
-     * @param timeoutMs Timeout in milliseconds to wait for the result (default: 20000)
+     * @param timeoutMs Timeout in milliseconds to wait for the result
      * @return QVariant containing the result, or invalid QVariant if failed
      */
     QVariant invokeRemoteMethod(const QString& objectName, const QString& methodName, 
@@ -117,7 +102,7 @@ public:
      * @param arg1 First argument to pass to the method
      * @param arg2 Second argument to pass to the method
      * @param arg3 Third argument to pass to the method
-     * @param timeoutMs Timeout in milliseconds to wait for the result (default: 20000)
+     * @param timeoutMs Timeout in milliseconds to wait for the result
      * @return QVariant containing the result, or invalid QVariant if failed
      */
     QVariant invokeRemoteMethod(const QString& objectName, const QString& methodName, 
@@ -131,7 +116,7 @@ public:
      * @param arg2 Second argument to pass to the method
      * @param arg3 Third argument to pass to the method
      * @param arg4 Fourth argument to pass to the method
-     * @param timeoutMs Timeout in milliseconds to wait for the result (default: 20000)
+     * @param timeoutMs Timeout in milliseconds to wait for the result
      * @return QVariant containing the result, or invalid QVariant if failed
      */
     QVariant invokeRemoteMethod(const QString& objectName, const QString& methodName, 
@@ -147,7 +132,7 @@ public:
      * @param arg3 Third argument to pass to the method
      * @param arg4 Fourth argument to pass to the method
      * @param arg5 Fifth argument to pass to the method
-     * @param timeoutMs Timeout in milliseconds to wait for the result (default: 20000)
+     * @param timeoutMs Timeout in milliseconds to wait for the result
      * @return QVariant containing the result, or invalid QVariant if failed
      */
     QVariant invokeRemoteMethod(const QString& objectName, const QString& methodName, 
@@ -159,11 +144,10 @@ public:
      * @param originObject The object that will emit the event
      * @param destinationObject The object that will receive the event
      * @param eventName The name of the event to listen for
-     * @param callback Function to call when the event is triggered, receives eventName and event data
-     * 
-     * Multiple listeners can be registered for the same event name.
+     * @param callback Function to call when the event is triggered
      */
-    void onEvent(QObject* originObject, QObject* destinationObject, const QString& eventName, std::function<void(const QString&, const QVariantList&)> callback);
+    void onEvent(QObject* originObject, QObject* destinationObject, const QString& eventName, 
+                std::function<void(const QString&, const QVariantList&)> callback);
     
     /**
      * @brief Register an event listener without callback (connects to destinationObject's slot)
@@ -173,17 +157,17 @@ public:
      */
     void onEvent(QObject* originObject, QObject* destinationObject, const QString& eventName);
 
-public slots:
+
+
     /**
-     * @brief Handle incoming event responses and trigger registered callbacks
-     * @param eventName The name of the event that was triggered
-     * @param data The event data to pass to the callbacks
-     * 
-     * This slot is typically connected to signals from remote objects to handle
-     * events and notifications from the Logos Core system.
+     * @brief Emit an event response (for plugins that also act as event sources)
+     * @param replica The replica object that should receive the event
+     * @param eventName The name of the event
+     * @param data The event data
      */
     void onEventResponse(QObject* replica, const QString& eventName, const QVariantList& data);
-    
+
+public slots:
     /**
      * @brief Helper slot to invoke stored callbacks
      * @param eventName The name of the event that was triggered
@@ -192,38 +176,8 @@ public slots:
     void invokeCallback(const QString& eventName, const QVariantList& data);
 
 private:
-    QRemoteObjectNode* m_node;
-    QRemoteObjectRegistryHost* m_registryHost;
-    QString m_registryUrl;
-    bool m_connected;
-
-    // Storage for string arguments to keep them alive during method calls
-    mutable QList<QString> m_stringArgs;
-
-    // Event listeners storage - maps event names to lists of callback functions
-    QHash<QString, QList<std::function<void(const QVariantList&)>>> m_eventListeners;
-    
-    // Store callbacks by event name for the new callback-based approach
-    QHash<QString, QList<std::function<void(const QString&, const QVariantList&)>>> m_eventCallbacks;
-    
-    // Track existing connections by origin object to avoid duplicates
-    // Since we always connect to 'this' LogosAPI instance, we only need to track origin objects
-    QHash<QObject*, QMetaObject::Connection> m_connections;
-
-    /**
-     * @brief Internal method to establish connection to the registry
-     * @return true if connection successful, false otherwise
-     */
-    bool connectToRegistry();
-
-    /**
-     * @brief Helper function to determine if a method returns void
-     * @param replica The replica object
-     * @param methodName The method name to check
-     * @param args The arguments for the method
-     * @return true if the method is likely to return void, false otherwise
-     */
-    static bool isVoidMethod(QObject* replica, const QString& methodName, const QVariantList& args);
+    LogosAPIConsumer* m_consumer;
+    QMap<QString, QString> m_tokens;
 };
 
-#endif // LOGOS_API_H 
+#endif // LOGOS_API_CLIENT_H 

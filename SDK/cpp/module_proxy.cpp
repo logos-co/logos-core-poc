@@ -134,11 +134,12 @@ namespace {
     }
 }
 
-ModuleProxy::ModuleProxy(QObject* module, QObject* parent)
+ModuleProxy::ModuleProxy(QObject* module, const QString& authToken, QObject* parent)
     : QObject(parent)
     , m_module(module)
 {
-    qDebug() << "ModuleProxy: Created for module:" << module;
+    Q_UNUSED(authToken); // For now, we'll store the token but not use it
+    qDebug() << "ModuleProxy: Created for module:" << module << "with auth token";
     // Connect to the wrapped object's eventResponse signal to forward events
     if (m_module) {
        QObject::connect(m_module, SIGNAL(eventResponse(QString, QVariantList)),
