@@ -305,6 +305,29 @@ static QStringList findPlugins(const QString &pluginsDir)
     return plugins;
 }
 
+static bool initializeCapabilityModule()
+{
+    qDebug() << "\n=== Initializing Capability Module ===";
+
+    // Check if capability_module is available in known plugins
+    if (!g_known_plugins.contains("capability_module")) {
+        qDebug() << "Capability module not found in known plugins, skipping initialization";
+        return false;
+    }
+
+    qDebug() << "Capability module found, attempting to load...";
+
+    // Load the capability module
+    bool success = loadPlugin("capability_module");
+    if (success) {
+        qDebug() << "Capability module loaded successfully";
+        return true;
+    } else {
+        qWarning() << "Failed to load capability module";
+        return false;
+    }
+}
+
 // Helper function to initialize core manager
 static bool initializeCoreManager()
 {
@@ -380,7 +403,7 @@ void logos_core_start()
     }
     qDebug() << "Looking for modules in:" << pluginsDir;
     
-    // Find and load all plugins in the directory
+    // Find and process all plugins in the directory to populate g_known_plugins
     QStringList pluginPaths = findPlugins(pluginsDir);
     
     if (pluginPaths.isEmpty()) {
@@ -388,11 +411,13 @@ void logos_core_start()
     } else {
         qDebug() << "Found" << pluginPaths.size() << "modules";
         
-        // Load and process each plugin
+        // Process each plugin to add to known plugins list
         for (const QString &pluginPath : pluginPaths) {
-            // loadAndProcessPlugin(pluginPath);
             processPlugin(pluginPath);
         }
+
+        // Initialize capability module if available (after plugin discovery)
+        initializeCapabilityModule();
     }
 }
 
