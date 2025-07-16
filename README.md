@@ -66,6 +66,7 @@ For some plugins
  ┣ 📂 modules/                 # Modules for Logos Core
  ┃ ┗ 📂 chat/                  # POC Chat API, interacts with Waku Module
  ┃ ┗ 📂 package_manager/       # Package Manager Module
+ ┃ ┗ 📂 capability_module/     # Coordinates permissions between modules
  ┃ ┗ 📂 template_module/       # Example Module
  ┃ ┗ 📂 waku/                  # Waku Module
  ┃

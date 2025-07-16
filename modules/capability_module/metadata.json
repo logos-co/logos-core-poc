@@ -1,0 +1,14 @@
+{
+  "name": "capability_module",
+  "version": "1.0.0",
+  "description": "Coordinates permissions between modules",
+  "author": "Logos Core Team",
+  "type": "core",
+  "category": "security",
+  "main": "capability_module_plugin",
+  "dependencies": [],
+  "capabilities": [
+    "module_coordination",
+    "permission_management"
+  ]
+} 

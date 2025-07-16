@@ -29,6 +29,7 @@ endif()
 
 # Add subdirectories for each plugin
 add_subdirectory(chat)
+add_subdirectory(capability_module)
 add_subdirectory(package_manager)
 add_subdirectory(template_module)
 add_subdirectory(waku_module)
