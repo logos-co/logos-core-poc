@@ -150,10 +150,18 @@ QVariant LogosAPIConsumer::invokeRemoteMethod(const QString& objectName, const Q
     // get the token for the module
     QString token = getToken(objectName);
 
+    qDebug() << "========================================================";
+    qDebug() << "========================================================";
+    qDebug() << "========================================================";
+    qDebug() << "LogosAPIConsumer: Token for module:" << objectName << "is:" << token;
+    qDebug() << "========================================================";
+    qDebug() << "========================================================";
+    qDebug() << "========================================================";
+
     // Try to cast to ModuleProxy first (in case the replica is a wrapped module)
     ModuleProxy* moduleProxy = qobject_cast<ModuleProxy*>(replica);
     if (moduleProxy) {
-        QVariant result = moduleProxy->callRemoteMethod(methodName, args);
+        QVariant result = moduleProxy->callRemoteMethod(token, methodName, args);
         delete replica;
         return result;
     }
@@ -166,6 +174,7 @@ QVariant LogosAPIConsumer::invokeRemoteMethod(const QString& objectName, const Q
         "callRemoteMethod",
         Qt::DirectConnection,
         Q_RETURN_ARG(QRemoteObjectPendingCall, pendingCall),
+        Q_ARG(QString, token),
         Q_ARG(QString, methodName),
         Q_ARG(QVariantList, args)
     );

@@ -36,11 +36,12 @@ public:
 
     /**
      * @brief Call a method on the proxied module
+     * @param authToken Authentication token for the method call
      * @param methodName The name of the method to call
      * @param args Arguments to pass to the method
      * @return QVariant containing the result, or invalid QVariant if failed
      */
-    Q_INVOKABLE QVariant callRemoteMethod(const QString& methodName, const QVariantList& args = QVariantList());
+    Q_INVOKABLE QVariant callRemoteMethod(const QString& authToken, const QString& methodName, const QVariantList& args = QVariantList());
 
     /**
      * @brief Save a token from a module

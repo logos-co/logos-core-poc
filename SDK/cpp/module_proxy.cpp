@@ -170,7 +170,7 @@ bool ModuleProxy::saveToken(const QString& from_module_name, const QString& toke
     return true;
 }
 
-QVariant ModuleProxy::callRemoteMethod(const QString& methodName, const QVariantList& args)
+QVariant ModuleProxy::callRemoteMethod(const QString& authToken, const QString& methodName, const QVariantList& args)
 {
     if (!m_module) {
         qWarning() << "ModuleProxy: Cannot call method on null module:" << methodName;
@@ -182,7 +182,24 @@ QVariant ModuleProxy::callRemoteMethod(const QString& methodName, const QVariant
         return QVariant();
     }
 
+    qDebug() << "ModuleProxy: Auth token received:" << authToken;
     qDebug() << "ModuleProxy: Calling method" << methodName << "on module" << m_module << "with args:" << args;
+
+    // check if the auth token is valid
+    if (authToken.isEmpty()) {
+        qWarning() << "ModuleProxy: Auth token is empty";
+        return QVariant();
+    }
+
+    // check if the auth token is stored
+    if (!m_tokens.contains(authToken)) {
+        qDebug() << "========================================================";
+        qDebug() << "========================================================";
+        qWarning() << "ModuleProxy: Auth token not found in stored tokens";
+        qDebug() << "========================================================";
+        qDebug() << "========================================================";
+        // return QVariant();
+    }
 
     // Each createArgument() call now generates its own unique GUID
 
