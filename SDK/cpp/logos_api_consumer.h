@@ -101,6 +101,15 @@ public slots:
      */
     void invokeCallback(const QString& eventName, const QVariantList& data);
 
+    /**
+     * @brief Inform a module about a token
+     * @param authToken Authentication token for the operation
+     * @param moduleName The name of the module
+     * @param token The token to inform the module about
+     * @return bool true if successful, false otherwise
+     */
+    bool informModuleToken(const QString& authToken, const QString& moduleName, const QString& token);
+
 private:
     QRemoteObjectNode* m_node;
     QString m_registryUrl;

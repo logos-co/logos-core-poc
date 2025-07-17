@@ -248,4 +248,24 @@ void LogosAPIConsumer::onEvent(QObject* originObject, QObject* destinationObject
     // connect to the eventResponse signal of the destinationObject's slot
     QObject::connect(originObject, SIGNAL(eventResponse(QString, QVariantList)), 
                     destinationObject, SLOT(onEventResponse(QString, QVariantList)), Qt::AutoConnection);
+}
+
+bool LogosAPIConsumer::informModuleToken(const QString& authToken, const QString& moduleName, const QString& token)
+{
+    // Request the ModuleProxy object
+    QObject* moduleProxy = requestObject("ModuleProxy", 20000);
+    if (!moduleProxy) {
+        return false;
+    }
+    
+    // Call the informModuleToken method on the ModuleProxy
+    QVariant result;
+    bool success = QMetaObject::invokeMethod(moduleProxy, "informModuleToken", 
+                                           Qt::DirectConnection,
+                                           Q_RETURN_ARG(QVariant, result),
+                                           Q_ARG(QString, authToken),
+                                           Q_ARG(QString, moduleName), 
+                                           Q_ARG(QString, token));
+    
+    return success && result.toBool();
 } 

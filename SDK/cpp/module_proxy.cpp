@@ -1,4 +1,5 @@
 #include "module_proxy.h"
+#include "token_manager.h"
 #include <QDebug>
 #include <QMetaObject>
 #include <QMetaMethod>
@@ -311,6 +312,16 @@ QVariant ModuleProxy::callRemoteMethod(const QString& authToken, const QString& 
     // Note: Argument cleanup is now handled automatically by each createArgument() call's unique GUID
     qDebug() << "ModuleProxy: Successfully called method" << methodName << "on module" << m_module;
     return result;
+}
+
+bool ModuleProxy::informModuleToken(const QString& authToken, const QString& moduleName, const QString& token)
+{
+    Q_UNUSED(authToken) // Authentication token validation can be added later
+    
+    TokenManager& tokenManager = TokenManager::instance();
+    tokenManager.saveToken(moduleName, token);
+    
+    return true;
 }
 
 // Include MOC for template instantiation

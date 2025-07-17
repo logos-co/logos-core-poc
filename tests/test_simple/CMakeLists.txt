@@ -12,6 +12,8 @@ set(TEST_SIMPLE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api_consumer.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/module_proxy.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/module_proxy.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/token_manager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/token_manager.h
 )
 
 # Create the test_simple application
