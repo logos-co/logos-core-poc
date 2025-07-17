@@ -7,6 +7,7 @@
 #include <QUuid>
 #include <QHash>
 #include <QMetaObject>
+#include <QString>
 
 /**
  * @brief ModuleProxy provides a proxy interface for module interactions
@@ -26,7 +27,7 @@ public:
      * @param authToken Authentication token for the module
      * @param parent Parent QObject
      */
-    explicit ModuleProxy(QObject* module, const QString& authToken, QObject* parent = nullptr);
+    explicit ModuleProxy(QObject* module, QObject* parent = nullptr);
 
     /**
      * @brief Destructor
@@ -41,11 +42,20 @@ public:
      */
     Q_INVOKABLE QVariant callRemoteMethod(const QString& methodName, const QVariantList& args = QVariantList());
 
+    /**
+     * @brief Save a token from a module
+     * @param from_module_name The name of the module providing the token
+     * @param token The token to save
+     * @return bool true if token was saved successfully, false otherwise
+     */
+    bool saveToken(const QString& from_module_name, const QString& token);
+
 signals:
     void eventResponse(const QString& eventName, const QVariantList& data);
 
 private:
     QObject* m_module;
+    QHash<QString, QString> m_tokens;
 };
 
 #endif // MODULE_PROXY_H
