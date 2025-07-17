@@ -14,6 +14,10 @@
 #include <QHash>
 #include <QRemoteObjectRegistryHost>
 #include <QProcess>
+#include <QLocalSocket>
+#include <QLocalServer>
+#include <QUuid>
+#include <QThread>
 #include "../interface.h"
 #include "core_manager/core_manager.h"
 #include "../../SDK/cpp/logos_api_provider.h"
@@ -171,6 +175,43 @@ static bool loadPlugin(const QString &pluginName)
 
     qDebug() << "Logos host process started successfully for plugin:" << pluginName;
     qDebug() << "Process ID:" << process->processId();
+
+    // Set up IPC to securely send the auth token
+    QString socketName = QString("logos_token_%1").arg(pluginName);
+    QLocalSocket* tokenSocket = new QLocalSocket();
+
+    // Try to connect to the socket (with retries since the process might need time to set up)
+    bool connected = false;
+    for (int i = 0; i < 10; ++i) { // Try for up to 1 second
+        tokenSocket->connectToServer(socketName);
+        if (tokenSocket->waitForConnected(100)) {
+            connected = true;
+            break;
+        }
+        QThread::msleep(100); // Wait 100ms before retry
+    }
+
+    if (!connected) {
+        qCritical() << "Failed to connect to token socket for plugin:" << pluginName;
+        tokenSocket->deleteLater();
+        process->terminate();
+        delete process;
+        return false;
+    }
+
+    // generate a guid and print it
+    QUuid authToken = QUuid::createUuid();
+    QString authTokenString = authToken.toString(QUuid::WithoutBraces);
+    qDebug() << "Generated auth token:" << authTokenString;
+
+    // Send the auth token securely via IPC
+    QByteArray tokenData = QString(authTokenString).toUtf8();
+    tokenSocket->write(tokenData);
+    tokenSocket->waitForBytesWritten(1000);
+    tokenSocket->disconnectFromServer();
+    tokenSocket->deleteLater();
+
+    qDebug() << "Auth token sent securely to plugin:" << pluginName;
 
     // Store the process
     g_plugin_processes.insert(pluginName, process);

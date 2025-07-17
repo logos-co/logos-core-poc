@@ -4,6 +4,8 @@
 #include <QDebug>
 #include <QCommandLineParser>
 #include <QRemoteObjectRegistryHost>
+#include <QLocalSocket>
+#include <QLocalServer>
 #include "../interface.h"
 #include "../../SDK/cpp/logos_api_provider.h"
 
@@ -46,6 +48,48 @@ int main(int argc, char *argv[])
 
     qDebug() << "Logos host starting for plugin:" << pluginName;
     qDebug() << "Plugin path:" << pluginPath;
+
+    // Set up IPC server to receive auth token securely
+    QString socketName = QString("logos_token_%1").arg(pluginName);
+    QLocalServer* tokenServer = new QLocalServer();
+
+    // Remove any existing socket file
+    QLocalServer::removeServer(socketName);
+
+    if (!tokenServer->listen(socketName)) {
+        qCritical() << "Failed to start token server:" << tokenServer->errorString();
+        return 1;
+    }
+
+    qDebug() << "Token server started, waiting for auth token...";
+
+    // Wait for connection and receive token
+    QString authToken;
+    if (tokenServer->waitForNewConnection(10000)) { // Wait up to 10 seconds
+        QLocalSocket* clientSocket = tokenServer->nextPendingConnection();
+        if (clientSocket->waitForReadyRead(5000)) {
+            QByteArray tokenData = clientSocket->readAll();
+            authToken = QString::fromUtf8(tokenData);
+            qDebug() << "Auth token received securely";
+
+            // print the auth token for debugging purposes, make it super visible
+            qDebug() << "========================================================";
+            qDebug() << "Auth token:" << authToken;
+            qDebug() << "========================================================";
+        }
+        clientSocket->deleteLater();
+    } else {
+        qCritical() << "Timeout waiting for auth token";
+        tokenServer->deleteLater();
+        return 1;
+    }
+
+    tokenServer->deleteLater();
+
+    if (authToken.isEmpty()) {
+        qCritical() << "No auth token received";
+        return 1;
+    }
 
     // Initialize LogosAPIProvider for this plugin
     LogosAPIProvider* logos_api = new LogosAPIProvider(pluginName);
