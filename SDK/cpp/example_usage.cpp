@@ -7,6 +7,7 @@
  */
 
 #include "logos_api_client.h"
+#include "token_manager.h"
 #include <QMetaObject>
 #include <QRemoteObjectReplica>
 #include <QDebug>
@@ -71,4 +72,34 @@ void exampleCustomUsage()
         // Clean up
         delete someObject;
     }
+    
+    // Example TokenManager usage
+    TokenManager& tokenManager = TokenManager::instance();
+    
+    // Save some tokens
+    tokenManager.saveToken("auth_token", "abc123xyz");
+    tokenManager.saveToken("refresh_token", "def456uvw");
+    tokenManager.saveToken("session_token", "ghi789rst");
+    
+    // Retrieve tokens
+    QString authToken = tokenManager.getToken("auth_token");
+    qDebug() << "Auth token:" << authToken;
+    
+    // Check if token exists
+    if (tokenManager.hasToken("refresh_token")) {
+        qDebug() << "Refresh token exists";
+    }
+    
+    // Get all token keys
+    QList<QString> keys = tokenManager.getTokenKeys();
+    qDebug() << "Token keys:" << keys;
+    qDebug() << "Total tokens:" << tokenManager.tokenCount();
+    
+    // Remove a token
+    if (tokenManager.removeToken("session_token")) {
+        qDebug() << "Session token removed";
+    }
+    
+    // Clear all tokens when done
+    // tokenManager.clearAllTokens();
 } 
