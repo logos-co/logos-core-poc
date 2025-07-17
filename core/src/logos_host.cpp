@@ -126,7 +126,8 @@ int main(int argc, char *argv[])
     qDebug() << "Plugin version:" << basePlugin->version();
 
     // Register the plugin for remote access using LogosAPIProvider
-    bool success = logos_api->registerObject(basePlugin->name(), plugin, authToken);
+    bool success = logos_api->registerObject(basePlugin->name(), plugin);
+    logos_api->saveToken("core", authToken);
     if (success) {
         qDebug() << "Plugin registered for remote access with name:" << basePlugin->name();
     } else {

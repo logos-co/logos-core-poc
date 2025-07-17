@@ -42,13 +42,21 @@ public:
      * @param authToken Authentication token for the object
      * @return true if registration successful, false otherwise
      */
-    bool registerObject(const QString& name, QObject* object, const QString& authToken);
+    bool registerObject(const QString& name, QObject* object);
 
     /**
      * @brief Get the registry URL for this provider
      * @return QString containing the registry URL
      */
     QString registryUrl() const;
+
+    /**
+     * @brief Save a token from a module via the proxy
+     * @param from_module_name The name of the module providing the token
+     * @param token The token to save
+     * @return bool true if token was saved successfully, false otherwise
+     */
+    bool saveToken(const QString& from_module_name, const QString& token);
 
 public slots:
     /**

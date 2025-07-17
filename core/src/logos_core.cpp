@@ -381,7 +381,9 @@ static bool initializeCoreManager()
     LogosAPIProvider* coreAPI = new LogosAPIProvider("core_manager");
     
     // Register the core manager using the new API (which will wrap it with ModuleProxy)
-    bool success = coreAPI->registerObject(coreManager->name(), coreManager, "abc");
+    bool success = coreAPI->registerObject(coreManager->name(), coreManager);
+    // TODO: replace this, using test token
+    coreAPI->saveToken("core", "abc");
     if (success) {
         qDebug() << "Core manager registered using new API with name:" << coreManager->name();
     } else {

@@ -19,7 +19,7 @@ LogosAPIProvider::~LogosAPIProvider()
     // ModuleProxy will be deleted automatically as it's a child object
 }
 
-bool LogosAPIProvider::registerObject(const QString& name, QObject* object, const QString& authToken)
+bool LogosAPIProvider::registerObject(const QString& name, QObject* object)
 {
     if (!object) {
         qWarning() << "LogosAPIProvider: Cannot register null object";
@@ -31,11 +31,6 @@ bool LogosAPIProvider::registerObject(const QString& name, QObject* object, cons
         return false;
     }
 
-    if (authToken.isEmpty()) {
-        qWarning() << "LogosAPIProvider: Cannot register object with empty auth token";
-        return false;
-    }
-
     // Check if a ModuleProxy was already created - only allow one registration
     if (m_moduleProxy) {
         qCritical() << "LogosAPIProvider: Object already registered. Only one registration per provider is allowed";
@@ -44,7 +39,7 @@ bool LogosAPIProvider::registerObject(const QString& name, QObject* object, cons
 
     qDebug() << "LogosAPIProvider: Creating ModuleProxy for" << name << "wrapping the provided object";
     
-    m_moduleProxy = new ModuleProxy(object, authToken, this);
+    m_moduleProxy = new ModuleProxy(object, this);
     object = m_moduleProxy;
 
     if (!m_registryHost) {
@@ -69,6 +64,17 @@ bool LogosAPIProvider::registerObject(const QString& name, QObject* object, cons
 QString LogosAPIProvider::registryUrl() const
 {
     return m_registryUrl;
+}
+
+bool LogosAPIProvider::saveToken(const QString& from_module_name, const QString& token)
+{
+    if (!m_moduleProxy) {
+        qWarning() << "LogosAPIProvider: Cannot save token - no module proxy available";
+        return false;
+    }
+
+    qDebug() << "LogosAPIProvider: Delegating saveToken call to module proxy for module:" << from_module_name;
+    return m_moduleProxy->saveToken(from_module_name, token);
 }
 
 void LogosAPIProvider::onEventResponse(QObject* replica, const QString& eventName, const QVariantList& data)

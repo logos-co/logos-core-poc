@@ -134,12 +134,10 @@ namespace {
     }
 }
 
-ModuleProxy::ModuleProxy(QObject* module, const QString& authToken, QObject* parent)
+ModuleProxy::ModuleProxy(QObject* module, QObject* parent)
     : QObject(parent)
     , m_module(module)
 {
-    Q_UNUSED(authToken); // For now, we'll store the token but not use it
-    qDebug() << "ModuleProxy: Created for module:" << module << "with auth token";
     // Connect to the wrapped object's eventResponse signal to forward events
     if (m_module) {
        QObject::connect(m_module, SIGNAL(eventResponse(QString, QVariantList)),
@@ -151,6 +149,25 @@ ModuleProxy::ModuleProxy(QObject* module, const QString& authToken, QObject* par
 ModuleProxy::~ModuleProxy()
 {
     qDebug() << "ModuleProxy: Destroyed for module:" << m_module;
+}
+
+bool ModuleProxy::saveToken(const QString& from_module_name, const QString& token)
+{
+    if (from_module_name.isEmpty()) {
+        qWarning() << "ModuleProxy: Cannot save token with empty module name";
+        return false;
+    }
+
+    if (token.isEmpty()) {
+        qWarning() << "ModuleProxy: Cannot save empty token for module:" << from_module_name;
+        return false;
+    }
+
+    qDebug() << "ModuleProxy: Saving token for module:" << from_module_name;
+    m_tokens[from_module_name] = token;
+    
+    qDebug() << "ModuleProxy: Token saved successfully. Total tokens stored:" << m_tokens.size();
+    return true;
 }
 
 QVariant ModuleProxy::callRemoteMethod(const QString& methodName, const QVariantList& args)
