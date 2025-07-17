@@ -71,11 +71,6 @@ int main(int argc, char *argv[])
             QByteArray tokenData = clientSocket->readAll();
             authToken = QString::fromUtf8(tokenData);
             qDebug() << "Auth token received securely";
-
-            // print the auth token for debugging purposes, make it super visible
-            qDebug() << "========================================================";
-            qDebug() << "Auth token:" << authToken;
-            qDebug() << "========================================================";
         }
         clientSocket->deleteLater();
     } else {
@@ -131,7 +126,7 @@ int main(int argc, char *argv[])
     qDebug() << "Plugin version:" << basePlugin->version();
 
     // Register the plugin for remote access using LogosAPIProvider
-    bool success = logos_api->registerObject(basePlugin->name(), plugin, "abc");
+    bool success = logos_api->registerObject(basePlugin->name(), plugin, authToken);
     if (success) {
         qDebug() << "Plugin registered for remote access with name:" << basePlugin->name();
     } else {
