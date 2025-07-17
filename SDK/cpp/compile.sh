@@ -59,6 +59,7 @@ MOC_HEADERS=(
     "logos_api_provider.h" 
     "logos_api_consumer.h"
     "module_proxy.h"
+    "token_manager.h"
 )
 
 for header in "${MOC_HEADERS[@]}"; do
@@ -111,6 +112,15 @@ else
     exit 1
 fi
 
+g++ $CXXFLAGS $QT_INCLUDES -c -x c++-header token_manager.h -o /tmp/token_manager.h.gch
+if [ $? -eq 0 ]; then
+    echo "✅ Token manager header syntax OK"
+    rm -f /tmp/token_manager.h.gch
+else
+    echo "❌ Token manager header has syntax errors"
+    exit 1
+fi
+
 # Try to compile the implementations (without linking)
 echo "Checking implementation syntax..."
 
@@ -147,6 +157,15 @@ if [ $? -eq 0 ]; then
     rm -f /tmp/module_proxy.o
 else
     echo "❌ Module proxy implementation has compilation errors"
+    exit 1
+fi
+
+g++ $CXXFLAGS $QT_INCLUDES -c token_manager.cpp -o /tmp/token_manager.o
+if [ $? -eq 0 ]; then
+    echo "✅ Token manager implementation compiles OK"
+    rm -f /tmp/token_manager.o
+else
+    echo "❌ Token manager implementation has compilation errors"
     exit 1
 fi
 
