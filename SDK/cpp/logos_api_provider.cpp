@@ -9,12 +9,14 @@ LogosAPIProvider::LogosAPIProvider(const QString& module_name, QObject *parent)
     : QObject(parent)
     , m_registryHost(nullptr)
     , m_registryUrl(QString("local:logos_%1").arg(module_name))
+    , m_moduleProxy(nullptr)
 {
 }
 
 LogosAPIProvider::~LogosAPIProvider()
 {
     // QRemoteObjectRegistryHost will be deleted automatically as it's a child object
+    // ModuleProxy will be deleted automatically as it's a child object
 }
 
 bool LogosAPIProvider::registerObject(const QString& name, QObject* object, const QString& authToken)
@@ -34,11 +36,16 @@ bool LogosAPIProvider::registerObject(const QString& name, QObject* object, cons
         return false;
     }
 
+    // Check if a ModuleProxy was already created - only allow one registration
+    if (m_moduleProxy) {
+        qCritical() << "LogosAPIProvider: Object already registered. Only one registration per provider is allowed";
+        return false;
+    }
+
     qDebug() << "LogosAPIProvider: Creating ModuleProxy for" << name << "wrapping the provided object";
-    ModuleProxy* proxy = new ModuleProxy(object, authToken, this);
-    object = proxy;
-
-
+    
+    m_moduleProxy = new ModuleProxy(object, authToken, this);
+    object = m_moduleProxy;
 
     if (!m_registryHost) {
         m_registryHost = new QRemoteObjectRegistryHost(QUrl(m_registryUrl));

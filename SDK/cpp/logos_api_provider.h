@@ -8,6 +8,7 @@
 #include <QMap>
 
 class QRemoteObjectRegistryHost;
+class ModuleProxy;
 
 /**
  * @brief LogosAPIProvider handles registering objects for remote access
@@ -62,6 +63,7 @@ private:
     QRemoteObjectRegistryHost* m_registryHost;
     QString m_registryUrl;
     QMap<QString, QString> m_tokens;
+    ModuleProxy* m_moduleProxy;
 
 
 };
