@@ -55,6 +55,7 @@ echo "Generating MOC files..."
 
 # List of headers that need MOC processing (contain Q_OBJECT)
 MOC_HEADERS=(
+    "logos_api.h"
     "logos_api_client.h"
     "logos_api_provider.h" 
     "logos_api_consumer.h"
@@ -75,6 +76,15 @@ done
 
 # Try to compile the headers (syntax check)
 echo "Checking header syntax..."
+
+g++ $CXXFLAGS $QT_INCLUDES -c -x c++-header logos_api.h -o /tmp/logos_api.h.gch
+if [ $? -eq 0 ]; then
+    echo "✅ LogosAPI header syntax OK"
+    rm -f /tmp/logos_api.h.gch
+else
+    echo "❌ LogosAPI header has syntax errors"
+    exit 1
+fi
 
 g++ $CXXFLAGS $QT_INCLUDES -c -x c++-header logos_api_client.h -o /tmp/logos_api_client.h.gch
 if [ $? -eq 0 ]; then
@@ -123,6 +133,15 @@ fi
 
 # Try to compile the implementations (without linking)
 echo "Checking implementation syntax..."
+
+g++ $CXXFLAGS $QT_INCLUDES -c logos_api.cpp -o /tmp/logos_api.o
+if [ $? -eq 0 ]; then
+    echo "✅ LogosAPI implementation compiles OK"
+    rm -f /tmp/logos_api.o
+else
+    echo "❌ LogosAPI implementation has compilation errors"
+    exit 1
+fi
 
 g++ $CXXFLAGS $QT_INCLUDES -c logos_api_client.cpp -o /tmp/logos_api_client.o
 if [ $? -eq 0 ]; then
