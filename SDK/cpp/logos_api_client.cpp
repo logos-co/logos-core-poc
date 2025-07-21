@@ -1,5 +1,6 @@
 #include "logos_api_client.h"
 #include "logos_api_consumer.h"
+#include "token_manager.h"
 
 LogosAPIClient::LogosAPIClient(const QString& module_to_talk_to, const QString& origin_module, QObject *parent)
     : QObject(parent)
@@ -55,6 +56,18 @@ QVariant LogosAPIClient::invokeRemoteMethod(const QString& objectName, const QSt
     //    qDebug() << "================================================";
     //    qDebug() << "================================================";
     //}
+
+    qDebug() << "--------------------------------------------------------";
+    qDebug() << "--------------------------------------------------------";
+    TokenManager& tokenManager = TokenManager::instance();
+    qDebug() << "LogosAPIClient: Tokens in TokenManager:";
+    QList<QString> tokenKeys = tokenManager.getTokenKeys();
+    for (const QString& key : tokenKeys) {
+        QString value = tokenManager.getToken(key);
+        qDebug() << "Token:" << key << "Value:" << value;
+    }
+    qDebug() << "--------------------------------------------------------";
+    qDebug() << "--------------------------------------------------------";
 
     return m_consumer->invokeRemoteMethod(objectName, methodName, args, timeoutMs);
 }

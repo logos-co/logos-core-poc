@@ -213,6 +213,14 @@ static bool loadPlugin(const QString &pluginName)
 
     qDebug() << "Auth token sent securely to plugin:" << pluginName;
 
+    // unless this is capability_module then create logos api client instance to capability module
+    // and call informModuleToken with the auth token
+    if (pluginName != "capability_module" && pluginName != "core_manager") {
+        LogosAPIClient* client = new LogosAPIClient("capability_module", "core");
+        client->informModuleToken(authTokenString, "capability_module", authTokenString);
+        delete client;
+    }
+
     // Store the process
     g_plugin_processes.insert(pluginName, process);
 

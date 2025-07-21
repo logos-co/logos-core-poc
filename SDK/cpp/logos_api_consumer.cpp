@@ -8,6 +8,7 @@
 #include <QMetaObject>
 #include <QTime>
 #include <string>
+#include "token_manager.h"
 
 const QString AUTH_TOKEN = "abc";
 
@@ -154,9 +155,22 @@ QVariant LogosAPIConsumer::invokeRemoteMethod(const QString& objectName, const Q
     qDebug() << "========================================================";
     qDebug() << "========================================================";
     qDebug() << "LogosAPIConsumer: Token for module:" << objectName << "is:" << token;
-    qDebug() << "========================================================";
-    qDebug() << "========================================================";
-    qDebug() << "========================================================";
+
+    // print tokens in token manager
+    qDebug() << "--------------------------------------------------------";
+    qDebug() << "--------------------------------------------------------";
+    TokenManager& tokenManager = TokenManager::instance();
+    qDebug() << "LogosAPIConsumer:invokeRemoteMethod: Tokens in TokenManager:";
+    QList<QString> tokenKeys = tokenManager.getTokenKeys();
+    for (const QString& key : tokenKeys) {
+        QString value = tokenManager.getToken(key);
+        qDebug() << "invokeRemoteMethod: Token:" << key << "Value:" << value;
+    }
+    qDebug() << "--------------------------------------------------------";
+    qDebug() << "--------------------------------------------------------";
+
+    qDebug() << "==||||||||||||||||||||||||||||||||||||||||||||||========";
+    qDebug() << "==||||||||||||||||||||||||||||||||||||||||||||||========";
 
     // Try to cast to ModuleProxy first (in case the replica is a wrapped module)
     ModuleProxy* moduleProxy = qobject_cast<ModuleProxy*>(replica);
@@ -252,20 +266,44 @@ void LogosAPIConsumer::onEvent(QObject* originObject, QObject* destinationObject
 
 bool LogosAPIConsumer::informModuleToken(const QString& authToken, const QString& moduleName, const QString& token)
 {
+    qDebug() << "LogosAPIConsumer: Informing module token for module:" << moduleName << "with token:" << token;
+
     // Request the ModuleProxy object
-    QObject* moduleProxy = requestObject("ModuleProxy", 20000);
-    if (!moduleProxy) {
+    QObject* replica = requestObject("capability_module", 20000);
+    if (!replica) {
+        qWarning() << "LogosAPIConsumer: Failed to acquire replica for object:" << "capability_module";
         return false;
     }
     
-    // Call the informModuleToken method on the ModuleProxy
-    QVariant result;
-    bool success = QMetaObject::invokeMethod(moduleProxy, "informModuleToken", 
-                                           Qt::DirectConnection,
-                                           Q_RETURN_ARG(QVariant, result),
-                                           Q_ARG(QString, authToken),
-                                           Q_ARG(QString, moduleName), 
-                                           Q_ARG(QString, token));
+    // Use QRemoteObjectPendingCall similar to invokeRemoteMethod
+    QRemoteObjectPendingCall pendingCall;
+    bool success = QMetaObject::invokeMethod(
+        replica,
+        "informModuleToken",
+        Qt::DirectConnection,
+        Q_RETURN_ARG(QRemoteObjectPendingCall, pendingCall),
+        Q_ARG(QString, authToken),
+        Q_ARG(QString, moduleName),
+        Q_ARG(QString, token)
+    );
+
+    if (!success) {
+        qWarning() << "LogosAPIConsumer: Failed to invoke informModuleToken on replica";
+        delete replica;
+        return false;
+    }
+
+    // Wait for the result
+    pendingCall.waitForFinished(20000);
+    delete replica;
+
+    if (!pendingCall.isFinished() || pendingCall.error() != QRemoteObjectPendingCall::NoError) {
+        qWarning() << "LogosAPIConsumer: Remote informModuleToken failed or timed out:" << pendingCall.error();
+        return false;
+    }
+
+    QVariant result = pendingCall.returnValue();
+    qDebug() << "LogosAPIConsumer: informModuleToken completed with result:" << result;
     
-    return success && result.toBool();
+    return result.toBool();
 } 
