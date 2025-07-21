@@ -3,6 +3,7 @@
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include "capability_module_interface.h"
+#include "../../SDK/cpp/logos_api.h"
 #include "../../SDK/cpp/logos_api_client.h"
 
 class CapabilityModulePlugin : public QObject, public CapabilityModuleInterface
@@ -24,5 +25,5 @@ signals:
     void eventResponse(const QString& eventName, const QVariantList& data);
 
 private:
-    LogosAPIClient* logosAPI;
+    LogosAPI* logosAPI;
 }; 

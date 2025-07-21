@@ -6,10 +6,16 @@ set(PLUGIN_SOURCES
     package_manager_plugin.h
     package_manager_interface.h
     ${CMAKE_SOURCE_DIR}/../core/interface.h
-    ${CMAKE_SOURCE_DIR}/../SDK/cpp/logos_api_client.cpp
-    ${CMAKE_SOURCE_DIR}/../SDK/cpp/logos_api_client.h
-    ${CMAKE_SOURCE_DIR}/../SDK/cpp/logos_api_consumer.cpp
-    ${CMAKE_SOURCE_DIR}/../SDK/cpp/logos_api_consumer.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api_client.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api_client.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api_consumer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api_consumer.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api_provider.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api_provider.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/token_manager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/token_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/module_proxy.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/module_proxy.h
 )

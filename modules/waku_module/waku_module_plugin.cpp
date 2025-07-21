@@ -8,8 +8,8 @@ WakuModulePlugin::WakuModulePlugin() : logosAPI(nullptr), wakuCtx(nullptr)
 {
     qDebug() << "WakuModulePlugin: Initializing...";
 
-    // Initialize the Logos API Client
-    logosAPI = new LogosAPIClient("core_manager", "waku_module", this);
+    // Initialize the Logos API
+    logosAPI = new LogosAPI("waku_module", this);
 
     qDebug() << "WakuModulePlugin: Initialized successfully";
 }
@@ -38,11 +38,11 @@ bool WakuModulePlugin::foo(const QString &bar)
     eventData << bar; // Add the bar parameter to the event data
     eventData << QDateTime::currentDateTime().toString(Qt::ISODate); // Add timestamp
 
-    // Trigger the event using LogosAPI (like chat module does)
+    // Trigger the event using LogosAPI client (like chat module does)
     if (logosAPI) {
         // print triggering signal
         qDebug() << "WakuModulePlugin: Triggering event 'fooTriggered' with data:" << eventData;
-        logosAPI->onEventResponse(this, "fooTriggered", eventData);
+        logosAPI->getClient("core_manager")->onEventResponse(this, "fooTriggered", eventData);
         qDebug() << "WakuModulePlugin: Event 'fooTriggered' triggered with data:" << eventData;
     } else {
         qWarning() << "WakuModulePlugin: LogosAPI not available, cannot trigger event";
@@ -88,10 +88,10 @@ void WakuModulePlugin::event_callback(int callerRet, const char* msg, size_t len
         eventData << message;
         eventData << QDateTime::currentDateTime().toString(Qt::ISODate);
 
-        // Trigger event using LogosAPI
+        // Trigger event using LogosAPI client
         if (plugin->logosAPI) {
             // qDebug() << "------------------------> WakuModulePlugin: Triggering event 'wakuMessage' with data:" << eventData;
-            plugin->logosAPI->onEventResponse(plugin, "wakuMessage", eventData);
+            plugin->logosAPI->getClient("core_manager")->onEventResponse(plugin, "wakuMessage", eventData);
         } else {
             qWarning() << "WakuModulePlugin: LogosAPI not available, cannot trigger event";
         }
@@ -145,10 +145,10 @@ void WakuModulePlugin::store_query_callback(int callerRet, const char* msg, size
         eventData << message;
         eventData << QDateTime::currentDateTime().toString(Qt::ISODate);
 
-        // Trigger event using LogosAPI (similar to event_callback)
+        // Trigger event using LogosAPI client (similar to event_callback)
         if (plugin->logosAPI) {
             // qDebug() << "WakuModulePlugin: Triggering event 'storeQueryResult' with data:" << eventData;
-            plugin->logosAPI->onEventResponse(plugin, "storeQueryResponse", eventData);
+            plugin->logosAPI->getClient("core_manager")->onEventResponse(plugin, "storeQueryResponse", eventData);
             // exit(1);
         } else {
             qWarning() << "WakuModulePlugin: LogosAPI not available, cannot trigger event";

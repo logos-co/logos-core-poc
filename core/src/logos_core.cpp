@@ -20,8 +20,10 @@
 #include <QThread>
 #include "../interface.h"
 #include "core_manager/core_manager.h"
+#include "../../SDK/cpp/logos_api.h"
 #include "../../SDK/cpp/logos_api_provider.h"
 #include "../../SDK/cpp/logos_api_client.h"
+#include "../../SDK/cpp/token_manager.h"
 
 // Declare QObject* as a metatype so it can be stored in QVariant
 Q_DECLARE_METATYPE(QObject*)
@@ -377,15 +379,16 @@ static bool initializeCoreManager()
     // Create the core manager instance directly
     CoreManagerPlugin* coreManager = new CoreManagerPlugin();
     
-    // Create LogosAPIProvider instance for core manager registration
-    LogosAPIProvider* coreAPI = new LogosAPIProvider("core_manager");
+    // Create LogosAPI instance for core manager registration
+    LogosAPI* coreAPI = new LogosAPI("core_manager");
     
     // Register the core manager using the new API (which will wrap it with ModuleProxy)
-    bool success = coreAPI->registerObject(coreManager->name(), coreManager);
-    // TODO: replace this, using test token
-    coreAPI->saveToken("core", "abc");
+    bool success = coreAPI->getProvider()->registerObject(coreManager->name(), coreManager);
     if (success) {
         qDebug() << "Core manager registered using new API with name:" << coreManager->name();
+        // TODO: replace this, using test token
+        coreAPI->getTokenManager()->saveToken("core", "abc");
+        qDebug() << "Test token saved for core access";
     } else {
         qWarning() << "Failed to register core manager using new API";
         delete coreAPI;
@@ -861,8 +864,8 @@ void logos_core_call_plugin_method_async(
             
             qDebug() << "Converted parameters to QVariantList, count:" << args.size();
             
-            // Create LogosAPIClient instance to make the remote call
-            LogosAPIClient* logosAPI = new LogosAPIClient(pluginNameStr, "core", nullptr);
+            // Create LogosAPI instance to make the remote call
+            LogosAPI* logosAPI = new LogosAPI("core");
             
             // Use a longer delay to ensure connection is established
             QTimer* connectionTimer = new QTimer();
@@ -870,11 +873,11 @@ void logos_core_call_plugin_method_async(
             connectionTimer->setInterval(2000); // 2 second delay
             
             QObject::connect(connectionTimer, &QTimer::timeout, [=]() {
-                if (logosAPI->isConnected()) {
+                if (logosAPI->getClient(pluginNameStr)->isConnected()) {
                     qDebug() << "LogosAPI connected, making remote method call";
                     
                     // Make the remote method call
-                    QVariant result = logosAPI->invokeRemoteMethod(pluginNameStr, methodNameStr, args);
+                    QVariant result = logosAPI->getClient(pluginNameStr)->invokeRemoteMethod(pluginNameStr, methodNameStr, args);
                     
                     QString resultMessage;
                     if (result.isValid()) {
@@ -964,8 +967,8 @@ void logos_core_register_event_listener(
     setupTimer->setInterval(1000); // Give plugin time to be ready
         
         QObject::connect(setupTimer, &QTimer::timeout, [=]() {
-        // Create LogosAPIClient instance to connect to the plugin
-        LogosAPIClient* logosAPI = new LogosAPIClient(pluginNameStr, "core", nullptr);
+        // Create LogosAPI instance to connect to the plugin
+        LogosAPI* logosAPI = new LogosAPI("core");
         
         // Use a delay to ensure connection is established
         QTimer* connectionTimer = new QTimer();
@@ -973,14 +976,14 @@ void logos_core_register_event_listener(
         connectionTimer->setInterval(2000); // 2 second delay
         
         QObject::connect(connectionTimer, &QTimer::timeout, [=]() {
-            if (logosAPI->isConnected()) {
+            if (logosAPI->getClient(pluginNameStr)->isConnected()) {
                 qDebug() << "LogosAPI connected for event listener, setting up event listener for" << eventNameStr;
                 
                 // Get the replica object to set up event listener
-                QObject* replica = logosAPI->requestObject(pluginNameStr);
+                QObject* replica = logosAPI->getClient(pluginNameStr)->requestObject(pluginNameStr);
                 if (replica) {
                     // Set up event listener for the specified event
-                    logosAPI->onEvent(replica, nullptr, eventNameStr, [=](const QString& eventName, const QVariantList& eventData) {
+                    logosAPI->getClient(pluginNameStr)->onEvent(replica, nullptr, eventNameStr, [=](const QString& eventName, const QVariantList& eventData) {
                         qDebug() << "Event listener captured event:" << eventName << "with data:" << eventData;
                         
                         // Format the event data as JSON for the callback

@@ -8,8 +8,8 @@ CapabilityModulePlugin::CapabilityModulePlugin() : logosAPI(nullptr)
 {
     qDebug() << "CapabilityModulePlugin: Initializing...";
     
-    // Initialize the Logos API Client
-    logosAPI = new LogosAPIClient("core_manager", "capability_module", this);
+    // Initialize the Logos API
+    logosAPI = new LogosAPI("capability_module", this);
     
     qDebug() << "CapabilityModulePlugin: Initialized successfully";
 }

@@ -9,6 +9,7 @@
 #include <QFileInfo>
 #include <QFile>
 #include "logos_core.h"
+#include "logos_api.h"
 #include "logos_api_client.h"
 
 CoreManagerPlugin::CoreManagerPlugin() {
@@ -129,12 +130,12 @@ QString CoreManagerPlugin::processPlugin(const QString& filePath) {
 QJsonArray CoreManagerPlugin::getPluginMethods(const QString& pluginName) {
     QJsonArray methodsArray;
 
-    auto m_logosAPI = new LogosAPIClient(pluginName, "core_manager", this);
+    auto m_logosAPI = new LogosAPI("core_manager", this);
 
     // Get the plugin using LogosAPI instead of PluginRegistry
     QObject* plugin = nullptr;
-    if (m_logosAPI && m_logosAPI->isConnected()) {
-        plugin = m_logosAPI->requestObject(pluginName);
+    if (m_logosAPI && m_logosAPI->getClient(pluginName)->isConnected()) {
+        plugin = m_logosAPI->getClient(pluginName)->requestObject(pluginName);
     }
 
     if (!plugin) {

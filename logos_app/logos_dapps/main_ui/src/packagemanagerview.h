@@ -15,6 +15,7 @@
 #include <QMap>
 #include <QSet>
 #include <QStringList>
+#include "logos_api.h"
 #include "logos_api_client.h"
 
 class MainWindow;
@@ -88,5 +89,5 @@ private:
     bool m_isProcessingDependencies;
     
     // LogosAPI instance for remote method calls
-    LogosAPIClient* m_logosAPI;
+    LogosAPI* m_logosAPI;
 }; 

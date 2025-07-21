@@ -1,4 +1,6 @@
 #include "coremoduleview.h"
+#include "logos_api.h"
+#include "logos_api_client.h"
 #include <QFont>
 #include <memory>
 #include <QStringList>
@@ -172,8 +174,9 @@ void CoreModuleView::updatePluginList()
     qDebug() << "\n\n----------> Updating plugin list\n\n";
     
     // Use LogosAPI to get the list of known plugins
-    LogosAPIClient api("core_manager", "main_ui");
-    QVariant result = api.invokeRemoteMethod("core_manager", "getKnownPlugins");
+    LogosAPI api("main_ui");
+    auto client = api.getClient("core_manager");
+    QVariant result = client->invokeRemoteMethod("core_manager", "getKnownPlugins");
     
     if (!result.isValid()) {
         qWarning() << "Failed to get known plugins from core manager";
@@ -279,8 +282,9 @@ void CoreModuleView::onLoadPluginClicked()
     qDebug() << "Loading plugin:" << pluginName;
 
     // Use LogosAPI to load the plugin
-    LogosAPIClient api("core_manager", "main_ui");
-    QVariant result = api.invokeRemoteMethod("core_manager", "loadPlugin", pluginName);
+    LogosAPI api("main_ui");
+    auto client = api.getClient("core_manager");
+    QVariant result = client->invokeRemoteMethod("core_manager", "loadPlugin", pluginName);
 
     bool success = result.toBool();
     if (success) {
@@ -308,8 +312,9 @@ void CoreModuleView::onUnloadPluginClicked()
     qDebug() << "Unloading plugin:" << pluginName;
 
     // Use LogosAPI to unload the plugin
-    LogosAPIClient api("core_manager", "main_ui");
-    QVariant result = api.invokeRemoteMethod("core_manager", "unloadPlugin", pluginName);
+    LogosAPI api("main_ui");
+    auto client = api.getClient("core_manager");
+    QVariant result = client->invokeRemoteMethod("core_manager", "unloadPlugin", pluginName);
 
     bool success = result.toBool();
     if (success) {
@@ -391,8 +396,9 @@ void CoreModuleView::onAddPluginClicked()
     qDebug() << "Selected plugin file:" << filePath;
 
     // Use LogosAPI to install the plugin
-    LogosAPIClient api("core_manager", "main_ui");
-    QVariant result = api.invokeRemoteMethod("core_manager", "installPlugin", filePath);
+    LogosAPI api("main_ui");
+    auto client = api.getClient("core_manager");
+    QVariant result = client->invokeRemoteMethod("core_manager", "installPlugin", filePath);
 
     bool success = result.toBool();
     if (!success) {

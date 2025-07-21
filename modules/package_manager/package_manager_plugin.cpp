@@ -13,12 +13,23 @@
 #include <QRemoteObjectPendingCall>
 #include "../../SDK/cpp/logos_api_client.h"
 
-PackageManagerPlugin::PackageManagerPlugin()
+PackageManagerPlugin::PackageManagerPlugin() : logosAPI(nullptr)
 {
     qDebug() << "PackageManagerPlugin created";
+    
+    // Initialize the Logos API
+    logosAPI = new LogosAPI("package_manager", this);
+    
+    qDebug() << "PackageManagerPlugin: LogosAPI initialized";
 }
 
-PackageManagerPlugin::~PackageManagerPlugin() {}
+PackageManagerPlugin::~PackageManagerPlugin() 
+{
+    if (logosAPI) {
+        delete logosAPI;
+        logosAPI = nullptr;
+    }
+}
 
 bool PackageManagerPlugin::installPlugin(const QString& pluginPath)
 {
@@ -134,15 +145,14 @@ bool PackageManagerPlugin::installPlugin(const QString& pluginPath)
         }
     }
     
-    // Use LogosAPIClient to call the remote method
-    LogosAPIClient api("core_manager", "package_manager");
-    if (!api.isConnected()) {
+    // Use LogosAPI to call the remote method
+    if (!logosAPI || !logosAPI->getClient("core_manager")->isConnected()) {
         qWarning() << "Failed to connect to Logos Core registry.";
         return false;
     }
     
     qDebug() << "Calling processPlugin with destinationPath:" << destinationPath;
-    QVariant result = api.invokeRemoteMethod("core_manager", "processPlugin", destinationPath);
+    QVariant result = logosAPI->getClient("core_manager")->invokeRemoteMethod("core_manager", "processPlugin", destinationPath);
     if (!result.isValid()) {
         qDebug() << "ERROR: --------------------------------";
         qWarning() << "Failed to process installed plugin:" << destinationPath;

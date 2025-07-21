@@ -10,8 +10,8 @@ TemplateModulePlugin::TemplateModulePlugin() : logosAPI(nullptr)
 {
     qDebug() << "TemplateModulePlugin: Initializing...";
     
-    // Initialize the Logos API Client
-    logosAPI = new LogosAPIClient("core_manager", "template_module", this);
+    // Initialize the Logos API
+    logosAPI = new LogosAPI("template_module", this);
     
     qDebug() << "TemplateModulePlugin: Initialized successfully";
 }
@@ -34,11 +34,11 @@ bool TemplateModulePlugin::foo(const QString &bar)
     eventData << bar; // Add the bar parameter to the event data
     eventData << QDateTime::currentDateTime().toString(Qt::ISODate); // Add timestamp
     
-    // Trigger the event using LogosAPI (like chat module does)
+    // Trigger the event using LogosAPI client (like chat module does)
     if (logosAPI) {
         // print triggering signal
         qDebug() << "TemplateModulePlugin: Triggering event 'fooTriggered' with data:" << eventData;
-        logosAPI->onEventResponse(this, "fooTriggered", eventData);
+        logosAPI->getClient("core_manager")->onEventResponse(this, "fooTriggered", eventData);
         qDebug() << "TemplateModulePlugin: Event 'fooTriggered' triggered with data:" << eventData;
     } else {
         qWarning() << "TemplateModulePlugin: LogosAPI not available, cannot trigger event";
@@ -56,10 +56,10 @@ void TemplateModulePlugin::bar(const QString &message)
     eventData << message;
     eventData << QDateTime::currentDateTime().toString(Qt::ISODate);
     
-    // Trigger the event using LogosAPI
+    // Trigger the event using LogosAPI client
     if (logosAPI) {
         qDebug() << "TemplateModulePlugin: Triggering event 'barTriggered' with data:" << eventData;
-        logosAPI->onEventResponse(this, "barTriggered", eventData);
+        logosAPI->getClient("core_manager")->onEventResponse(this, "barTriggered", eventData);
         qDebug() << "TemplateModulePlugin: Event 'barTriggered' triggered with data:" << eventData;
     } else {
         qWarning() << "TemplateModulePlugin: LogosAPI not available, cannot trigger event";
@@ -79,7 +79,7 @@ bool TemplateModulePlugin::stringToBool(const QString &boolString)
     if (logosAPI) {
         QVariantList eventData;
         eventData << boolString << result;
-        logosAPI->onEventResponse(this, "stringToBoolTriggered", eventData);
+        logosAPI->getClient("core_manager")->onEventResponse(this, "stringToBoolTriggered", eventData);
     }
     
     return result;
@@ -128,7 +128,7 @@ QJsonArray TemplateModulePlugin::getJsonArray(const QString &arrayType)
     if (logosAPI) {
         QVariantList eventData;
         eventData << arrayType << QVariant::fromValue(result);
-        logosAPI->onEventResponse(this, "getJsonArrayTriggered", eventData);
+        logosAPI->getClient("core_manager")->onEventResponse(this, "getJsonArrayTriggered", eventData);
     }
     
     return result;
@@ -146,7 +146,7 @@ QString TemplateModulePlugin::combineStrings(const QString &str1, const QString 
     if (logosAPI) {
         QVariantList eventData;
         eventData << str1 << str2 << result;
-        logosAPI->onEventResponse(this, "combineStringsTriggered", eventData);
+        logosAPI->getClient("core_manager")->onEventResponse(this, "combineStringsTriggered", eventData);
     }
     
     return result;
@@ -164,7 +164,7 @@ QString TemplateModulePlugin::formatMessage(const QString &prefix, const QString
     if (logosAPI) {
         QVariantList eventData;
         eventData << prefix << message << suffix << result;
-        logosAPI->onEventResponse(this, "formatMessageTriggered", eventData);
+        logosAPI->getClient("core_manager")->onEventResponse(this, "formatMessageTriggered", eventData);
     }
     
     return result;
@@ -197,7 +197,7 @@ QStringList TemplateModulePlugin::getStringList(const QString &listType)
     if (logosAPI) {
         QVariantList eventData;
         eventData << listType << QVariant::fromValue(result);
-        logosAPI->onEventResponse(this, "getStringListTriggered", eventData);
+        logosAPI->getClient("core_manager")->onEventResponse(this, "getStringListTriggered", eventData);
     }
     
     return result;
@@ -215,7 +215,7 @@ QString TemplateModulePlugin::processData(const QString &title, int value, const
     if (logosAPI) {
         QVariantList eventData;
         eventData << title << value << unit << result;
-        logosAPI->onEventResponse(this, "processDataTriggered", eventData);
+        logosAPI->getClient("core_manager")->onEventResponse(this, "processDataTriggered", eventData);
     }
     
     return result;
