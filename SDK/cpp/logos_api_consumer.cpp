@@ -160,7 +160,7 @@ QVariant LogosAPIConsumer::invokeRemoteMethod(const QString& objectName, const Q
     qDebug() << "--------------------------------------------------------";
     qDebug() << "--------------------------------------------------------";
     TokenManager& tokenManager = TokenManager::instance();
-    qDebug() << "LogosAPIConsumer:invokeRemoteMethod: Tokens in TokenManager:";
+    qDebug() << "[THIS SHOULD NOT BE EMPTY] LogosAPIConsumer:invokeRemoteMethod: Tokens in TokenManager:";
     QList<QString> tokenKeys = tokenManager.getTokenKeys();
     for (const QString& key : tokenKeys) {
         QString value = tokenManager.getToken(key);
