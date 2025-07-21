@@ -2,6 +2,7 @@
 
 #include <QtCore/QObject>
 #include "waku_module_interface.h"
+#include "../../SDK/cpp/logos_api.h"
 #include "../../SDK/cpp/logos_api_client.h"
 #include "lib/libwaku.h"
 
@@ -31,7 +32,7 @@ signals:
     void eventResponse(const QString& eventName, const QVariantList& data);
 
 private:
-    LogosAPIClient* logosAPI;
+    LogosAPI* logosAPI;
     void* wakuCtx;
     
     // Static callback functions for waku

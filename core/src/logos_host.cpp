@@ -7,7 +7,9 @@
 #include <QLocalSocket>
 #include <QLocalServer>
 #include "../interface.h"
+#include "../../SDK/cpp/logos_api.h"
 #include "../../SDK/cpp/logos_api_provider.h"
+#include "../../SDK/cpp/token_manager.h"
 
 int main(int argc, char *argv[])
 {
@@ -86,15 +88,15 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    // Initialize LogosAPIProvider for this plugin
-    LogosAPIProvider* logos_api = new LogosAPIProvider(pluginName);
+    // Initialize LogosAPI for this plugin
+    LogosAPI* logos_api = new LogosAPI(pluginName);
 
     if (!logos_api) {
         qCritical() << "Failed to create LogosAPI instance";
         return 1;
     }
 
-    qDebug() << "LogosAPIProvider initialized for plugin:" << pluginName;
+    qDebug() << "LogosAPI initialized for plugin:" << pluginName;
 
     // Load the plugin
     QPluginLoader loader(pluginPath);
@@ -125,11 +127,13 @@ int main(int argc, char *argv[])
     qDebug() << "Plugin name:" << basePlugin->name();
     qDebug() << "Plugin version:" << basePlugin->version();
 
-    // Register the plugin for remote access using LogosAPIProvider
-    bool success = logos_api->registerObject(basePlugin->name(), plugin);
-    logos_api->saveToken("core", authToken);
+    // Register the plugin for remote access using LogosAPI Provider
+    bool success = logos_api->getProvider()->registerObject(basePlugin->name(), plugin);
     if (success) {
         qDebug() << "Plugin registered for remote access with name:" << basePlugin->name();
+        // Save the auth token using the TokenManager
+        logos_api->getTokenManager()->saveToken("core", authToken);
+        qDebug() << "Auth token saved for core access";
     } else {
         qCritical() << "Failed to register plugin for remote access:" << basePlugin->name();
         delete plugin;

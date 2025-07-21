@@ -5,6 +5,7 @@
 #include <QTreeWidgetItem>
 #include <QDebug>
 #include <QMessageBox>
+#include "logos_api.h"
 #include "logos_api_client.h"
 
 PluginMethodsView::PluginMethodsView(const QString& pluginName, QWidget* parent)
@@ -117,8 +118,9 @@ void PluginMethodsView::setupUi()
 
 void PluginMethodsView::loadPluginMethods()
 {
-    LogosAPIClient api("core_manager", "main_ui");
-    QVariant result = api.invokeRemoteMethod("core_manager", "getPluginMethods", m_pluginName);
+    LogosAPI api("main_ui");
+    auto client = api.getClient("core_manager");
+    QVariant result = client->invokeRemoteMethod("core_manager", "getPluginMethods", m_pluginName);
 
     if (!result.isValid()) {
         qWarning() << "Failed to call getPluginMethods method";

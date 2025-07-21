@@ -7,14 +7,10 @@ LogosAPI::LogosAPI(const QString& module_name, QObject *parent)
     : QObject(parent)
     , m_module_name(module_name)
     , m_provider(nullptr)
-    , m_client(nullptr)
     , m_token_manager(nullptr)
 {
     // Initialize provider
     m_provider = new LogosAPIProvider(m_module_name, this);
-    
-    // Initialize client (with default target - can be changed later)
-    m_client = new LogosAPIClient("core_manager", m_module_name, this);
     
     // Get token manager instance
     m_token_manager = &TokenManager::instance();
@@ -33,10 +29,18 @@ LogosAPIProvider* LogosAPI::getProvider() const
 
 LogosAPIClient* LogosAPI::getClient(const QString& target_module) const
 {
-    // For simplicity, return the existing client
-    // In a more complex implementation, you might create clients per module
-    Q_UNUSED(target_module)
-    return m_client;
+    // Check if we already have a client for this target module
+    if (m_clients.contains(target_module)) {
+        return m_clients.value(target_module);
+    }
+    
+    // Create a new client for this target module
+    LogosAPIClient* client = new LogosAPIClient(target_module, m_module_name, const_cast<LogosAPI*>(this));
+    
+    // Cache it for future use
+    m_clients.insert(target_module, client);
+    
+    return client;
 }
 
 TokenManager* LogosAPI::getTokenManager() const

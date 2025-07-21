@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QString>
+#include <QHash>
 
 class LogosAPIClient;
 class LogosAPIProvider;
@@ -52,7 +53,7 @@ public:
 private:
     QString m_module_name;
     LogosAPIProvider* m_provider;
-    LogosAPIClient* m_client;
+    mutable QHash<QString, LogosAPIClient*> m_clients;  // Cache of clients per target module
     TokenManager* m_token_manager;
 };
 

@@ -3,7 +3,7 @@
 #include <QDateTime>
 
 ChatPlugin::ChatPlugin() : currentRelayTopic("/waku/2/rs/16/32"), logosAPI(nullptr) {
-    logosAPI = new LogosAPIClient("waku_module", "chat", this);
+    logosAPI = new LogosAPI("chat", this);
 }
 
 ChatPlugin::~ChatPlugin() {
@@ -19,22 +19,22 @@ bool ChatPlugin::initialize() {
         QVariantList data;
         data << QString::fromStdString(timestamp) << QString::fromStdString(nick) << QString::fromStdString(message);
 
-        logosAPI->onEventResponse(this, "chatMessage", data);
+        logosAPI->getClient("waku_module")->onEventResponse(this, "chatMessage", data);
     };
 
-    void* result = ::initAndStart(logosAPI, currentRelayTopic, actualCallback);
+    void* result = ::initAndStart(logosAPI->getClient("waku_module"), currentRelayTopic, actualCallback);
 
     return (result != nullptr);
 }
 
 bool ChatPlugin::joinChannel(const QString& channelName) {
-    return ::joinChannel(logosAPI, channelName.toStdString(), currentRelayTopic);
+    return ::joinChannel(logosAPI->getClient("waku_module"), channelName.toStdString(), currentRelayTopic);
 }
 
 void ChatPlugin::sendMessage(const QString& channelName, const QString& username, const QString& message) {
     // print method arguments
     std::cout << "ChatPlugin::sendMessage called with channelName: " << channelName.toStdString() << ", username: " << username.toStdString() << ", message: " << message.toStdString() << std::endl;
-    ::sendMessage(logosAPI, channelName.toStdString(), username.toStdString(), message.toStdString());
+    ::sendMessage(logosAPI->getClient("waku_module"), channelName.toStdString(), username.toStdString(), message.toStdString());
 }
 
 bool ChatPlugin::retrieveHistory(const std::string& channelName) {
@@ -42,10 +42,10 @@ bool ChatPlugin::retrieveHistory(const std::string& channelName) {
         QVariantList data;
         data << QString::fromStdString(timestamp) << QString::fromStdString(nick) << QString::fromStdString(message);
 
-        logosAPI->onEventResponse(this, "historyMessage", data);
+        logosAPI->getClient("waku_module")->onEventResponse(this, "historyMessage", data);
     };
 
-    ::retrieveHistory(logosAPI, channelName, actualCallback);
+    ::retrieveHistory(logosAPI->getClient("waku_module"), channelName, actualCallback);
     return true; // Assume success for now
 }
 

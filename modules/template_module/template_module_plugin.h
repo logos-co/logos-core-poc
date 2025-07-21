@@ -4,6 +4,7 @@
 #include <QtCore/QJsonArray>
 #include <QtCore/QStringList>
 #include "template_module_interface.h"
+#include "../../SDK/cpp/logos_api.h"
 #include "../../SDK/cpp/logos_api_client.h"
 
 class TemplateModulePlugin : public QObject, public TemplateModuleInterface
@@ -32,5 +33,5 @@ signals:
     void eventResponse(const QString& eventName, const QVariantList& data);
 
 private:
-    LogosAPIClient* logosAPI;
+    LogosAPI* logosAPI;
 }; 
