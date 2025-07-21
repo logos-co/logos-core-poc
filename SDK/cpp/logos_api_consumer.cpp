@@ -269,7 +269,8 @@ bool LogosAPIConsumer::informModuleToken(const QString& authToken, const QString
     qDebug() << "LogosAPIConsumer: Informing module token for module:" << moduleName << "with token:" << token;
 
     // Request the ModuleProxy object
-    QObject* replica = requestObject("capability_module", 20000);
+    //QObject* replica = requestObject("capability_module", 20000);
+    QObject* replica = requestObject("template_module", 20000);
     if (!replica) {
         qWarning() << "LogosAPIConsumer: Failed to acquire replica for object:" << "capability_module";
         return false;

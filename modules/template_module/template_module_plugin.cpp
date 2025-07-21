@@ -5,6 +5,7 @@
 #include <QDateTime>
 #include <QJsonArray>
 #include <QJsonObject>
+#include "token_manager.h"
 
 TemplateModulePlugin::TemplateModulePlugin() : logosAPI(nullptr)
 {
@@ -33,6 +34,19 @@ bool TemplateModulePlugin::foo(const QString &bar)
     QVariantList eventData;
     eventData << bar; // Add the bar parameter to the event data
     eventData << QDateTime::currentDateTime().toString(Qt::ISODate); // Add timestamp
+    
+    TokenManager& tokenManager = TokenManager::instance();
+    QString token = tokenManager.getToken("test_module");
+    qDebug() << "\n================================================";
+    qDebug() << "TemplateModulePlugin::foo: Token:" << token;
+
+    // print all tokens in token manager
+    QList<QString> tokenKeys = tokenManager.getTokenKeys();
+    for (const QString& key : tokenKeys) {
+        QString value = tokenManager.getToken(key);
+        qDebug() << "TemplateModulePlugin::foo: Token:" << key << "Value:" << value;
+    }
+    qDebug() << "================================================";
     
     // Trigger the event using LogosAPI (like chat module does)
     if (logosAPI) {
