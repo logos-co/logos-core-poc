@@ -11,6 +11,8 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core RemoteObjects)
 
 # SDK sources
 set(SDK_SOURCES
+    logos_api.cpp
+    logos_api.h
     logos_api_client.cpp
     logos_api_client.h
     logos_api_consumer.cpp
