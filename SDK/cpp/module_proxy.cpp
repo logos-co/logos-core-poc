@@ -138,6 +138,20 @@ namespace {
 ModuleProxy::ModuleProxy(QObject* module, QObject* parent)
     : QObject(parent)
     , m_module(module)
+    , m_tokenManager(nullptr)
+{
+    // Connect to the wrapped object's eventResponse signal to forward events
+    if (m_module) {
+       QObject::connect(m_module, SIGNAL(eventResponse(QString, QVariantList)),
+                       this, SIGNAL(eventResponse(QString, QVariantList)));
+       qDebug() << "ModuleProxy: Connected to wrapped object's eventResponse signal";
+    }
+}
+
+ModuleProxy::ModuleProxy(QObject* module, TokenManager* tokenManager, QObject* parent)
+    : QObject(parent)
+    , m_module(module)
+    , m_tokenManager(tokenManager)
 {
     // Connect to the wrapped object's eventResponse signal to forward events
     if (m_module) {
@@ -198,11 +212,11 @@ QVariant ModuleProxy::callRemoteMethod(const QString& authToken, const QString& 
         qDebug() << "========================================================";
         qWarning() << "ModuleProxy: Auth token not found in stored tokens";
 
-        TokenManager& tokenManager = TokenManager::instance();
+        TokenManager* tokenManager = m_tokenManager ? m_tokenManager : &TokenManager::instance();
 
-        QList<QString> tokenKeys = tokenManager.getTokenKeys();
+        QList<QString> tokenKeys = tokenManager->getTokenKeys();
         for (const QString& key : tokenKeys) {
-            QString value = tokenManager.getToken(key);
+            QString value = tokenManager->getToken(key);
             qDebug() << "Token:" << key << "Value:" << value;
         }
         qDebug() << "--------------------------------------------------------";
@@ -334,12 +348,12 @@ bool ModuleProxy::informModuleToken(const QString& authToken, const QString& mod
     qDebug() << "--------------------------------------------------------";
     qDebug() << "--------------------------------------------------------";
 
-    TokenManager& tokenManager = TokenManager::instance();
-    tokenManager.saveToken(moduleName, token);
+    TokenManager* tokenManager = m_tokenManager ? m_tokenManager : &TokenManager::instance();
+    tokenManager->saveToken(moduleName, token);
 
-    QList<QString> tokenKeys = tokenManager.getTokenKeys();
+    QList<QString> tokenKeys = tokenManager->getTokenKeys();
     for (const QString& key : tokenKeys) {
-        QString value = tokenManager.getToken(key);
+        QString value = tokenManager->getToken(key);
         qDebug() << "Token:" << key << "Value:" << value;
     }
     qDebug() << "--------------------------------------------------------";

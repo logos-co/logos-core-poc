@@ -6,6 +6,9 @@
 #include "template_module_interface.h"
 #include "../../SDK/cpp/logos_api_client.h"
 
+// Forward declaration to avoid circular dependency
+class TokenManager;
+
 class TemplateModulePlugin : public QObject, public TemplateModuleInterface
 {
     Q_OBJECT
@@ -14,6 +17,7 @@ class TemplateModulePlugin : public QObject, public TemplateModuleInterface
 
 public:
     TemplateModulePlugin();
+    TemplateModulePlugin(TokenManager* tokenManager);
     ~TemplateModulePlugin();
 
     Q_INVOKABLE bool foo(const QString &bar) override;
@@ -27,10 +31,17 @@ public:
     QString name() const override { return "template_module"; }
     QString version() const override { return "1.0.0"; }
 
+    /**
+     * @brief Set the TokenManager instance to use
+     * @param tokenManager Pointer to the TokenManager instance to use
+     */
+    Q_INVOKABLE void setTokenManager(TokenManager* tokenManager) override;
+
 signals:
     // for now this is required for events, later it might not be necessary if using a proxy
     void eventResponse(const QString& eventName, const QVariantList& data);
 
 private:
     LogosAPIClient* logosAPI;
+    TokenManager* m_tokenManager;
 }; 

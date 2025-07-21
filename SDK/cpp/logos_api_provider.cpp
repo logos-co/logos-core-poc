@@ -1,5 +1,6 @@
 #include "logos_api_provider.h"
 #include "module_proxy.h"
+#include "token_manager.h"
 #include <QRemoteObjectRegistryHost>
 #include <QDebug>
 #include <QUrl>
@@ -19,7 +20,7 @@ LogosAPIProvider::~LogosAPIProvider()
     // ModuleProxy will be deleted automatically as it's a child object
 }
 
-bool LogosAPIProvider::registerObject(const QString& name, QObject* object)
+bool LogosAPIProvider::registerObject(const QString& name, QObject* object, TokenManager* tokenManager)
 {
     if (!object) {
         qWarning() << "LogosAPIProvider: Cannot register null object";
@@ -39,7 +40,25 @@ bool LogosAPIProvider::registerObject(const QString& name, QObject* object)
 
     qDebug() << "LogosAPIProvider: Creating ModuleProxy for" << name << "wrapping the provided object";
     
-    m_moduleProxy = new ModuleProxy(object, this);
+    // Special handling for template_module - set the TokenManager instance
+    if (name == "template_module") {
+        qDebug() << "LogosAPIProvider: Detected template_module, setting TokenManager instance";
+        
+        // Try to call setTokenManager on the object
+        TokenManager* tokenManagerToUse = tokenManager ? tokenManager : &TokenManager::instance();
+        bool success = QMetaObject::invokeMethod(object, "setTokenManager", Qt::DirectConnection, 
+                                                 Q_ARG(TokenManager*, tokenManagerToUse));
+        
+        if (success) {
+            qDebug() << "LogosAPIProvider: Successfully called setTokenManager on template_module";
+        } else {
+            qWarning() << "LogosAPIProvider: Failed to call setTokenManager on template_module";
+        }
+    }
+    
+    // Use the provided TokenManager instance, or fall back to singleton if nullptr
+    TokenManager* tokenManagerToUse = tokenManager ? tokenManager : &TokenManager::instance();
+    m_moduleProxy = new ModuleProxy(object, tokenManagerToUse, this);
     object = m_moduleProxy;
 
     if (!m_registryHost) {

@@ -8,6 +8,7 @@
 #include <QLocalServer>
 #include "../interface.h"
 #include "../../SDK/cpp/logos_api_provider.h"
+#include "../../SDK/cpp/token_manager.h"
 
 int main(int argc, char *argv[])
 {
@@ -126,7 +127,7 @@ int main(int argc, char *argv[])
     qDebug() << "Plugin version:" << basePlugin->version();
 
     // Register the plugin for remote access using LogosAPIProvider
-    bool success = logos_api->registerObject(basePlugin->name(), plugin);
+    bool success = logos_api->registerObject(basePlugin->name(), plugin, &TokenManager::instance());
     logos_api->saveToken("core", authToken);
     if (success) {
         qDebug() << "Plugin registered for remote access with name:" << basePlugin->name();

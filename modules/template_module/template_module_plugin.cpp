@@ -5,9 +5,9 @@
 #include <QDateTime>
 #include <QJsonArray>
 #include <QJsonObject>
-#include "token_manager.h"
+#include "../../SDK/cpp/token_manager.h"
 
-TemplateModulePlugin::TemplateModulePlugin() : logosAPI(nullptr)
+TemplateModulePlugin::TemplateModulePlugin() : logosAPI(nullptr), m_tokenManager(nullptr)
 {
     qDebug() << "TemplateModulePlugin: Initializing...";
     
@@ -15,6 +15,16 @@ TemplateModulePlugin::TemplateModulePlugin() : logosAPI(nullptr)
     logosAPI = new LogosAPIClient("core_manager", "template_module", this);
     
     qDebug() << "TemplateModulePlugin: Initialized successfully";
+}
+
+TemplateModulePlugin::TemplateModulePlugin(TokenManager* tokenManager) : logosAPI(nullptr), m_tokenManager(tokenManager)
+{
+    qDebug() << "TemplateModulePlugin: Initializing with TokenManager...";
+    
+    // Initialize the Logos API Client
+    logosAPI = new LogosAPIClient("core_manager", "template_module", this);
+    
+    qDebug() << "TemplateModulePlugin: Initialized successfully with TokenManager";
 }
 
 TemplateModulePlugin::~TemplateModulePlugin() 
@@ -26,6 +36,13 @@ TemplateModulePlugin::~TemplateModulePlugin()
     }
 }
 
+void TemplateModulePlugin::setTokenManager(TokenManager* tokenManager)
+{
+    qDebug() << "TemplateModulePlugin: Setting TokenManager instance";
+    m_tokenManager = tokenManager;
+    qDebug() << "TemplateModulePlugin: TokenManager instance set successfully";
+}
+
 bool TemplateModulePlugin::foo(const QString &bar)
 {
     qDebug() << "TemplateModulePlugin::foo called with:" << bar;
@@ -35,15 +52,15 @@ bool TemplateModulePlugin::foo(const QString &bar)
     eventData << bar; // Add the bar parameter to the event data
     eventData << QDateTime::currentDateTime().toString(Qt::ISODate); // Add timestamp
     
-    TokenManager& tokenManager = TokenManager::instance();
-    QString token = tokenManager.getToken("test_module");
+    TokenManager* tokenManager = m_tokenManager ? m_tokenManager : &TokenManager::instance();
+    QString token = tokenManager->getToken("test_module");
     qDebug() << "\n================================================";
     qDebug() << "TemplateModulePlugin::foo: Token:" << token;
 
     // print all tokens in token manager
-    QList<QString> tokenKeys = tokenManager.getTokenKeys();
+    QList<QString> tokenKeys = tokenManager->getTokenKeys();
     for (const QString& key : tokenKeys) {
-        QString value = tokenManager.getToken(key);
+        QString value = tokenManager->getToken(key);
         qDebug() << "TemplateModulePlugin::foo: Token:" << key << "Value:" << value;
     }
     qDebug() << "================================================";

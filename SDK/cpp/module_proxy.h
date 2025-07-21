@@ -9,6 +9,9 @@
 #include <QMetaObject>
 #include <QString>
 
+// Forward declaration to avoid circular dependency
+class TokenManager;
+
 /**
  * @brief ModuleProxy provides a proxy interface for module interactions
  *
@@ -24,10 +27,17 @@ public:
     /**
      * @brief Construct a new ModuleProxy with authentication token
      * @param module The module object to proxy
-     * @param authToken Authentication token for the module
      * @param parent Parent QObject
      */
     explicit ModuleProxy(QObject* module, QObject* parent = nullptr);
+
+    /**
+     * @brief Construct a new ModuleProxy with TokenManager instance
+     * @param module The module object to proxy
+     * @param tokenManager Pointer to the TokenManager instance to use
+     * @param parent Parent QObject
+     */
+    explicit ModuleProxy(QObject* module, TokenManager* tokenManager, QObject* parent = nullptr);
 
     /**
      * @brief Destructor
@@ -66,6 +76,7 @@ signals:
 private:
     QObject* m_module;
     QHash<QString, QString> m_tokens;
+    TokenManager* m_tokenManager;
 };
 
 #endif // MODULE_PROXY_H

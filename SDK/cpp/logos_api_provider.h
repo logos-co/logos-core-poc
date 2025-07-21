@@ -9,6 +9,7 @@
 
 class QRemoteObjectRegistryHost;
 class ModuleProxy;
+class TokenManager;
 
 /**
  * @brief LogosAPIProvider handles registering objects for remote access
@@ -39,10 +40,10 @@ public:
      * @brief Register an object to be available for remote access
      * @param name The name to register the object under
      * @param object The object to register
-     * @param authToken Authentication token for the object
+     * @param tokenManager Optional TokenManager instance to use (defaults to singleton if nullptr)
      * @return true if registration successful, false otherwise
      */
-    bool registerObject(const QString& name, QObject* object);
+    bool registerObject(const QString& name, QObject* object, TokenManager* tokenManager = nullptr);
 
     /**
      * @brief Get the registry URL for this provider
