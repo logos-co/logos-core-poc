@@ -22,6 +22,9 @@ public:
     QString version() const override { return "1.0.0"; }
     Q_INVOKABLE QJsonArray getPackages();
 
+    // LogosAPI initialization
+    Q_INVOKABLE void initLogos(LogosAPI* logosAPIInstance);
+
 private:
     QString m_pluginsDirectory;
     LogosAPI* logosAPI;

@@ -1,5 +1,6 @@
 #include "logos_api_provider.h"
 #include "module_proxy.h"
+#include "logos_api.h"
 #include <QRemoteObjectRegistryHost>
 #include <QDebug>
 #include <QUrl>
@@ -38,7 +39,24 @@ bool LogosAPIProvider::registerObject(const QString& name, QObject* object)
     }
 
     qDebug() << "LogosAPIProvider: Creating ModuleProxy for" << name << "wrapping the provided object";
-    
+
+    // Before wrapping with ModuleProxy, call initLogos if the method exists
+    // Check if the object has an initLogos method and call it with the parent (LogosAPI instance)
+    int methodIndex = object->metaObject()->indexOfMethod("initLogos(LogosAPI*)");
+    if (methodIndex != -1) {
+        qDebug() << "LogosAPIProvider: Calling initLogos on object before wrapping";
+        bool methodSuccess = QMetaObject::invokeMethod(object, "initLogos", 
+                                                     Qt::DirectConnection,
+                                                     Q_ARG(LogosAPI*, qobject_cast<LogosAPI*>(parent())));
+        if (methodSuccess) {
+            qDebug() << "LogosAPIProvider: Successfully called initLogos on object";
+        } else {
+            qWarning() << "LogosAPIProvider: Failed to call initLogos on object";
+        }
+    } else {
+        qDebug() << "LogosAPIProvider: Object does not have initLogos method, skipping";
+    }
+
     m_moduleProxy = new ModuleProxy(object, this);
     object = m_moduleProxy;
 

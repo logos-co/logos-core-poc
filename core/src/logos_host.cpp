@@ -87,24 +87,12 @@ int main(int argc, char *argv[])
         qCritical() << "No auth token received";
         return 1;
     }
-
-    // Initialize LogosAPI for this plugin
-    LogosAPI* logos_api = new LogosAPI(pluginName);
-
-    if (!logos_api) {
-        qCritical() << "Failed to create LogosAPI instance";
-        return 1;
-    }
-
-    qDebug() << "LogosAPI initialized for plugin:" << pluginName;
-
     // Load the plugin
     QPluginLoader loader(pluginPath);
     QObject *plugin = loader.instance();
 
     if (!plugin) {
         qCritical() << "Failed to load plugin:" << loader.errorString();
-        delete logos_api;
         return 1;
     }
 
@@ -115,7 +103,6 @@ int main(int argc, char *argv[])
     if (!basePlugin) {
         qCritical() << "Plugin does not implement the PluginInterface";
         delete plugin;
-        delete logos_api;
         return 1;
     }
 
@@ -126,6 +113,16 @@ int main(int argc, char *argv[])
 
     qDebug() << "Plugin name:" << basePlugin->name();
     qDebug() << "Plugin version:" << basePlugin->version();
+
+    // Initialize LogosAPI for this plugin
+    LogosAPI* logos_api = new LogosAPI(pluginName, plugin);
+
+    if (!logos_api) {
+        qCritical() << "Failed to create LogosAPI instance";
+        return 1;
+    }
+
+    qDebug() << "LogosAPI initialized for plugin:" << pluginName;
 
     // Register the plugin for remote access using LogosAPI Provider
     bool success = logos_api->getProvider()->registerObject(basePlugin->name(), plugin);

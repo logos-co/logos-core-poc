@@ -7,10 +7,6 @@
 CapabilityModulePlugin::CapabilityModulePlugin() : logosAPI(nullptr)
 {
     qDebug() << "CapabilityModulePlugin: Initializing...";
-    
-    // Initialize the Logos API
-    logosAPI = new LogosAPI("capability_module", this);
-    
     qDebug() << "CapabilityModulePlugin: Initialized successfully";
 }
 
@@ -33,4 +29,11 @@ QString CapabilityModulePlugin::requestModule(const QString &fromModuleName, con
     qDebug() << "CapabilityModulePlugin::requestModule returning:" << result;
     
     return result;
+}
+
+void CapabilityModulePlugin::initLogos(LogosAPI* logosAPIInstance) {
+    if (logosAPI) {
+        delete logosAPI;
+    }
+    logosAPI = logosAPIInstance;
 } 

@@ -7,4 +7,4 @@ QWidget* ChatUIComponent::createWidget() {
 
 void ChatUIComponent::destroyWidget(QWidget* widget) {
     delete widget;
-} 
+}

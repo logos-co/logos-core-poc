@@ -7,10 +7,6 @@
 WakuModulePlugin::WakuModulePlugin() : logosAPI(nullptr), wakuCtx(nullptr)
 {
     qDebug() << "WakuModulePlugin: Initializing...";
-
-    // Initialize the Logos API
-    logosAPI = new LogosAPI("waku_module", this);
-
     qDebug() << "WakuModulePlugin: Initialized successfully";
 }
 
@@ -155,6 +151,13 @@ void WakuModulePlugin::store_query_callback(int callerRet, const char* msg, size
             exit(1);
         }
     }
+}
+
+void WakuModulePlugin::initLogos(LogosAPI* logosAPIInstance) {
+    if (logosAPI) {
+        delete logosAPI;
+    }
+    logosAPI = logosAPIInstance;
 }
 
 bool WakuModulePlugin::initWaku(const QString &cfg)
@@ -314,3 +317,4 @@ bool WakuModulePlugin::storeQuery(const QString &jsonQuery, const QString &peerA
         return false;
     }
 } 
+
