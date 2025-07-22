@@ -8,6 +8,7 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include "../../core/src/logos_core.h"
+#include "../../SDK/cpp/logos_api.h"
 #include "../../SDK/cpp/logos_api_client.h"
 
 // Qt-style plugin testing utility class
@@ -222,11 +223,11 @@ int main(int argc, char *argv[])
     qDebug() << "\n=== Testing Template Module Events ===";
 
             // Initialize LogosAPI for testing
-        // LogosAPIClient testAPI("core_manager", "test_simple");
-        LogosAPIClient testAPI("template_module", "test_simple");
+        // LogosAPI testAPI("test_simple");
+        LogosAPI testAPI("test_simple");
 
     // Get template_module object for event listening
-    QObject* templateModuleObj = testAPI.requestObject("template_module");
+    QObject* templateModuleObj = testAPI.getClient("template_module")->requestObject("template_module");
     if (!templateModuleObj) {
         PluginTester::printError("CRITICAL: Failed to get template_module from registry");
         logos_core_cleanup();
@@ -235,13 +236,13 @@ int main(int argc, char *argv[])
     
     // Register event listener
     EventTracker::eventReceived = false;
-    testAPI.onEvent(templateModuleObj, nullptr, "fooTriggered", EventTracker::onEvent);
+    testAPI.getClient("template_module")->onEvent(templateModuleObj, nullptr, "fooTriggered", EventTracker::onEvent);
     
     // Call foo method using remote API
     QVariant testParam = "hello_world";
     qDebug() << "Calling foo() remotely with parameter:" << testParam;
     
-    QVariant result = testAPI.invokeRemoteMethod("template_module", "foo", testParam);
+    QVariant result = testAPI.getClient("template_module")->invokeRemoteMethod("template_module", "foo", testParam);
     if (!result.isValid() || !result.toBool()) {
         PluginTester::printError("CRITICAL: Failed to call foo() method or method returned false");
         logos_core_cleanup();
@@ -273,12 +274,12 @@ int main(int argc, char *argv[])
     // Test the new bar() method
     qDebug() << "\n=== Testing bar() method ===";
     EventTracker::eventReceived = false;
-    testAPI.onEvent(templateModuleObj, nullptr, "barTriggered", EventTracker::onEvent);
+    testAPI.getClient("template_module")->onEvent(templateModuleObj, nullptr, "barTriggered", EventTracker::onEvent);
     
     QString barMessage = "Hello from bar method!";
     qDebug() << "Calling bar() remotely with message:" << barMessage;
     
-    QVariant barResult = testAPI.invokeRemoteMethod("template_module", "bar", barMessage);
+    QVariant barResult = testAPI.getClient("template_module")->invokeRemoteMethod("template_module", "bar", barMessage);
     if (!barResult.isValid()) {
         PluginTester::printError("CRITICAL: Failed to call bar() method");
         logos_core_cleanup();
@@ -307,13 +308,13 @@ int main(int argc, char *argv[])
     // Test the stringToBool() method
     qDebug() << "\n=== Testing stringToBool() method ===";
     EventTracker::eventReceived = false;
-    testAPI.onEvent(templateModuleObj, nullptr, "stringToBoolTriggered", EventTracker::onEvent);
+    testAPI.getClient("template_module")->onEvent(templateModuleObj, nullptr, "stringToBoolTriggered", EventTracker::onEvent);
     
     // Test true values
     QStringList trueValues = {"true", "TRUE", "True", "1", "yes", "YES", "on", "ON"};
     for (const QString& value : trueValues) {
         qDebug() << "Testing stringToBool() with:" << value;
-        QVariant boolResult = testAPI.invokeRemoteMethod("template_module", "stringToBool", value);
+        QVariant boolResult = testAPI.getClient("template_module")->invokeRemoteMethod("template_module", "stringToBool", value);
         if (!boolResult.isValid() || !boolResult.toBool()) {
             PluginTester::printError(QString("CRITICAL: stringToBool() failed for true value: %1").arg(value));
             logos_core_cleanup();
@@ -326,7 +327,7 @@ int main(int argc, char *argv[])
     QStringList falseValues = {"false", "FALSE", "False", "0", "no", "NO", "off", "OFF", "random", ""};
     for (const QString& value : falseValues) {
         qDebug() << "Testing stringToBool() with:" << value;
-        QVariant boolResult = testAPI.invokeRemoteMethod("template_module", "stringToBool", value);
+        QVariant boolResult = testAPI.getClient("template_module")->invokeRemoteMethod("template_module", "stringToBool", value);
         if (!boolResult.isValid() || boolResult.toBool()) {
             PluginTester::printError(QString("CRITICAL: stringToBool() failed for false value: %1").arg(value));
             logos_core_cleanup();
@@ -338,7 +339,7 @@ int main(int argc, char *argv[])
     // Test the getJsonArray() method
     qDebug() << "\n=== Testing getJsonArray() method ===";
     EventTracker::eventReceived = false;
-    testAPI.onEvent(templateModuleObj, nullptr, "getJsonArrayTriggered", EventTracker::onEvent);
+    testAPI.getClient("template_module")->onEvent(templateModuleObj, nullptr, "getJsonArrayTriggered", EventTracker::onEvent);
     
     // Test different array types
     QStringList arrayTypes = {"numbers", "strings", "mixed", "objects", "unknown"};
@@ -349,7 +350,7 @@ int main(int argc, char *argv[])
         int expectedSize = expectedSizes[i];
         
         qDebug() << "Testing getJsonArray() with arrayType:" << arrayType;
-        QVariant arrayResult = testAPI.invokeRemoteMethod("template_module", "getJsonArray", arrayType);
+        QVariant arrayResult = testAPI.getClient("template_module")->invokeRemoteMethod("template_module", "getJsonArray", arrayType);
         
         if (!arrayResult.isValid()) {
             PluginTester::printError(QString("CRITICAL: getJsonArray() failed for type: %1").arg(arrayType));
@@ -377,7 +378,7 @@ int main(int argc, char *argv[])
     qDebug() << "\n=== Validating specific array contents ===";
     
     // Test numbers array
-    QVariant numbersResult = testAPI.invokeRemoteMethod("template_module", "getJsonArray", "numbers");
+    QVariant numbersResult = testAPI.getClient("template_module")->invokeRemoteMethod("template_module", "getJsonArray", "numbers");
     QJsonArray numbersArray = numbersResult.toJsonArray();
     for (int i = 0; i < 5; i++) {
         if (numbersArray[i].toInt() != i + 1) {
@@ -389,7 +390,7 @@ int main(int argc, char *argv[])
     PluginTester::printSuccess("PASS: Numbers array content validation");
     
     // Test strings array
-    QVariant stringsResult = testAPI.invokeRemoteMethod("template_module", "getJsonArray", "strings");
+    QVariant stringsResult = testAPI.getClient("template_module")->invokeRemoteMethod("template_module", "getJsonArray", "strings");
     QJsonArray stringsArray = stringsResult.toJsonArray();
     QStringList expectedStrings = {"apple", "banana", "cherry", "date"};
     for (int i = 0; i < expectedStrings.size(); i++) {
@@ -402,7 +403,7 @@ int main(int argc, char *argv[])
     PluginTester::printSuccess("PASS: Strings array content validation");
     
     // Test objects array
-    QVariant objectsResult = testAPI.invokeRemoteMethod("template_module", "getJsonArray", "objects");
+    QVariant objectsResult = testAPI.getClient("template_module")->invokeRemoteMethod("template_module", "getJsonArray", "objects");
     QJsonArray objectsArray = objectsResult.toJsonArray();
     QJsonObject firstObj = objectsArray[0].toObject();
     if (firstObj["name"].toString() != "John" || firstObj["age"].toInt() != 30) {
@@ -415,7 +416,7 @@ int main(int argc, char *argv[])
     // Test the new getStringList() method
     qDebug() << "\n=== Testing getStringList() method ===";
     EventTracker::eventReceived = false;
-    testAPI.onEvent(templateModuleObj, nullptr, "getStringListTriggered", EventTracker::onEvent);
+    testAPI.getClient("template_module")->onEvent(templateModuleObj, nullptr, "getStringListTriggered", EventTracker::onEvent);
     
     // Test different list types
     QStringList listTypes = {"fruits", "colors", "countries", "programming", "numbers", "unknown"};
@@ -426,7 +427,7 @@ int main(int argc, char *argv[])
         int expectedSize = expectedListSizes[i];
         
         qDebug() << "Testing getStringList() with listType:" << listType;
-        QVariant listResult = testAPI.invokeRemoteMethod("template_module", "getStringList", listType);
+        QVariant listResult = testAPI.getClient("template_module")->invokeRemoteMethod("template_module", "getStringList", listType);
         
         if (!listResult.isValid()) {
             PluginTester::printError(QString("CRITICAL: getStringList() failed for type: %1").arg(listType));
@@ -454,7 +455,7 @@ int main(int argc, char *argv[])
     qDebug() << "\n=== Validating specific list contents ===";
     
     // Test fruits list
-    QVariant fruitsResult = testAPI.invokeRemoteMethod("template_module", "getStringList", "fruits");
+    QVariant fruitsResult = testAPI.getClient("template_module")->invokeRemoteMethod("template_module", "getStringList", "fruits");
     QStringList fruitsList = fruitsResult.toStringList();
     QStringList expectedFruits = {"apple", "banana", "cherry", "date", "elderberry"};
     for (int i = 0; i < expectedFruits.size(); i++) {
@@ -467,7 +468,7 @@ int main(int argc, char *argv[])
     PluginTester::printSuccess("PASS: Fruits list content validation");
     
     // Test colors list
-    QVariant colorsResult = testAPI.invokeRemoteMethod("template_module", "getStringList", "colors");
+    QVariant colorsResult = testAPI.getClient("template_module")->invokeRemoteMethod("template_module", "getStringList", "colors");
     QStringList colorsList = colorsResult.toStringList();
     QStringList expectedColors = {"red", "green", "blue", "yellow"};
     for (int i = 0; i < expectedColors.size(); i++) {
@@ -482,7 +483,7 @@ int main(int argc, char *argv[])
     // Test the new processData() method with 3 parameters (string, int, string)
     qDebug() << "\n=== Testing processData() method ===";
     EventTracker::eventReceived = false;
-    testAPI.onEvent(templateModuleObj, nullptr, "processDataTriggered", EventTracker::onEvent);
+    testAPI.getClient("template_module")->onEvent(templateModuleObj, nullptr, "processDataTriggered", EventTracker::onEvent);
     
     QString title = "Temperature";
     int value = 23;
@@ -490,7 +491,7 @@ int main(int argc, char *argv[])
     QString expectedProcessResult = QString("%1: %2 %3").arg(title).arg(value).arg(unit); // "Temperature: 23 °C"
     
     qDebug() << "Calling processData() with:" << title << value << unit;
-    QVariant processResult = testAPI.invokeRemoteMethod("template_module", "processData", title, value, unit);
+    QVariant processResult = testAPI.getClient("template_module")->invokeRemoteMethod("template_module", "processData", title, value, unit);
     
     if (!processResult.isValid()) {
         PluginTester::printError("CRITICAL: Failed to call processData() method");
@@ -535,14 +536,14 @@ int main(int argc, char *argv[])
     // Test the new combineStrings() method
     qDebug() << "\n=== Testing combineStrings() method ===";
     EventTracker::eventReceived = false;
-    testAPI.onEvent(templateModuleObj, nullptr, "combineStringsTriggered", EventTracker::onEvent);
+    testAPI.getClient("template_module")->onEvent(templateModuleObj, nullptr, "combineStringsTriggered", EventTracker::onEvent);
     
     QString str1 = "Hello";
     QString str2 = "World";
     QString expectedResult = str1 + " + " + str2; // "Hello + World"
     
     qDebug() << "Calling combineStrings() with:" << str1 << "and" << str2;
-    QVariant combineResult = testAPI.invokeRemoteMethod("template_module", "combineStrings", str1, str2);
+    QVariant combineResult = testAPI.getClient("template_module")->invokeRemoteMethod("template_module", "combineStrings", str1, str2);
     
     if (!combineResult.isValid()) {
         PluginTester::printError("CRITICAL: Failed to call combineStrings() method");
@@ -584,7 +585,7 @@ int main(int argc, char *argv[])
     // Test the new formatMessage() method with 3 arguments
     qDebug() << "\n=== Testing formatMessage() method ===";
     EventTracker::eventReceived = false;
-    testAPI.onEvent(templateModuleObj, nullptr, "formatMessageTriggered", EventTracker::onEvent);
+    testAPI.getClient("template_module")->onEvent(templateModuleObj, nullptr, "formatMessageTriggered", EventTracker::onEvent);
     
     QString prefix = "INFO";
     QString message = "System started successfully";
@@ -592,7 +593,7 @@ int main(int argc, char *argv[])
     QString expectedResult_2 = QString("[%1] %2 [%3]").arg(prefix).arg(message).arg(suffix); // "[INFO] System started successfully [OK]"
     
     qDebug() << "Calling formatMessage() with:" << prefix << message << suffix;
-    QVariant formatResult = testAPI.invokeRemoteMethod("template_module", "formatMessage", prefix, message, suffix);
+    QVariant formatResult = testAPI.getClient("template_module")->invokeRemoteMethod("template_module", "formatMessage", prefix, message, suffix);
     
     if (!formatResult.isValid()) {
         PluginTester::printError("CRITICAL: Failed to call formatMessage() method");
@@ -637,10 +638,10 @@ int main(int argc, char *argv[])
     qDebug() << "\n=== Testing Capability Module ===";
     
     // Initialize LogosAPI for testing capability_module
-    LogosAPIClient capabilityAPI("capability_module", "test_simple");
+    LogosAPI capabilityAPI("test_simple");
     
     // Get capability_module object for testing
-    QObject* capabilityModuleObj = capabilityAPI.requestObject("capability_module");
+    QObject* capabilityModuleObj = capabilityAPI.getClient("capability_module")->requestObject("capability_module");
     if (!capabilityModuleObj) {
         PluginTester::printError("CRITICAL: Failed to get capability_module from registry");
         logos_core_cleanup();
@@ -651,7 +652,7 @@ int main(int argc, char *argv[])
     QString testModuleName = "test_module";
     qDebug() << "Calling requestModule() with parameter:" << testModuleName;
     
-    QVariant requestResult = capabilityAPI.invokeRemoteMethod("capability_module", "requestModule", "app", testModuleName);
+    QVariant requestResult = capabilityAPI.getClient("capability_module")->invokeRemoteMethod("capability_module", "requestModule", "app", testModuleName);
     if (!requestResult.isValid()) {
         PluginTester::printError("CRITICAL: Failed to call requestModule() method");
         logos_core_cleanup();

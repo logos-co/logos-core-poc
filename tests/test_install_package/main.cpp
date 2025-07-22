@@ -7,6 +7,7 @@
 #include <QVariantList>
 #include <QFile>
 #include "../../core/src/logos_core.h"
+#include "../../SDK/cpp/logos_api.h"
 #include "../../SDK/cpp/logos_api_client.h"
 
 // Qt-style plugin testing utility class
@@ -238,7 +239,7 @@ int main(int argc, char *argv[])
     qDebug() << "\n=== Testing Package Installation ===";
     
             // Initialize LogosAPI for testing
-        LogosAPIClient testAPI("package_manager", "test_install_package");
+        LogosAPI testAPI("test_install_package");
     
     // Determine the correct file extension for this platform
     QString libExt;
@@ -266,7 +267,7 @@ int main(int argc, char *argv[])
     qDebug() << "✓ Package file found, proceeding with installation...";
     
     // Call package_manager's installPlugin method
-    QVariant result = testAPI.invokeRemoteMethod("package_manager", "installPlugin", filePath);
+    QVariant result = testAPI.getClient("package_manager")->invokeRemoteMethod("package_manager", "installPlugin", filePath);
     bool installSuccess = result.toBool();
     
     if (installSuccess) {
@@ -291,10 +292,10 @@ int main(int argc, char *argv[])
         qDebug() << "\n=== Testing Template Module Events ===";
 
         // Initialize LogosAPI for testing
-        LogosAPIClient eventTestAPI("template_module", "test_install_package");
+        LogosAPI eventTestAPI("test_install_package");
 
         // Get template_module object for event listening
-        QObject* templateModuleObj = eventTestAPI.requestObject("template_module");
+        QObject* templateModuleObj = eventTestAPI.getClient("template_module")->requestObject("template_module");
         if (!templateModuleObj) {
             PluginTester::printError("CRITICAL: Failed to get template_module from registry");
             logos_core_cleanup();
@@ -303,13 +304,13 @@ int main(int argc, char *argv[])
         
         // Register event listener
         EventTracker::eventReceived = false;
-        eventTestAPI.onEvent(templateModuleObj, nullptr, "fooTriggered", EventTracker::onEvent);
+        eventTestAPI.getClient("template_module")->onEvent(templateModuleObj, nullptr, "fooTriggered", EventTracker::onEvent);
         
         // Call foo method using remote API
         QVariant testParam = "hello_world";
         qDebug() << "Calling foo() remotely with parameter:" << testParam;
         
-        QVariant eventResult = eventTestAPI.invokeRemoteMethod("template_module", "foo", testParam);
+        QVariant eventResult = eventTestAPI.getClient("template_module")->invokeRemoteMethod("template_module", "foo", testParam);
         if (!eventResult.isValid() || !eventResult.toBool()) {
             PluginTester::printError("CRITICAL: Failed to call foo() method or method returned false");
             logos_core_cleanup();
