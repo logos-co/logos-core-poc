@@ -3,7 +3,6 @@
 #include <QDateTime>
 
 ChatPlugin::ChatPlugin() : currentRelayTopic("/waku/2/rs/16/32"), logosAPI(nullptr) {
-    logosAPI = new LogosAPI("chat", this);
 }
 
 ChatPlugin::~ChatPlugin() {
@@ -51,4 +50,11 @@ bool ChatPlugin::retrieveHistory(const std::string& channelName) {
 
 bool ChatPlugin::retrieveHistory(const QString& channelName) {
     return retrieveHistory(channelName.toStdString());
+}
+
+void ChatPlugin::initLogos(LogosAPI* logosAPIInstance) {
+    if (logosAPI) {
+        delete logosAPI;
+    }
+    logosAPI = logosAPIInstance;
 }

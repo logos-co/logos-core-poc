@@ -16,10 +16,6 @@
 PackageManagerPlugin::PackageManagerPlugin() : logosAPI(nullptr)
 {
     qDebug() << "PackageManagerPlugin created";
-    
-    // Initialize the Logos API
-    logosAPI = new LogosAPI("package_manager", this);
-    
     qDebug() << "PackageManagerPlugin: LogosAPI initialized";
 }
 
@@ -223,5 +219,13 @@ QJsonArray PackageManagerPlugin::getPackages() {
         packageObj["dependencies"] = dependencies;
         packagesArray.append(packageObj);
     }
+    
     return packagesArray;
+}
+
+void PackageManagerPlugin::initLogos(LogosAPI* logosAPIInstance) {
+    if (logosAPI) {
+        delete logosAPI;
+    }
+    logosAPI = logosAPIInstance;
 }

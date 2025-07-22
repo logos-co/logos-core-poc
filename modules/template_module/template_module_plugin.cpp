@@ -9,10 +9,6 @@
 TemplateModulePlugin::TemplateModulePlugin() : logosAPI(nullptr)
 {
     qDebug() << "TemplateModulePlugin: Initializing...";
-    
-    // Initialize the Logos API
-    logosAPI = new LogosAPI("template_module", this);
-    
     qDebug() << "TemplateModulePlugin: Initialized successfully";
 }
 
@@ -219,4 +215,8 @@ QString TemplateModulePlugin::processData(const QString &title, int value, const
     }
     
     return result;
+}
+
+void TemplateModulePlugin::initLogos(LogosAPI* logosAPIInstance) {
+    logosAPI = logosAPIInstance;
 } 
