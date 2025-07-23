@@ -101,8 +101,6 @@ void LogosAPIClient::onEvent(QObject* originObject, QObject* destinationObject, 
     m_consumer->onEvent(originObject, destinationObject, eventName);
 }
 
-
-
 void LogosAPIClient::invokeCallback(const QString& eventName, const QVariantList& data)
 {
     m_consumer->invokeCallback(eventName, data);
@@ -123,4 +121,9 @@ void LogosAPIClient::onEventResponse(QObject* replica, const QString& eventName,
 
     // emit the eventResponse signal of replica
     QMetaObject::invokeMethod(replica, "eventResponse", Qt::QueuedConnection, Q_ARG(QString, eventName), Q_ARG(QVariantList, data));
-} 
+}
+
+bool LogosAPIClient::informModuleToken(const QString& authToken, const QString& moduleName, const QString& token)
+{
+    return m_consumer->informModuleToken(authToken, moduleName, token);
+}

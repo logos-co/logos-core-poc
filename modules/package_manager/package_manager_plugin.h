@@ -11,6 +11,7 @@ class PackageManagerPlugin : public QObject, public PackageManagerInterface
     Q_OBJECT
     Q_PLUGIN_METADATA(IID PackageManagerInterface_iid FILE "metadata.json")
     Q_INTERFACES(PackageManagerInterface PluginInterface)
+    Q_PROPERTY(LogosAPI* logosAPI MEMBER logosAPI)
 
 public:
     PackageManagerPlugin();

@@ -5,6 +5,9 @@
 #include <QMetaType>
 #include <QJsonArray>
 #include <QStringList>
+#include "token_manager.h"
+#include "logos_api.h"
+#include "template_module_plugin_minimal.h"
 
 // Helper macro to simplify method invocation with return types
 #define INVOKE_METHOD_WITH_RETURN(returnType, castType) \
@@ -311,6 +314,62 @@ QVariant ModuleProxy::callRemoteMethod(const QString& authToken, const QString& 
     // Note: Argument cleanup is now handled automatically by each createArgument() call's unique GUID
     qDebug() << "ModuleProxy: Successfully called method" << methodName << "on module" << m_module;
     return result;
+}
+
+bool ModuleProxy::informModuleToken(const QString& authToken, const QString& moduleName, const QString& token)
+{
+    Q_UNUSED(authToken) // Authentication token validation can be added later
+
+    qDebug() << "--------------------------------------------------------";
+    qDebug() << "--------------------------------------------------------";
+    qDebug() << "ModuleProxy: Informing module token for module:" << moduleName << "with token:" << token;
+    qDebug() << "--------------------------------------------------------";
+    qDebug() << "--------------------------------------------------------";
+
+    //TokenManager& tokenManager = TokenManager::instance();
+    //tokenManager.saveToken(moduleName, token);
+
+    //QList<QString> tokenKeys = tokenManager.getTokenKeys();
+    //for (const QString& key : tokenKeys) {
+    //    QString value = tokenManager.getToken(key);
+    //    qDebug() << "Token:" << key << "Value:" << value;
+    //}
+    //qDebug() << "--------------------------------------------------------";
+
+    // Try direct casting to TemplateModulePlugin first
+    TemplateModulePlugin_Minimal* templateModule = qobject_cast<TemplateModulePlugin_Minimal*>(m_module);
+    if (templateModule && templateModule->logosAPI) {
+        TokenManager* tokenManager = templateModule->logosAPI->getTokenManager();
+        if (tokenManager) {
+            tokenManager->saveToken(moduleName, token);
+            qDebug() << "ModuleProxy: Token saved successfully via direct casting. Total tokens stored:" << tokenManager->getTokenKeys().size();
+            return true;
+        } else {
+            qWarning() << "ModuleProxy: TokenManager is null from template module";
+        }
+    }
+
+    // Fallback to property-based access for other modules
+    QVariant logosAPIVariant = m_module->property("logosAPI");
+    if (logosAPIVariant.isValid()) {
+        LogosAPI* logosAPI = qvariant_cast<LogosAPI*>(logosAPIVariant);
+        if (logosAPI) {
+            TokenManager* tokenManager = logosAPI->getTokenManager();
+            if (tokenManager) {
+                tokenManager->saveToken(moduleName, token);
+                qDebug() << "ModuleProxy: Token saved successfully via property access. Total tokens stored:" << tokenManager->getTokenKeys().size();
+                return true;
+            } else {
+                qWarning() << "ModuleProxy: TokenManager is null";
+            }
+        } else {
+            qWarning() << "ModuleProxy: Failed to cast LogosAPI from property";
+        }
+    } else {
+        qWarning() << "ModuleProxy: logosAPI property not found on module";
+    }
+
+    return false;
 }
 
 // Include MOC for template instantiation

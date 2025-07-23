@@ -58,6 +58,8 @@ add_library(chat SHARED
     ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/token_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/module_proxy.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/module_proxy.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/template_module_plugin_minimal.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/template_module_plugin_minimal.h
 )
 
 # Make sure protocol buffers are generated before building

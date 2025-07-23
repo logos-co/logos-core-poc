@@ -11,6 +11,7 @@ class WakuModulePlugin : public QObject, public WakuModuleInterface
     Q_OBJECT
     Q_PLUGIN_METADATA(IID WakuModuleInterface_iid FILE "metadata.json")
     Q_INTERFACES(WakuModuleInterface PluginInterface)
+    Q_PROPERTY(LogosAPI* logosAPI MEMBER logosAPI)
 
 public:
     WakuModulePlugin();

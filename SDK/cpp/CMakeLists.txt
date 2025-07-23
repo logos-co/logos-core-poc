@@ -23,6 +23,8 @@ set(SDK_SOURCES
     module_proxy.h
     token_manager.cpp
     token_manager.h
+    template_module_plugin_minimal.cpp
+    template_module_plugin_minimal.h
 )
 
 # Create the SDK library as STATIC instead of SHARED

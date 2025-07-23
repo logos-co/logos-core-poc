@@ -11,6 +11,7 @@ class CapabilityModulePlugin : public QObject, public CapabilityModuleInterface
     Q_OBJECT
     Q_PLUGIN_METADATA(IID CapabilityModuleInterface_iid FILE "metadata.json")
     Q_INTERFACES(CapabilityModuleInterface PluginInterface)
+    Q_PROPERTY(LogosAPI* logosAPI MEMBER logosAPI)
 
 public:
     CapabilityModulePlugin();

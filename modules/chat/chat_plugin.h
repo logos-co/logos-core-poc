@@ -11,6 +11,7 @@ class ChatPlugin : public QObject, public ChatInterface {
     Q_OBJECT
     Q_PLUGIN_METADATA(IID ChatInterface_iid FILE "metadata.json")
     Q_INTERFACES(ChatInterface PluginInterface)
+    Q_PROPERTY(LogosAPI* logosAPI MEMBER logosAPI)
 
 public:
     ChatPlugin();
