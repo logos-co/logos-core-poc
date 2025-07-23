@@ -13,7 +13,7 @@
 #include <QRemoteObjectPendingCall>
 #include "../../SDK/cpp/logos_api_client.h"
 
-PackageManagerPlugin::PackageManagerPlugin() : logosAPI(nullptr)
+PackageManagerPlugin::PackageManagerPlugin()
 {
     qDebug() << "PackageManagerPlugin created";
     qDebug() << "PackageManagerPlugin: LogosAPI initialized";

@@ -27,5 +27,4 @@ public:
 
 private:
     QString m_pluginsDirectory;
-    LogosAPI* logosAPI;
 }; 

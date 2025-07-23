@@ -5,6 +5,9 @@
 #include <QMetaType>
 #include <QJsonArray>
 #include <QStringList>
+#include "../../core/interface.h"
+#include "../../SDK/cpp/logos_api.h"
+#include "../../SDK/cpp/token_manager.h"
 
 // Helper macro to simplify method invocation with return types
 #define INVOKE_METHOD_WITH_RETURN(returnType, castType) \
@@ -311,6 +314,42 @@ QVariant ModuleProxy::callRemoteMethod(const QString& authToken, const QString& 
     // Note: Argument cleanup is now handled automatically by each createArgument() call's unique GUID
     qDebug() << "ModuleProxy: Successfully called method" << methodName << "on module" << m_module;
     return result;
+}
+
+bool ModuleProxy::informModuleToken(const QString& authToken, const QString& moduleName, const QString& token)
+{
+    Q_UNUSED(authToken) // Authentication token validation can be added later
+
+    // cast m_module to PluginInterface
+    PluginInterface* pluginInterface = qobject_cast<PluginInterface*>(m_module);
+    if (!pluginInterface) {
+        qWarning() << "ModuleProxy: Module is not a PluginInterface";
+        return false;
+    }
+
+    // now print the name
+    qDebug() << "ModuleProxy: PluginInterface name:" << pluginInterface->name();
+
+    // get Logos API
+    LogosAPI* logosAPI = pluginInterface->logosAPI;
+    if (!logosAPI) {
+        qWarning() << "ModuleProxy: LogosAPI not available";
+        return false;
+    }
+
+    // get TokenManager
+    TokenManager* tokenManager = logosAPI->getTokenManager();
+    if (!tokenManager) {
+        qWarning() << "ModuleProxy: TokenManager not available";
+        return false;
+    }
+
+    // save token
+    qDebug() << "ModuleProxy: Saving token for module:" << moduleName << "with token:" << token;
+    tokenManager->saveToken(moduleName, token);
+    qDebug() << "ModuleProxy: Token saved successfully";
+
+    return true;
 }
 
 // Include MOC for template instantiation

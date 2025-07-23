@@ -305,6 +305,34 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+    qDebug() << "\n\n\n\n\n=== Testing Token Manager ===";
+    qDebug() << "==========================================================================================";
+    qDebug() << "==========================================================================================";
+    // initialize for TemplateModule
+    LogosAPI templateModuleAPI("test_simple");
+
+    QString authToken = "test_auth_token_123";
+    QString moduleName = "test_module";
+    QString moduleToken = "test_module_token_456";
+
+    qDebug() << "\n\n--------> Calling informModuleToken() with authToken:" << authToken << "moduleName:" << moduleName << "moduleToken:" << moduleToken;
+    bool tokenResult = templateModuleAPI.getClient("template_module")->informModuleToken(authToken, moduleName, moduleToken);
+    if (!tokenResult) {
+        PluginTester::printError("CRITICAL: Failed to call informModuleToken() method");
+        logos_core_cleanup();
+        exit(1);
+    }
+
+    // now call foo on template_module
+    qDebug() << "\n\n--------> Calling foo() on template_module";
+    QVariant fooResult = templateModuleAPI.getClient("template_module")->invokeRemoteMethod("template_module", "foo", "hello_world");
+    if (!fooResult.isValid() || !fooResult.toBool()) {
+        PluginTester::printError("CRITICAL: Failed to call foo() method");
+
+        logos_core_cleanup();
+        exit(1);
+    }
+
     // Test the stringToBool() method
     qDebug() << "\n=== Testing stringToBool() method ===";
     EventTracker::eventReceived = false;

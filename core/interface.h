@@ -3,6 +3,7 @@
 
 #include <QtPlugin>
 #include <QString>
+#include "../SDK/cpp/logos_api.h"
 
 // Define the common base interface for all modules
 class PluginInterface
@@ -13,6 +14,11 @@ public:
     // Common plugin methods
     virtual QString name() const = 0;
     virtual QString version() const = 0;
+
+    // TODO: this should be defined here and removed from the modules, but needs some work
+    // Q_INVOKABLE void initLogos(LogosAPI* logosAPIInstance);
+
+    LogosAPI* logosAPI;
 };
 
 // Define the interface ID used by Qt's plugin system

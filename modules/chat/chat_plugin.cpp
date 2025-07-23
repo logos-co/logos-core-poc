@@ -2,7 +2,7 @@
 #include <QTimer>
 #include <QDateTime>
 
-ChatPlugin::ChatPlugin() : currentRelayTopic("/waku/2/rs/16/32"), logosAPI(nullptr) {
+ChatPlugin::ChatPlugin() : currentRelayTopic("/waku/2/rs/16/32") {
 }
 
 ChatPlugin::~ChatPlugin() {

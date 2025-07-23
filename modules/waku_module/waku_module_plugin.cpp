@@ -4,7 +4,7 @@
 #include <QVariantList>
 #include <QDateTime>
 
-WakuModulePlugin::WakuModulePlugin() : logosAPI(nullptr), wakuCtx(nullptr)
+WakuModulePlugin::WakuModulePlugin() : wakuCtx(nullptr)
 {
     qDebug() << "WakuModulePlugin: Initializing...";
     qDebug() << "WakuModulePlugin: Initialized successfully";

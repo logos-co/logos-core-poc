@@ -150,14 +150,6 @@ QVariant LogosAPIConsumer::invokeRemoteMethod(const QString& objectName, const Q
     // get the token for the module
     QString token = getToken(objectName);
 
-    qDebug() << "========================================================";
-    qDebug() << "========================================================";
-    qDebug() << "========================================================";
-    qDebug() << "LogosAPIConsumer: Token for module:" << objectName << "is:" << token;
-    qDebug() << "========================================================";
-    qDebug() << "========================================================";
-    qDebug() << "========================================================";
-
     // Try to cast to ModuleProxy first (in case the replica is a wrapped module)
     ModuleProxy* moduleProxy = qobject_cast<ModuleProxy*>(replica);
     if (moduleProxy) {
@@ -248,4 +240,49 @@ void LogosAPIConsumer::onEvent(QObject* originObject, QObject* destinationObject
     // connect to the eventResponse signal of the destinationObject's slot
     QObject::connect(originObject, SIGNAL(eventResponse(QString, QVariantList)), 
                     destinationObject, SLOT(onEventResponse(QString, QVariantList)), Qt::AutoConnection);
-} 
+}
+
+bool LogosAPIConsumer::informModuleToken(const QString& authToken, const QString& moduleName, const QString& token)
+{
+    qDebug() << "LogosAPIConsumer: Informing module token for module:" << moduleName << "with token:" << token;
+
+    // Request the ModuleProxy object
+    //QObject* replica = requestObject("capability_module", 20000);
+    QObject* replica = requestObject("template_module", 20000);
+    if (!replica) {
+        qWarning() << "LogosAPIConsumer: Failed to acquire replica for object:" << "capability_module";
+        return false;
+    }
+
+    // Use QRemoteObjectPendingCall similar to invokeRemoteMethod
+    QRemoteObjectPendingCall pendingCall;
+    bool success = QMetaObject::invokeMethod(
+        replica,
+        "informModuleToken",
+        Qt::DirectConnection,
+        Q_RETURN_ARG(QRemoteObjectPendingCall, pendingCall),
+        Q_ARG(QString, authToken),
+        Q_ARG(QString, moduleName),
+        Q_ARG(QString, token)
+    );
+
+    if (!success) {
+        qWarning() << "LogosAPIConsumer: Failed to invoke informModuleToken on replica";
+        delete replica;
+        return false;
+    }
+
+    // Wait for the result
+    pendingCall.waitForFinished(20000);
+    delete replica;
+
+    if (!pendingCall.isFinished() || pendingCall.error() != QRemoteObjectPendingCall::NoError) {
+        qWarning() << "LogosAPIConsumer: Remote informModuleToken failed or timed out:" << pendingCall.error();
+        return false;
+    }
+
+    QVariant result = pendingCall.returnValue();
+    qDebug() << "LogosAPIConsumer: informModuleToken completed with result:" << result;
+
+    return result.toBool();
+}

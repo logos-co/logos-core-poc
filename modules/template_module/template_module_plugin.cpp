@@ -5,8 +5,9 @@
 #include <QDateTime>
 #include <QJsonArray>
 #include <QJsonObject>
+#include "../../SDK/cpp/token_manager.h"
 
-TemplateModulePlugin::TemplateModulePlugin() : logosAPI(nullptr)
+TemplateModulePlugin::TemplateModulePlugin()
 {
     qDebug() << "TemplateModulePlugin: Initializing...";
     qDebug() << "TemplateModulePlugin: Initialized successfully";
@@ -29,6 +30,22 @@ bool TemplateModulePlugin::foo(const QString &bar)
     QVariantList eventData;
     eventData << bar; // Add the bar parameter to the event data
     eventData << QDateTime::currentDateTime().toString(Qt::ISODate); // Add timestamp
+    
+    // This is here for now for testing purposes
+    // get token manager from logos api and print the keys
+    TokenManager* tokenManager = logosAPI->getTokenManager();
+    if (tokenManager) {
+        qDebug() << "--------------------------------------------------------";
+        qDebug() << "TemplateModulePlugin: Token manager keys:";
+        // print the keys and values
+        QList<QString> keys = tokenManager->getTokenKeys();
+        for (const QString& key : keys) {
+            qDebug() << "TemplateModulePlugin: Token key:" << key << "value:" << tokenManager->getToken(key);
+        }
+        qDebug() << "--------------------------------------------------------";
+    } else {
+        qWarning() << "TemplateModulePlugin: Token manager not available";
+    }
     
     // Trigger the event using LogosAPI client (like chat module does)
     if (logosAPI) {
