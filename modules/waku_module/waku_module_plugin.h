@@ -35,7 +35,6 @@ signals:
     void eventResponse(const QString& eventName, const QVariantList& data);
 
 private:
-    LogosAPI* logosAPI;
     void* wakuCtx;
     
     // Static callback functions for waku

@@ -4,7 +4,7 @@
 #include <QVariantList>
 #include <QDateTime>
 
-CapabilityModulePlugin::CapabilityModulePlugin() : logosAPI(nullptr)
+CapabilityModulePlugin::CapabilityModulePlugin()
 {
     qDebug() << "CapabilityModulePlugin: Initializing...";
     qDebug() << "CapabilityModulePlugin: Initialized successfully";

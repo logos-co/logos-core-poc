@@ -36,5 +36,4 @@ signals:
 
 private:
     std::string currentRelayTopic;
-    LogosAPI* logosAPI;
 }; 

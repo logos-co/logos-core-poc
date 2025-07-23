@@ -44,6 +44,15 @@ public:
     Q_INVOKABLE QVariant callRemoteMethod(const QString& authToken, const QString& methodName, const QVariantList& args = QVariantList());
 
     /**
+     * @brief Inform module of a token
+     * @param authToken Authentication token for the operation
+     * @param moduleName The name of the module
+     * @param token The token to inform the module about
+     * @return bool true if successful, false otherwise
+     */
+    Q_INVOKABLE bool informModuleToken(const QString& authToken, const QString& moduleName, const QString& token);
+
+    /**
      * @brief Save a token from a module
      * @param from_module_name The name of the module providing the token
      * @param token The token to save
