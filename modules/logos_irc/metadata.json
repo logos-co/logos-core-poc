@@ -1,0 +1,11 @@
+{
+  "name": "logos_irc",
+  "version": "1.0.0",
+  "description": "Logos IRC module",
+  "author": "Logos Core Team",
+  "type": "core",
+  "category": "chat",
+  "main": "logos_irc_plugin",
+  "dependencies": ["chat"],
+  "capabilities": []
+} 
