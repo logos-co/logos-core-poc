@@ -35,7 +35,7 @@ LogosAPIClient* LogosAPI::getClient(const QString& target_module) const
     }
     
     // Create a new client for this target module
-    LogosAPIClient* client = new LogosAPIClient(target_module, m_module_name, const_cast<LogosAPI*>(this));
+    LogosAPIClient* client = new LogosAPIClient(target_module, m_module_name, m_token_manager, const_cast<LogosAPI*>(this));
     
     // Cache it for future use
     m_clients.insert(target_module, client);

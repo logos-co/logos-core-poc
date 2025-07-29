@@ -9,6 +9,7 @@
 #include <functional>
 
 class LogosAPIConsumer;
+class TokenManager;
 
 /**
  * @brief LogosAPIClient provides a high-level interface for remote method calls
@@ -26,9 +27,10 @@ public:
      * @brief Construct a new LogosAPIClient
      * @param module_to_talk_to The name of the module to connect to
      * @param origin_module The name of the originating module
+     * @param token_manager Pointer to the token manager instance
      * @param parent Parent QObject
      */
-    explicit LogosAPIClient(const QString& module_to_talk_to, const QString& origin_module, QObject *parent = nullptr);
+    explicit LogosAPIClient(const QString& module_to_talk_to, const QString& origin_module, TokenManager* token_manager, QObject *parent = nullptr);
     
     /**
      * @brief Destructor
@@ -176,6 +178,12 @@ public:
      */
     bool informModuleToken(const QString& authToken, const QString& moduleName, const QString& token);
 
+    /**
+     * @brief Get the token manager instance
+     * @return TokenManager* Pointer to the token manager
+     */
+    TokenManager* getTokenManager() const;
+
 public slots:
     /**
      * @brief Helper slot to invoke stored callbacks
@@ -187,6 +195,7 @@ public slots:
 private:
     LogosAPIConsumer* m_consumer;
     QMap<QString, QString> m_tokens;
+    TokenManager* m_token_manager;
 };
 
 #endif // LOGOS_API_CLIENT_H 
