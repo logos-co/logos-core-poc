@@ -316,7 +316,7 @@ int main(int argc, char *argv[])
     QString moduleToken = "test_module_token_456";
 
     qDebug() << "\n\n--------> Calling informModuleToken() with authToken:" << authToken << "moduleName:" << moduleName << "moduleToken:" << moduleToken;
-    bool tokenResult = templateModuleAPI.getClient("template_module")->informModuleToken(authToken, moduleName, moduleToken);
+    bool tokenResult = templateModuleAPI.getClient("capability_module")->informModuleToken(authToken, moduleName, moduleToken);
     if (!tokenResult) {
         PluginTester::printError("CRITICAL: Failed to call informModuleToken() method");
         logos_core_cleanup();

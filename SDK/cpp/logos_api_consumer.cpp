@@ -129,11 +129,6 @@ bool LogosAPIConsumer::connectToRegistry()
 
 QString LogosAPIConsumer::getToken(const QString& module_name)
 {
-    if (m_tokens.contains(module_name)) {
-        qDebug() << "LogosAPIConsumer: Using stored token for module:" << module_name;
-        return m_tokens[module_name];
-    }
-
     if (m_token_manager) {
         //QList<QString> keys = m_token_manager->getTokenKeys();
         //for (const QString& key : keys) {
@@ -268,8 +263,7 @@ bool LogosAPIConsumer::informModuleToken(const QString& authToken, const QString
     qDebug() << "LogosAPIConsumer: Informing module token for module:" << moduleName << "with token:" << token;
 
     // Request the ModuleProxy object
-    //QObject* replica = requestObject("capability_module", 20000);
-    QObject* replica = requestObject("template_module", 20000);
+    QObject* replica = requestObject("capability_module", 20000);
     if (!replica) {
         qWarning() << "LogosAPIConsumer: Failed to acquire replica for object:" << "capability_module";
         return false;
