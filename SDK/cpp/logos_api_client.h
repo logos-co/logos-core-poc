@@ -184,6 +184,13 @@ public:
      */
     TokenManager* getTokenManager() const;
 
+    /**
+     * @brief Get authentication token for a module
+     * @param module_name The module name to get token for
+     * @return QString containing the token
+     */
+    QString getToken(const QString& module_name);
+
 public slots:
     /**
      * @brief Helper slot to invoke stored callbacks

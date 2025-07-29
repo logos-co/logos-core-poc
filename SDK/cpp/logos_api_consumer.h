@@ -68,13 +68,14 @@ public:
 
     /**
      * @brief Invoke a remote method on a remote object
+     * @param authToken Authentication token for the operation
      * @param objectName The name of the remote object
      * @param methodName The name of the method to call
      * @param args Arguments to pass to the method
      * @param timeoutMs Timeout in milliseconds to wait for the result
      * @return QVariant containing the result, or invalid QVariant if failed
      */
-    QVariant invokeRemoteMethod(const QString& objectName, const QString& methodName, 
+    QVariant invokeRemoteMethod(const QString& authToken, const QString& objectName, const QString& methodName, 
                              const QVariantList& args = QVariantList(), int timeoutMs = 20000);
 
     /**
@@ -131,12 +132,7 @@ private:
      */
     bool connectToRegistry();
 
-    /**
-     * @brief Get authentication token for a module
-     * @param module_name The module name to get token for
-     * @return QString containing the token
-     */
-    QString getToken(const QString& module_name);
+
 };
 
 #endif // LOGOS_API_CONSUMER_H 
