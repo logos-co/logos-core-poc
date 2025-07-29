@@ -196,6 +196,7 @@ private:
     LogosAPIConsumer* m_consumer;
     QMap<QString, QString> m_tokens;
     TokenManager* m_token_manager;
+    QString m_origin_module;
 };
 
 #endif // LOGOS_API_CLIENT_H 
