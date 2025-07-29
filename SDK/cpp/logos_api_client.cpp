@@ -6,6 +6,7 @@ LogosAPIClient::LogosAPIClient(const QString& module_to_talk_to, const QString& 
     : QObject(parent)
     , m_consumer(new LogosAPIConsumer(module_to_talk_to, origin_module, token_manager, this))
     , m_token_manager(token_manager)
+    , m_origin_module(origin_module)
 {
 }
 
@@ -39,24 +40,27 @@ QVariant LogosAPIClient::invokeRemoteMethod(const QString& objectName, const QSt
 {
     // Additional client-level logic can be added here
     // For example, capability module requests or token handling
-    
-    //if (objectName != "capability_module") {
-    //    qDebug() << "LogosAPIClient: calling requestModule for" << objectName;
-    //    LogosAPIConsumer* packageManagerConsumer = new LogosAPIConsumer("capability_module", "origin_module", this);
-    //    QVariant result = packageManagerConsumer->invokeRemoteMethod("capability_module", "requestModule", QVariantList() << objectName, timeoutMs);
-    //    qDebug() << "================================================";
-    //    qDebug() << "================================================";
-    //    qDebug() << "================================================";
-    //    qDebug() << "================================================";
-    //    qDebug() << "================================================";
-    //    qDebug() << "================================================";
-    //    qDebug() << "LogosAPIClient: requestModule result for" << objectName << ":" << result.toString();
-    //    qDebug() << "================================================";
-    //    qDebug() << "================================================";
-    //    qDebug() << "================================================";
-    //    qDebug() << "================================================";
-    //    qDebug() << "================================================";
-    //}
+
+    // TODO: need to move token management from consumer to here
+    // Consumer:invokeRemoteMethod then includes the token param
+
+    if (objectName != "capability_module") {
+        qDebug() << "LogosAPIClient: calling requestModule for" << objectName;
+        LogosAPIConsumer* packageManagerConsumer = new LogosAPIConsumer("capability_module", "origin_module", m_token_manager, this);
+        QVariant result = packageManagerConsumer->invokeRemoteMethod("capability_module", "requestModule", QVariantList() << m_origin_module << objectName, timeoutMs);
+        qDebug() << "================================================";
+        qDebug() << "================================================";
+        qDebug() << "================================================";
+        qDebug() << "================================================";
+        qDebug() << "================================================";
+        qDebug() << "================================================";
+        qDebug() << "LogosAPIClient: requestModule result for" << objectName << ":" << result.toString();
+        qDebug() << "================================================";
+        qDebug() << "================================================";
+        qDebug() << "================================================";
+        qDebug() << "================================================";
+        qDebug() << "================================================";
+    }
 
     return m_consumer->invokeRemoteMethod(objectName, methodName, args, timeoutMs);
 }
