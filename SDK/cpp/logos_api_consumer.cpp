@@ -1,5 +1,7 @@
 #include "logos_api_consumer.h"
 #include "module_proxy.h"
+#include "logos_api_client.h"
+#include "token_manager.h"
 #include <QRemoteObjectNode>
 #include <QRemoteObjectReplica>
 #include <QRemoteObjectPendingCall>
@@ -11,11 +13,12 @@
 
 const QString AUTH_TOKEN = "abc";
 
-LogosAPIConsumer::LogosAPIConsumer(const QString& module_to_talk_to, const QString& origin_module, QObject *parent)
+LogosAPIConsumer::LogosAPIConsumer(const QString& module_to_talk_to, const QString& origin_module, TokenManager* token_manager, QObject *parent)
     : QObject(parent)
     , m_node(nullptr)
     , m_registryUrl(QString("local:logos_%1").arg(module_to_talk_to))
     , m_connected(false)
+    , m_token_manager(token_manager)
 {
     m_node = new QRemoteObjectNode(this);
     connectToRegistry();
@@ -130,6 +133,24 @@ QString LogosAPIConsumer::getToken(const QString& module_name)
         qDebug() << "LogosAPIConsumer: Using stored token for module:" << module_name;
         return m_tokens[module_name];
     }
+
+    if (m_token_manager) {
+        //QList<QString> keys = m_token_manager->getTokenKeys();
+        //for (const QString& key : keys) {
+        //    qDebug() << "LogosAPIConsumer: Token key:" << key << "value:" << m_token_manager->getToken(key);
+        //}
+
+        QString token = m_token_manager->getToken(module_name);
+        if (!token.isEmpty()) {
+            qDebug() << "LogosAPIConsumer: Found token for module:" << module_name;
+            return token;
+        } else {
+            qDebug() << "LogosAPIConsumer: No token found for module:" << module_name;
+        }
+    } else {
+        qDebug() << "LogosAPIConsumer: No token manager found - using default AUTH_TOKEN";
+    }
+
     qDebug() << "LogosAPIConsumer: No stored token for module:" << module_name << "- using default AUTH_TOKEN";
     return AUTH_TOKEN;
 }

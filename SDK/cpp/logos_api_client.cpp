@@ -1,9 +1,11 @@
 #include "logos_api_client.h"
 #include "logos_api_consumer.h"
+#include "token_manager.h"
 
-LogosAPIClient::LogosAPIClient(const QString& module_to_talk_to, const QString& origin_module, QObject *parent)
+LogosAPIClient::LogosAPIClient(const QString& module_to_talk_to, const QString& origin_module, TokenManager* token_manager, QObject *parent)
     : QObject(parent)
-    , m_consumer(new LogosAPIConsumer(module_to_talk_to, origin_module, this))
+    , m_consumer(new LogosAPIConsumer(module_to_talk_to, origin_module, token_manager, this))
+    , m_token_manager(token_manager)
 {
 }
 
@@ -128,4 +130,9 @@ void LogosAPIClient::onEventResponse(QObject* replica, const QString& eventName,
 bool LogosAPIClient::informModuleToken(const QString& authToken, const QString& moduleName, const QString& token)
 {
     return m_consumer->informModuleToken(authToken, moduleName, token);
+}
+
+TokenManager* LogosAPIClient::getTokenManager() const
+{
+    return m_token_manager;
 }

@@ -10,6 +10,7 @@
 #include <functional>
 
 class QRemoteObjectNode;
+class TokenManager;
 
 /**
  * @brief LogosAPIConsumer handles connecting to remote objects and invoking their methods
@@ -29,9 +30,10 @@ public:
      * @brief Construct a new LogosAPIConsumer
      * @param module_to_talk_to The name of the module to connect to
      * @param origin_module The name of the originating module
+     * @param token_manager Pointer to the token manager instance
      * @param parent Parent QObject
      */
-    explicit LogosAPIConsumer(const QString& module_to_talk_to, const QString& origin_module, QObject *parent = nullptr);
+    explicit LogosAPIConsumer(const QString& module_to_talk_to, const QString& origin_module, TokenManager* token_manager, QObject *parent = nullptr);
     
     /**
      * @brief Destructor - cleans up connections and resources
@@ -115,6 +117,7 @@ private:
     QString m_registryUrl;
     bool m_connected;
     QMap<QString, QString> m_tokens;
+    TokenManager* m_token_manager;
 
     // Store callbacks by event name
     QHash<QString, QList<std::function<void(const QString&, const QVariantList&)>>> m_eventCallbacks;
