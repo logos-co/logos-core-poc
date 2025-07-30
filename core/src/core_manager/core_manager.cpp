@@ -193,3 +193,9 @@ QJsonArray CoreManagerPlugin::getPluginMethods(const QString& pluginName) {
 
     return methodsArray;
 }
+
+void CoreManagerPlugin::initLogos(LogosAPI* logosAPIInstance) {
+    qDebug() << "CoreManager: initLogos called with LogosAPI instance";
+    logosAPI = logosAPIInstance;
+    qDebug() << "CoreManager: LogosAPI instance stored successfully";
+}

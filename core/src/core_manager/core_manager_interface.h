@@ -6,7 +6,7 @@
 #include "../../interface.h"
 
 // Core manager specific methods interface
-class CoreManagerInterface {
+class CoreManagerInterface : public PluginInterface {
 public:
     virtual ~CoreManagerInterface() {}
 

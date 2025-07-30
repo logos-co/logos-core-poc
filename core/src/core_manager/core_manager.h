@@ -6,6 +6,8 @@
 #include <QStringList>
 #include <QJsonArray>
 #include "../../interface.h"
+#include "../../SDK/cpp/logos_api.h"
+#include "../../SDK/cpp/logos_api_client.h"
 
 // Forward declaration
 class LogosAPIClient;
@@ -35,6 +37,9 @@ public:
     Q_INVOKABLE bool loadPlugin(const QString& pluginName);
     Q_INVOKABLE bool unloadPlugin(const QString& pluginName);
     Q_INVOKABLE QString processPlugin(const QString& filePath);
+
+    // add initLogos
+    Q_INVOKABLE void initLogos(LogosAPI* logosAPIInstance);
 
 private:
     QString m_pluginsDirectory;
