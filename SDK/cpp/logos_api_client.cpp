@@ -146,11 +146,13 @@ TokenManager* LogosAPIClient::getTokenManager() const
 
 QString LogosAPIClient::getToken(const QString& module_name)
 {
+    qDebug() << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-";
+    qDebug() << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-";
     if (m_token_manager) {
-        //QList<QString> keys = m_token_manager->getTokenKeys();
-        //for (const QString& key : keys) {
-        //    qDebug() << "LogosAPIClient: Token key:" << key << "value:" << m_token_manager->getToken(key);
-        //}
+        QList<QString> keys = m_token_manager->getTokenKeys();
+        for (const QString& key : keys) {
+           qDebug() << "LogosAPIClient: Token key:" << key << "value:" << m_token_manager->getToken(key);
+        }
 
         QString token = m_token_manager->getToken(module_name);
         if (!token.isEmpty()) {
@@ -164,5 +166,6 @@ QString LogosAPIClient::getToken(const QString& module_name)
     }
 
     qDebug() << "LogosAPIClient: No stored token for module:" << module_name << "- using default AUTH_TOKEN";
+    qDebug() << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-";
     return AUTH_TOKEN;
 }
