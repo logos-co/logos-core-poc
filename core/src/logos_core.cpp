@@ -387,7 +387,7 @@ static bool initializeCoreManager()
     if (success) {
         qDebug() << "Core manager registered using new API with name:" << coreManager->name();
         // TODO: replace this, using test token
-        coreAPI->getTokenManager()->saveToken("core", "abc");
+        coreAPI->getTokenManager()->saveToken("core_manager", "abc");
         qDebug() << "Test token saved for core access";
     } else {
         qWarning() << "Failed to register core manager using new API";
@@ -655,6 +655,36 @@ char* logos_core_process_plugin(const char* plugin_path)
 
     // Convert to C string that must be freed by the caller
     QByteArray utf8Data = pluginName.toUtf8();
+    char* result = new char[utf8Data.size() + 1];
+    strcpy(result, utf8Data.constData());
+
+    return result;
+}
+
+// Implementation of the function to get a token by key
+char* logos_core_get_token(const char* key)
+{
+    if (!key) {
+        qWarning() << "Cannot get token: key is null";
+        return nullptr;
+    }
+
+    QString keyStr = QString::fromUtf8(key);
+    qDebug() << "Getting token for key:" << keyStr;
+
+    // Get the token from the TokenManager singleton
+    TokenManager& tokenManager = TokenManager::instance();
+    QString token = tokenManager.getToken(keyStr);
+
+    if (token.isEmpty()) {
+        qDebug() << "No token found for key:" << keyStr;
+        return nullptr;
+    }
+
+    qDebug() << "Token found for key:" << keyStr;
+
+    // Convert to C string that must be freed by the caller
+    QByteArray utf8Data = token.toUtf8();
     char* result = new char[utf8Data.size() + 1];
     strcpy(result, utf8Data.constData());
 

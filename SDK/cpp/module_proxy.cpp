@@ -188,6 +188,37 @@ QVariant ModuleProxy::callRemoteMethod(const QString& authToken, const QString& 
     qDebug() << "ModuleProxy: Auth token received:" << authToken;
     qDebug() << "ModuleProxy: Calling method" << methodName << "on module" << m_module << "with args:" << args;
 
+
+
+    PluginInterface* pluginInterface = qobject_cast<PluginInterface*>(m_module);
+    if (!pluginInterface) {
+        qWarning() << "ModuleProxy: Module is not a PluginInterface";
+        return false;
+    }
+
+    // now print the name
+    qDebug() << "ModuleProxy: PluginInterface name:" << pluginInterface->name();
+
+    // get Logos API
+    LogosAPI* logosAPI = pluginInterface->logosAPI;
+    if (!logosAPI) {
+        qWarning() << "ModuleProxy: LogosAPI not available";
+        return false;
+    }
+
+    // get TokenManager
+    TokenManager* tokenManager = logosAPI->getTokenManager();
+    if (!tokenManager) {
+        qWarning() << "ModuleProxy: TokenManager not available";
+        return false;
+    }
+
+    // print keys vand values for debug purposes
+    QList<QString> keys = tokenManager->getTokenKeys();
+    for (const QString& key : keys) {
+       qDebug() << "ModuleProxy: Token key:" << key << "value:" << tokenManager->getToken(key);
+    }
+
     // check if the auth token is valid
     if (authToken.isEmpty()) {
         qWarning() << "ModuleProxy: Auth token is empty";

@@ -699,6 +699,63 @@ int main(int argc, char *argv[])
     
     PluginTester::printSuccess(QString("PASS: requestModule() returned correct result: '%1'").arg(actualCapabilityResult));
 
+    // Test the new logos_core_get_token API
+    qDebug() << "\n=== Testing logos_core_get_token API ===";
+    
+    // Test retrieving the token that was saved during core initialization
+    const char* tokenKey = "core_manager";
+    qDebug() << "Retrieving token for key:" << tokenKey;
+    
+    char* retrievedToken = logos_core_get_token(tokenKey);
+    if (!retrievedToken) {
+        PluginTester::printError(QString("CRITICAL: Failed to retrieve token for key: %1").arg(tokenKey));
+        logos_core_cleanup();
+        exit(1);
+    }
+    
+    QString tokenValue = QString::fromUtf8(retrievedToken);
+    QString expectedTokenValue = "abc"; // The token saved in logos_core.cpp line 390
+    
+    if (tokenValue != expectedTokenValue) {
+        PluginTester::printError(QString("CRITICAL: Token value mismatch. Expected: '%1', Got: '%2'")
+                               .arg(expectedTokenValue).arg(tokenValue));
+        delete[] retrievedToken; // Clean up memory
+        logos_core_cleanup();
+        exit(1);
+    }
+    
+    PluginTester::printSuccess(QString("PASS: logos_core_get_token() returned correct token: '%1'").arg(tokenValue));
+    
+    // Clean up the allocated memory
+    delete[] retrievedToken;
+    
+    // Test retrieving a non-existent token
+    const char* nonExistentKey = "non_existent_token";
+    qDebug() << "Testing retrieval of non-existent token:" << nonExistentKey;
+    
+    char* nonExistentToken = logos_core_get_token(nonExistentKey);
+    if (nonExistentToken != nullptr) {
+        PluginTester::printError(QString("CRITICAL: Expected NULL for non-existent token, but got: '%1'")
+                               .arg(QString::fromUtf8(nonExistentToken)));
+        delete[] nonExistentToken;
+        logos_core_cleanup();
+        exit(1);
+    }
+    
+    PluginTester::printSuccess("PASS: logos_core_get_token() correctly returned NULL for non-existent token");
+    
+    // Test passing NULL key
+    qDebug() << "Testing logos_core_get_token() with NULL key";
+    char* nullKeyToken = logos_core_get_token(nullptr);
+    if (nullKeyToken != nullptr) {
+        PluginTester::printError("CRITICAL: Expected NULL for NULL key, but got a token");
+        delete[] nullKeyToken;
+        logos_core_cleanup();
+        exit(1);
+    }
+    
+    PluginTester::printSuccess("PASS: logos_core_get_token() correctly returned NULL for NULL key");
+
     // All assertions passed - test completed successfully
     qDebug() << "\n=== All Tests Completed Successfully ===";
     qDebug() << "✓ Plugin loading tests passed";
@@ -713,6 +770,7 @@ int main(int argc, char *argv[])
     qDebug() << "✓ Template module processData() method test passed";
     qDebug() << "✓ Template module formatMessage() method test passed";
     qDebug() << "✓ Capability module requestModule() method test passed";
+    qDebug() << "✓ logos_core_get_token() API test passed";
 
     // // Clean up resources
     // logos_core_cleanup();

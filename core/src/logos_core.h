@@ -47,6 +47,11 @@ LOGOS_CORE_EXPORT int logos_core_unload_plugin(const char* plugin_name);
 // Returns the plugin name if successful, NULL if failed
 LOGOS_CORE_EXPORT char* logos_core_process_plugin(const char* plugin_path);
 
+// Get a token by key from the core token manager
+// Returns the token value if found, NULL if not found
+// The returned string must be freed by the caller
+LOGOS_CORE_EXPORT char* logos_core_get_token(const char* key);
+
 // === Async Callback API ===
 
 // Define the callback function type for async operations
