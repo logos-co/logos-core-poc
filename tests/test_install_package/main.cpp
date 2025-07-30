@@ -197,8 +197,9 @@ int main(int argc, char *argv[])
     qDebug() << "\n=== Initial Plugin State ===";
     PluginTester::printLoadedPlugins("Initial plugins");
     
-    // Assert that core_manager plugin is loaded initially
-    PluginTester::assertEqual(QStringList{"core_manager"}, 1, "Initial state check");
+    // Assert that core_manager and capability_module plugins are loaded initially
+    // (capability_module is auto-loaded because it's in the modules directory)
+    PluginTester::assertEqual(QStringList{"core_manager", "capability_module"}, 1, "Initial state check");
 
     // Load the package_manager plugin
     qDebug() << "\n=== Loading package_manager plugin ===";
@@ -212,7 +213,12 @@ int main(int argc, char *argv[])
 
     // Verify package_manager is loaded
     PluginTester::printLoadedPlugins("Plugins after loading package_manager");
-    PluginTester::assertEqual(QStringList{"core_manager", "package_manager"}, 2, "package_manager should be loaded");
+    PluginTester::assertEqual(QStringList{"core_manager", "capability_module", "package_manager"}, 2, "package_manager should be loaded");
+
+    // Verify capability_module is already loaded (auto-loaded from modules directory)
+    qDebug() << "\n=== Verifying capability_module is loaded ===";
+    PluginTester::printLoadedPlugins("Current plugins state");
+    PluginTester::assertContains(QStringList{"capability_module"}, 3, "capability_module should be loaded");
 
     // Check that packages directory exists and contains template_module
     QString packagesDir = QDir::cleanPath(QDir::currentPath() + "/packages");
@@ -284,9 +290,9 @@ int main(int argc, char *argv[])
         PluginTester::assertContains(QStringList{"template_module"}, 4, 
                                   "template_module should be loaded after installation");
         
-        // Test that all three plugins are loaded: core_manager, package_manager, and template_module
-        PluginTester::assertEqual(QStringList{"core_manager", "package_manager", "template_module"}, 5, 
-                                "All three plugins should be loaded after installation");
+        // Test that all four plugins are loaded: core_manager, package_manager, capability_module, and template_module
+        PluginTester::assertEqual(QStringList{"core_manager", "package_manager", "capability_module", "template_module"}, 5, 
+                                "All four plugins should be loaded after installation");
         
         // Test the event system
         qDebug() << "\n=== Testing Template Module Events ===";
@@ -352,6 +358,7 @@ int main(int argc, char *argv[])
     qDebug() << "✓ Package discovery tests passed";
     qDebug() << "✓ Package installation tests passed";
     qDebug() << "✓ Template module is now available and loaded";
+    qDebug() << "✓ Capability module is loaded and functional";
     qDebug() << "✓ Event system tests passed";
     qDebug() << "✓ Template module foo() event trigger test passed";
 
