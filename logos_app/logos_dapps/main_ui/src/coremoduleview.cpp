@@ -174,7 +174,7 @@ void CoreModuleView::updatePluginList()
     qDebug() << "\n\n----------> Updating plugin list\n\n";
     
     // Use LogosAPI to get the list of known plugins
-    LogosAPI api("main_ui");
+    LogosAPI api("core");
     auto client = api.getClient("core_manager");
     QVariant result = client->invokeRemoteMethod("core_manager", "getKnownPlugins");
     
@@ -282,7 +282,7 @@ void CoreModuleView::onLoadPluginClicked()
     qDebug() << "Loading plugin:" << pluginName;
 
     // Use LogosAPI to load the plugin
-    LogosAPI api("main_ui");
+    LogosAPI api("core");
     auto client = api.getClient("core_manager");
     QVariant result = client->invokeRemoteMethod("core_manager", "loadPlugin", pluginName);
 
@@ -312,7 +312,7 @@ void CoreModuleView::onUnloadPluginClicked()
     qDebug() << "Unloading plugin:" << pluginName;
 
     // Use LogosAPI to unload the plugin
-    LogosAPI api("main_ui");
+    LogosAPI api("core");
     auto client = api.getClient("core_manager");
     QVariant result = client->invokeRemoteMethod("core_manager", "unloadPlugin", pluginName);
 
@@ -396,7 +396,7 @@ void CoreModuleView::onAddPluginClicked()
     qDebug() << "Selected plugin file:" << filePath;
 
     // Use LogosAPI to install the plugin
-    LogosAPI api("main_ui");
+    LogosAPI api("core");
     auto client = api.getClient("core_manager");
     QVariant result = client->invokeRemoteMethod("core_manager", "installPlugin", filePath);
 

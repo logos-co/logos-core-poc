@@ -118,7 +118,7 @@ void PluginMethodsView::setupUi()
 
 void PluginMethodsView::loadPluginMethods()
 {
-    LogosAPI api("main_ui");
+    LogosAPI api("core");
     auto client = api.getClient("core_manager");
     QVariant result = client->invokeRemoteMethod("core_manager", "getPluginMethods", m_pluginName);
 

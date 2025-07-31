@@ -233,7 +233,7 @@ int main(int argc, char *argv[])
     qDebug() << "\n=== Testing Chat and Waku Modules ===";
 
             // Initialize LogosAPI for testing waku
-        LogosAPI wakuAPI("test_chat");
+        LogosAPI wakuAPI("core");
 
     // Get waku object for testing
     QObject* wakuObj = wakuAPI.getClient("waku_module")->requestObject("waku_module");
@@ -243,7 +243,7 @@ int main(int argc, char *argv[])
         PluginTester::printSuccess("Successfully got waku object from registry");
     }
             // Initialize LogosAPI for testing chat
-        LogosAPI chatAPI("test_chat");
+        LogosAPI chatAPI("core");
 
     // Get chat object for testing
     QObject* chatObj = chatAPI.getClient("chat")->requestObject("chat");
