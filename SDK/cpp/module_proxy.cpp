@@ -189,7 +189,6 @@ QVariant ModuleProxy::callRemoteMethod(const QString& authToken, const QString& 
     qDebug() << "ModuleProxy: Calling method" << methodName << "on module" << m_module << "with args:" << args;
 
 
-
     PluginInterface* pluginInterface = qobject_cast<PluginInterface*>(m_module);
     if (!pluginInterface) {
         qWarning() << "ModuleProxy: Module is not a PluginInterface";
@@ -219,20 +218,22 @@ QVariant ModuleProxy::callRemoteMethod(const QString& authToken, const QString& 
        qDebug() << "ModuleProxy: Token key:" << key << "value:" << tokenManager->getToken(key);
     }
 
-    // check if the auth token is valid
+    // check if authToken is valid
     if (authToken.isEmpty()) {
         qWarning() << "ModuleProxy: Auth token is empty";
         return QVariant();
     }
 
-    // check if the auth token is stored
-    if (!m_tokens.contains(authToken)) {
-        qDebug() << "========================================================";
-        qDebug() << "========================================================";
+    // check if authToken is stored in tokenManager
+    if (!tokenManager->getToken(authToken).isEmpty()) {
+        qDebug() << "ERROR: =====================  getToken(authToken) is INVALID   =====================";
         qWarning() << "ModuleProxy: Auth token not found in stored tokens";
-        qDebug() << "========================================================";
-        qDebug() << "========================================================";
+        qDebug() << "ERROR: =====================  getToken(authToken) is INVALID   =====================";
+
+        // TODO: for now don't block until it's all implemented
         // return QVariant();
+    } else {
+        qDebug() << "VALID: =====================  getToken(authToken) is VALID   =====================";
     }
 
     // Each createArgument() call now generates its own unique GUID
