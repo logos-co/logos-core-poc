@@ -223,8 +223,7 @@ int main(int argc, char *argv[])
     qDebug() << "\n=== Testing Template Module Events ===";
 
             // Initialize LogosAPI for testing
-        // LogosAPI testAPI("test_simple");
-        LogosAPI testAPI("test_simple");
+        LogosAPI testAPI("core");
 
     // Get template_module object for event listening
     QObject* templateModuleObj = testAPI.getClient("template_module")->requestObject("template_module");
@@ -309,7 +308,7 @@ int main(int argc, char *argv[])
     qDebug() << "==========================================================================================";
     qDebug() << "==========================================================================================";
     // initialize for TemplateModule
-    LogosAPI templateModuleAPI("test_simple");
+    LogosAPI templateModuleAPI("core");
 
     QString authToken = "test_auth_token_123";
     QString moduleName = "test_module";
@@ -666,7 +665,7 @@ int main(int argc, char *argv[])
     qDebug() << "\n=== Testing Capability Module ===";
     
     // Initialize LogosAPI for testing capability_module
-    LogosAPI capabilityAPI("test_simple");
+    LogosAPI capabilityAPI("core");
     
     // Get capability_module object for testing
     QObject* capabilityModuleObj = capabilityAPI.getClient("capability_module")->requestObject("capability_module");

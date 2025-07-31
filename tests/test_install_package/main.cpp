@@ -245,7 +245,7 @@ int main(int argc, char *argv[])
     qDebug() << "\n=== Testing Package Installation ===";
     
             // Initialize LogosAPI for testing
-        LogosAPI testAPI("test_install_package");
+        LogosAPI testAPI("core");
     
     // Determine the correct file extension for this platform
     QString libExt;
@@ -298,7 +298,7 @@ int main(int argc, char *argv[])
         qDebug() << "\n=== Testing Template Module Events ===";
 
         // Initialize LogosAPI for testing
-        LogosAPI eventTestAPI("test_install_package");
+        LogosAPI eventTestAPI("core");
 
         // Get template_module object for event listening
         QObject* templateModuleObj = eventTestAPI.getClient("template_module")->requestObject("template_module");

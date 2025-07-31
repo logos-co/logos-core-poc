@@ -3,6 +3,7 @@
 #include <QCoreApplication>
 #include <QVariantList>
 #include <QDateTime>
+#include "token_manager.h"
 
 CapabilityModulePlugin::CapabilityModulePlugin()
 {
@@ -21,14 +22,20 @@ CapabilityModulePlugin::~CapabilityModulePlugin()
 
 QString CapabilityModulePlugin::requestModule(const QString &fromModuleName, const QString &moduleName)
 {
-    qDebug() << "CapabilityModulePlugin::requestModule called with fromModuleName:" << fromModuleName << "moduleName:" << moduleName;
-    
-    // For now, just return a hardcoded string as requested
-    QString result = "abc";
-    
-    qDebug() << "CapabilityModulePlugin::requestModule returning:" << result;
-    
-    return result;
+    // get the token for the module
+    QString token = logosAPI->getTokenManager()->getToken(fromModuleName);
+    qDebug() << "CapabilityModulePlugin::requestModule token:" << token;
+
+    // check if the token is valid
+    if (token.isEmpty()) {
+        qDebug() << "CapabilityModulePlugin::requestModule token is empty";
+
+        return "error";
+    } else {
+        qDebug() << "CapabilityModulePlugin::requestModule token is valid";
+        qDebug() << "Token is:" << token;
+        return token;
+    }
 }
 
 void CapabilityModulePlugin::initLogos(LogosAPI* logosAPIInstance) {

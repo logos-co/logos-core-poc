@@ -12,7 +12,7 @@
 void simpleExample()
 {
     // Create a LogosAPI instance for our module
-    LogosAPI api("my_app");
+    LogosAPI api("core");
     
     // Get the provider and register an object
     LogosAPIProvider* provider = api.getProvider();
