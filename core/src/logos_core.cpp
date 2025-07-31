@@ -221,6 +221,9 @@ static bool loadPlugin(const QString &pluginName)
     // Add the plugin name to our loaded plugins list
     g_loaded_plugins.append(pluginName);
 
+    TokenManager& tokenManager = TokenManager::instance();
+    tokenManager.saveToken(pluginName, authTokenString);
+
     // Connect to process finished signal for cleanup
     QObject::connect(process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
                      [pluginName, process](int exitCode, QProcess::ExitStatus exitStatus) {
