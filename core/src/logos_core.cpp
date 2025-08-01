@@ -406,6 +406,56 @@ static bool initializeCapabilityModule()
     bool success = loadPlugin("capability_module");
     if (success) {
         qDebug() << "Capability module loaded successfully";
+        
+        // Inform capability module about core_manager token
+        if (g_loaded_plugins.contains("core_manager")) {
+            qDebug() << "Informing capability module about core_manager token";
+            
+            // Get the core_manager token from TokenManager
+            TokenManager& tokenManager = TokenManager::instance();
+            QString coreManagerToken = tokenManager.getToken("core_manager");
+            
+            if (!coreManagerToken.isEmpty()) {
+                // Create LogosAPI instance to connect to the capability module
+                LogosAPI* coreAPI = new LogosAPI("core");
+                
+                // Use a timer to ensure the capability module is ready
+                QTimer* informTimer = new QTimer();
+                informTimer->setSingleShot(true);
+                informTimer->setInterval(1000); // 1 second delay to ensure connection is ready
+                
+                // get token for capability_module
+                QString capabilityModuleToken = tokenManager.getToken("capability_module");
+                qDebug() << "Capability module token:" << capabilityModuleToken;
+                
+                QObject::connect(informTimer, &QTimer::timeout, [=]() {
+                    if (coreAPI->getClient("capability_module")->isConnected()) {
+                        qDebug() << "Calling informModuleToken on capability module for core_manager";
+                        
+                        // Call informModuleToken with the core auth token, module name, and module token
+                        bool success = coreAPI->getClient("capability_module")->informModuleToken(capabilityModuleToken, "core_manager", "abc");
+                        if (success) {
+                            qDebug() << "Successfully informed capability module about core_manager token";
+                        } else {
+                            qWarning() << "Failed to inform capability module about core_manager token";
+                        }
+                    } else {
+                        qWarning() << "Failed to connect to capability module for core_manager token notification";
+                    }
+                    
+                    // Clean up
+                    coreAPI->deleteLater();
+                    informTimer->deleteLater();
+                });
+                
+                informTimer->start();
+            } else {
+                qWarning() << "No token found for core_manager, skipping capability module notification";
+            }
+        } else {
+            qDebug() << "Core manager not loaded, skipping token notification";
+        }
+        
         return true;
     } else {
         qWarning() << "Failed to load capability module";
