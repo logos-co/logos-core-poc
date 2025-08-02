@@ -26,6 +26,7 @@ class PackageManagerView : public QWidget
 
 public:
     explicit PackageManagerView(QWidget *parent = nullptr);
+    explicit PackageManagerView(LogosAPI* logosAPI, QWidget *parent = nullptr);
     ~PackageManagerView();
     
     // Set the main window reference

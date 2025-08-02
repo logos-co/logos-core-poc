@@ -113,6 +113,8 @@ public slots:
      */
     bool informModuleToken(const QString& authToken, const QString& moduleName, const QString& token);
 
+    bool informModuleToken_module(const QString& authToken, const QString& originModule, const QString& moduleName, const QString& token);
+
 private:
     QRemoteObjectNode* m_node;
     QString m_registryUrl;

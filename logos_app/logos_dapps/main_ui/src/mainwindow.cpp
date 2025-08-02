@@ -13,9 +13,36 @@
 #include "coremoduleview.h"
 #include "packagemanagerview.h"
 #include "modulesgenericview.h"
+#include "../../../../SDK/cpp/logos_api.h"
+#include "../../../../SDK/cpp/token_manager.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QWidget(parent)
+    , m_logosAPI(nullptr)
+{
+    // Create own LogosAPI instance if none provided
+    m_logosAPI = new LogosAPI("core", this);
+    
+    setupUi();
+    createSidebar();
+    createContentPages();
+    
+    // Set the first button as active by default
+    if (!m_sidebarButtons.isEmpty()) {
+        m_sidebarButtons[0]->setActive(true);
+        m_contentStack->setCurrentIndex(0);
+    }
+
+    qDebug() << "===> mainwindow: LogosAPI: printing keys";
+    QList<QString> keys = m_logosAPI->getTokenManager()->getTokenKeys();
+    for (const QString& key : keys) {
+       qDebug() << "===> mainwindow: LogosAPI: Token key:" << key << "value:" << m_logosAPI->getTokenManager()->getToken(key);
+    }
+}
+
+MainWindow::MainWindow(LogosAPI* logosAPI, QWidget *parent)
+    : QWidget(parent)
+    , m_logosAPI(logosAPI)
 {
     setupUi();
     createSidebar();
@@ -25,6 +52,14 @@ MainWindow::MainWindow(QWidget *parent)
     if (!m_sidebarButtons.isEmpty()) {
         m_sidebarButtons[0]->setActive(true);
         m_contentStack->setCurrentIndex(0);
+    }
+
+    if (m_logosAPI) {
+        qDebug() << "===> mainwindow: LogosAPI: printing keys";
+        QList<QString> keys = m_logosAPI->getTokenManager()->getTokenKeys();
+        for (const QString& key : keys) {
+           qDebug() << "===> mainwindow: LogosAPI: Token key:" << key << "value:" << m_logosAPI->getTokenManager()->getToken(key);
+        }
     }
 }
 
@@ -115,7 +150,7 @@ void MainWindow::createContentPages()
     m_contentStack->addWidget(m_modulesGenericView);
     
     // Package Manager page
-    PackageManagerView *packageManagerView = new PackageManagerView();
+    PackageManagerView *packageManagerView = new PackageManagerView(m_logosAPI);
     packageManagerView->setMainWindow(this);
     m_contentStack->addWidget(packageManagerView);
     

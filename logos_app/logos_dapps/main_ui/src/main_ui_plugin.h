@@ -5,6 +5,7 @@
 
 class MainWindow;
 class CoreModuleView;
+class LogosAPI;
 
 class MainUIPlugin : public QObject, public IComponent
 {
@@ -17,7 +18,7 @@ public:
     ~MainUIPlugin();
 
     // IComponent implementation
-    Q_INVOKABLE QWidget* createWidget() override;
+    Q_INVOKABLE QWidget* createWidget(LogosAPI* logosAPI = nullptr);
     void destroyWidget(QWidget* widget) override;
 
     // UI-specific methods
@@ -26,4 +27,5 @@ public:
 private:
     MainWindow* m_mainWindow;
     CoreModuleView* m_coreModuleView;
+    LogosAPI* m_logosAPI;
 }; 

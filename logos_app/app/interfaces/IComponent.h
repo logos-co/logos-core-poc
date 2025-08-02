@@ -4,10 +4,12 @@
 #include <QWidget>
 #include <QtPlugin>
 
+class LogosAPI;
+
 class IComponent {
 public:
     virtual ~IComponent() = default;
-    virtual QWidget* createWidget() = 0;
+    virtual QWidget* createWidget(LogosAPI* logosAPI = nullptr) = 0;
     virtual void destroyWidget(QWidget* widget) = 0;
 };
 

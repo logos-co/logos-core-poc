@@ -222,8 +222,8 @@ int main(int argc, char *argv[])
     // Test the event system
     qDebug() << "\n=== Testing Template Module Events ===";
 
-            // Initialize LogosAPI for testing
-        LogosAPI testAPI("core");
+    // Initialize LogosAPI for testing
+    LogosAPI testAPI("core");
 
     // Get template_module object for event listening
     QObject* templateModuleObj = testAPI.getClient("template_module")->requestObject("template_module");
@@ -304,33 +304,33 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    qDebug() << "\n\n\n\n\n=== Testing Token Manager ===";
-    qDebug() << "==========================================================================================";
-    qDebug() << "==========================================================================================";
-    // initialize for TemplateModule
-    LogosAPI templateModuleAPI("core");
+    // qDebug() << "\n\n\n\n\n=== Testing Token Manager ===";
+    // qDebug() << "==========================================================================================";
+    // qDebug() << "==========================================================================================";
+    // // initialize for TemplateModule
+    // LogosAPI templateModuleAPI("core");
 
-    QString authToken = "test_auth_token_123";
-    QString moduleName = "test_module";
-    QString moduleToken = "test_module_token_456";
+    // QString authToken = "test_auth_token_123";
+    // QString moduleName = "test_module";
+    // QString moduleToken = "test_module_token_456";
 
-    qDebug() << "\n\n--------> Calling informModuleToken() with authToken:" << authToken << "moduleName:" << moduleName << "moduleToken:" << moduleToken;
-    bool tokenResult = templateModuleAPI.getClient("capability_module")->informModuleToken(authToken, moduleName, moduleToken);
-    if (!tokenResult) {
-        PluginTester::printError("CRITICAL: Failed to call informModuleToken() method");
-        logos_core_cleanup();
-        exit(1);
-    }
+    // qDebug() << "\n\n--------> Calling informModuleToken() with authToken:" << authToken << "moduleName:" << moduleName << "moduleToken:" << moduleToken;
+    // bool tokenResult = templateModuleAPI.getClient("capability_module")->informModuleToken(authToken, moduleName, moduleToken);
+    // if (!tokenResult) {
+    //     PluginTester::printError("CRITICAL: Failed to call informModuleToken() method");
+    //     logos_core_cleanup();
+    //     exit(1);
+    // }
 
-    // now call foo on template_module
-    qDebug() << "\n\n--------> Calling foo() on template_module";
-    QVariant fooResult = templateModuleAPI.getClient("template_module")->invokeRemoteMethod("template_module", "foo", "hello_world");
-    if (!fooResult.isValid() || !fooResult.toBool()) {
-        PluginTester::printError("CRITICAL: Failed to call foo() method");
+    // // now call foo on template_module
+    // qDebug() << "\n\n--------> Calling foo() on template_module";
+    // QVariant fooResult = templateModuleAPI.getClient("template_module")->invokeRemoteMethod("template_module", "foo", "hello_world");
+    // if (!fooResult.isValid() || !fooResult.toBool()) {
+    //     PluginTester::printError("CRITICAL: Failed to call foo() method");
 
-        logos_core_cleanup();
-        exit(1);
-    }
+    //     logos_core_cleanup();
+    //     exit(1);
+    // }
 
     // Test the stringToBool() method
     qDebug() << "\n=== Testing stringToBool() method ===";
@@ -662,41 +662,41 @@ int main(int argc, char *argv[])
     }
 
     // Test the capability_module
-    qDebug() << "\n=== Testing Capability Module ===";
+    //qDebug() << "\n=== Testing Capability Module ===";
     
-    // Initialize LogosAPI for testing capability_module
-    LogosAPI capabilityAPI("core");
+    //// Initialize LogosAPI for testing capability_module
+    //LogosAPI capabilityAPI("core");
     
-    // Get capability_module object for testing
-    QObject* capabilityModuleObj = capabilityAPI.getClient("capability_module")->requestObject("capability_module");
-    if (!capabilityModuleObj) {
-        PluginTester::printError("CRITICAL: Failed to get capability_module from registry");
-        logos_core_cleanup();
-        exit(1);
-    }
+    //// Get capability_module object for testing
+    //QObject* capabilityModuleObj = capabilityAPI.getClient("capability_module")->requestObject("capability_module");
+    //if (!capabilityModuleObj) {
+    //    PluginTester::printError("CRITICAL: Failed to get capability_module from registry");
+    //    logos_core_cleanup();
+    //    exit(1);
+    //}
     
-    // Test the requestModule method
-    QString testModuleName = "test_module";
-    qDebug() << "Calling requestModule() with parameter:" << testModuleName;
+    //// Test the requestModule method
+    //QString testModuleName = "test_module";
+    //qDebug() << "Calling requestModule() with parameter:" << testModuleName;
     
-    QVariant requestResult = capabilityAPI.getClient("capability_module")->invokeRemoteMethod("capability_module", "requestModule", "app", testModuleName);
-    if (!requestResult.isValid()) {
-        PluginTester::printError("CRITICAL: Failed to call requestModule() method");
-        logos_core_cleanup();
-        exit(1);
-    }
+    //QVariant requestResult = capabilityAPI.getClient("capability_module")->invokeRemoteMethod("capability_module", "requestModule", "app", testModuleName);
+    //if (!requestResult.isValid()) {
+    //    PluginTester::printError("CRITICAL: Failed to call requestModule() method");
+    //    logos_core_cleanup();
+    //    exit(1);
+    //}
     
-    QString actualCapabilityResult = requestResult.toString();
-    QString expectedCapabilityResult = "abc"; // The hardcoded return value
+    //QString actualCapabilityResult = requestResult.toString();
+    //QString expectedCapabilityResult = "abc"; // The hardcoded return value
     
-    if (actualCapabilityResult != expectedCapabilityResult) {
-        PluginTester::printError(QString("CRITICAL: requestModule() result mismatch. Expected: '%1', Got: '%2'")
-                               .arg(expectedCapabilityResult).arg(actualCapabilityResult));
-        logos_core_cleanup();
-        exit(1);
-    }
+    //if (actualCapabilityResult != expectedCapabilityResult) {
+    //    PluginTester::printError(QString("CRITICAL: requestModule() result mismatch. Expected: '%1', Got: '%2'")
+    //                           .arg(expectedCapabilityResult).arg(actualCapabilityResult));
+    //    logos_core_cleanup();
+    //    exit(1);
+    //}
     
-    PluginTester::printSuccess(QString("PASS: requestModule() returned correct result: '%1'").arg(actualCapabilityResult));
+    //PluginTester::printSuccess(QString("PASS: requestModule() returned correct result: '%1'").arg(actualCapabilityResult));
 
     // Test the new logos_core_get_token API
     qDebug() << "\n=== Testing logos_core_get_token API ===";

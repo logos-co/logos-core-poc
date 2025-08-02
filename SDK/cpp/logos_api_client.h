@@ -178,6 +178,8 @@ public:
      */
     bool informModuleToken(const QString& authToken, const QString& moduleName, const QString& token);
 
+    bool informModuleToken_module(const QString& authToken, const QString& originModule, const QString& moduleName, const QString& token);
+
     /**
      * @brief Get the token manager instance
      * @return TokenManager* Pointer to the token manager

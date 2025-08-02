@@ -1,4 +1,6 @@
 #include "window.h"
+#include "../../SDK/cpp/logos_api.h"
+#include "../../SDK/cpp/token_manager.h"
 #include <QApplication>
 #include <QIcon>
 #include <QDir>
@@ -78,11 +80,18 @@ int main(int argc, char *argv[])
         qInfo() << "Total plugins:" << plugins.size();
     }
 
+    LogosAPI logosAPI("core", nullptr);
+    qDebug() << "LogosAPI: printing keys";
+    QList<QString> keys = logosAPI.getTokenManager()->getTokenKeys();
+    for (const QString& key : keys) {
+        qDebug() << "LogosAPI: Token key:" << key << "value:" << logosAPI.getTokenManager()->getToken(key);
+    }
+
     // Set application icon
     app.setWindowIcon(QIcon(":/icons/logos.png"));
 
     // Create and show the main window
-    Window mainWindow;
+    Window mainWindow(&logosAPI);
     mainWindow.show();
 
     // Run the application

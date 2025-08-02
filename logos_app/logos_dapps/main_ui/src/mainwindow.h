@@ -10,6 +10,7 @@
 #include "mdiview.h"
 
 class ModulesGenericView;
+class LogosAPI;
 
 class MainWindow : public QWidget
 {
@@ -17,6 +18,7 @@ class MainWindow : public QWidget
 
 public:
     explicit MainWindow(QWidget *parent = nullptr);
+    explicit MainWindow(LogosAPI* logosAPI, QWidget *parent = nullptr);
     ~MainWindow();
     
     // Get the MDI view
@@ -51,4 +53,7 @@ private:
     
     // Modules View
     ModulesGenericView *m_modulesGenericView;
+    
+    // LogosAPI instance
+    LogosAPI *m_logosAPI;
 }; 
