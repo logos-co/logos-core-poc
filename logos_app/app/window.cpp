@@ -9,6 +9,14 @@
 
 Window::Window(QWidget *parent)
     : QMainWindow(parent)
+    , m_logosAPI(nullptr)
+{
+    setupUi();
+}
+
+Window::Window(LogosAPI* logosAPI, QWidget *parent)
+    : QMainWindow(parent)
+    , m_logosAPI(logosAPI)
 {
     setupUi();
 }
@@ -41,7 +49,8 @@ void Window::setupUi()
             // Try to create the main window using the plugin's createWidget method
             QMetaObject::invokeMethod(plugin, "createWidget",
                                     Qt::DirectConnection,
-                                    Q_RETURN_ARG(QWidget*, mainContent));
+                                    Q_RETURN_ARG(QWidget*, mainContent),
+                                    Q_ARG(LogosAPI*, m_logosAPI));
         }
     }
 

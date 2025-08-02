@@ -146,6 +146,12 @@ ModuleProxy::ModuleProxy(QObject* module, QObject* parent)
        QObject::connect(m_module, SIGNAL(eventResponse(QString, QVariantList)),
                        this, SIGNAL(eventResponse(QString, QVariantList)));
        qDebug() << "ModuleProxy: Connected to wrapped object's eventResponse signal";
+
+        // save token to test the issue is here
+        //PluginInterface* pluginInterface = qobject_cast<PluginInterface*>(m_module);
+        //LogosAPI* logosAPI = pluginInterface->logosAPI;
+        //TokenManager* tokenManager = logosAPI->getTokenManager();
+        //tokenManager->saveToken("core_manager", "abc");
     }
 }
 
@@ -220,8 +226,8 @@ QVariant ModuleProxy::callRemoteMethod(const QString& authToken, const QString& 
 
     // check if authToken is valid
     if (authToken.isEmpty()) {
-        qWarning() << "ModuleProxy: Auth token is empty";
-        return QVariant();
+       qWarning() << "ModuleProxy: Auth token is empty";
+       return QVariant();
     }
 
     // check if authToken is stored in tokenManager

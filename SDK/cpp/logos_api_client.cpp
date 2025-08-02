@@ -40,15 +40,14 @@ bool LogosAPIClient::reconnect()
 QVariant LogosAPIClient::invokeRemoteMethod(const QString& objectName, const QString& methodName, 
                                    const QVariantList& args, int timeoutMs)
 {
-    // Additional client-level logic can be added here
-    // For example, capability module requests or token handling
+    qDebug() << "LogosAPIClient: invoking remote method" << objectName << methodName << args;
 
     // Get the token for the module
     QString token = getToken(objectName);
 
-    if (objectName != "capability_module") {
+    if (token.isEmpty() && objectName != "capability_module") {
         qDebug() << "LogosAPIClient: calling requestModule for" << objectName;
-        LogosAPIConsumer* packageManagerConsumer = new LogosAPIConsumer("capability_module", "origin_module", m_token_manager, this);
+        LogosAPIConsumer* packageManagerConsumer = new LogosAPIConsumer("capability_module", m_origin_module, m_token_manager, this);
         QString capabilityToken = getToken("capability_module");
         QVariant result = packageManagerConsumer->invokeRemoteMethod(capabilityToken, "capability_module", "requestModule", QVariantList() << m_origin_module << objectName, timeoutMs);
         qDebug() << "================================================";
@@ -63,6 +62,8 @@ QVariant LogosAPIClient::invokeRemoteMethod(const QString& objectName, const QSt
         qDebug() << "================================================";
         qDebug() << "================================================";
         qDebug() << "================================================";
+
+        token = result.toString();
     }
 
     return m_consumer->invokeRemoteMethod(token, objectName, methodName, args, timeoutMs);
@@ -139,6 +140,11 @@ bool LogosAPIClient::informModuleToken(const QString& authToken, const QString& 
     return m_consumer->informModuleToken(authToken, moduleName, token);
 }
 
+bool LogosAPIClient::informModuleToken_module(const QString& authToken, const QString& originModule, const QString& moduleName, const QString& token)
+{
+    return m_consumer->informModuleToken_module(authToken, originModule, moduleName, token);
+}
+
 TokenManager* LogosAPIClient::getTokenManager() const
 {
     return m_token_manager;
@@ -146,9 +152,10 @@ TokenManager* LogosAPIClient::getTokenManager() const
 
 QString LogosAPIClient::getToken(const QString& module_name)
 {
+    qDebug() << "getoken: -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-";
     qDebug() << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-";
-    qDebug() << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-";
-    if (m_token_manager) {
+    // if (m_token_manager) {
+        qDebug() << "LogosAPIClient: printing keys";
         QList<QString> keys = m_token_manager->getTokenKeys();
         for (const QString& key : keys) {
            qDebug() << "LogosAPIClient: Token key:" << key << "value:" << m_token_manager->getToken(key);
@@ -161,11 +168,14 @@ QString LogosAPIClient::getToken(const QString& module_name)
         } else {
             qDebug() << "LogosAPIClient: No token found for module:" << module_name;
         }
-    } else {
-        qDebug() << "LogosAPIClient: No token manager found - using default AUTH_TOKEN";
-    }
+    // } else {
+        // qDebug() << "LogosAPIClient: No token manager found - using default AUTH_TOKEN";
+    // }
 
-    qDebug() << "LogosAPIClient: No stored token for module:" << module_name << "- using default AUTH_TOKEN";
+    qDebug() << "LogosAPIClient: No stored token for module:" << module_name;
     qDebug() << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-";
-    return AUTH_TOKEN;
+
+    // TODO: this is breaking here for core_manager
+    // return AUTH_TOKEN;
+    return "";
 }

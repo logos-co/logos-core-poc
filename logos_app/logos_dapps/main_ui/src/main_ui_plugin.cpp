@@ -2,11 +2,14 @@
 #include "mainwindow.h"
 #include "coremoduleview.h"
 #include <QDebug>
+#include "../../../../SDK/cpp/logos_api.h"
+#include "../../../../SDK/cpp/token_manager.h"
 
 MainUIPlugin::MainUIPlugin(QObject* parent)
     : QObject(parent)
     , m_mainWindow(nullptr)
     , m_coreModuleView(nullptr)
+    , m_logosAPI(nullptr)
 {
     qDebug() << "MainUIPlugin created";
 }
@@ -21,10 +24,21 @@ MainUIPlugin::~MainUIPlugin()
     }
 }
 
-QWidget* MainUIPlugin::createWidget()
+QWidget* MainUIPlugin::createWidget(LogosAPI* logosAPI)
 {
+    qDebug() << "-----> MainUIPlugin::createWidget: logosAPI:" << logosAPI;
+    if (logosAPI) {
+        m_logosAPI = logosAPI;
+    }
+
+    // print keys
+    QList<QString> keys = m_logosAPI->getTokenManager()->getTokenKeys();
+    for (const QString& key : keys) {
+        qDebug() << "-----> MainUIPlugin::createWidget: Token key:" << key << "value:" << m_logosAPI->getTokenManager()->getToken(key);
+    }
+    
     if (!m_mainWindow) {
-        m_mainWindow = new MainWindow();
+        m_mainWindow = new MainWindow(m_logosAPI);
     }
     return m_mainWindow;
 }

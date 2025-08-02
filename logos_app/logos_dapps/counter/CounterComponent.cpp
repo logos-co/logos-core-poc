@@ -1,7 +1,8 @@
 #include "CounterComponent.h"
 #include "CounterWidget.h"
 
-QWidget* CounterComponent::createWidget() {
+QWidget* CounterComponent::createWidget(LogosAPI* logosAPI) {
+    // LogosAPI parameter available but not used in this simple widget
     return new CounterWidget();
 }
 

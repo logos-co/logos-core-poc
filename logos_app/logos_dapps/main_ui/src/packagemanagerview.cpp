@@ -35,8 +35,29 @@ PackageManagerView::PackageManagerView(QWidget *parent)
     , m_mainWindow(nullptr)
     , m_logosAPI(nullptr)
 {
+    // Create own LogosAPI instance if none provided
     m_logosAPI = new LogosAPI("core", this);
     
+    setupUi();
+}
+
+PackageManagerView::PackageManagerView(LogosAPI* logosAPI, QWidget *parent)
+    : QWidget(parent)
+    , m_layout(nullptr)
+    , m_splitter(nullptr)
+    , m_sidebarWidget(nullptr)
+    , m_sidebarLayout(nullptr)
+    , m_categoryList(nullptr)
+    , m_contentWidget(nullptr)
+    , m_contentLayout(nullptr)
+    , m_packageTable(nullptr)
+    , m_buttonLayout(nullptr)
+    , m_reloadButton(nullptr)
+    , m_applyButton(nullptr)
+    , m_detailsTextEdit(nullptr)
+    , m_mainWindow(nullptr)
+    , m_logosAPI(logosAPI)
+{
     setupUi();
 }
 
