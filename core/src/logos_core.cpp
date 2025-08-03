@@ -227,21 +227,25 @@ static bool loadPlugin(const QString &pluginName)
     // call InformModuleToken on Capability Module
     if (g_loaded_plugins.contains("capability_module")) {
         qDebug() << "Informing capability module about new module token for:" << pluginName;
-        
+
         // Create LogosAPI instance to connect to the capability module
         LogosAPI* coreAPI = new LogosAPI("core");
-        
+
         // Use a timer to ensure the capability module is ready
         QTimer* informTimer = new QTimer();
         informTimer->setSingleShot(true);
         informTimer->setInterval(1000); // 1 second delay to ensure connection is ready
-        
+
+        // get token for capability_module
+        QString capabilityModuleToken = tokenManager.getToken("capability_module");
+        qDebug() << "Capability module token:" << capabilityModuleToken;
+
         QObject::connect(informTimer, &QTimer::timeout, [=]() {
             if (coreAPI->getClient("capability_module")->isConnected()) {
                 qDebug() << "Calling informModuleToken on capability module";
                 
                 // Call informModuleToken with the core auth token, module name, and module token
-                bool success = coreAPI->getClient("capability_module")->informModuleToken("abc", pluginName, authTokenString);
+                bool success = coreAPI->getClient("capability_module")->informModuleToken(capabilityModuleToken, pluginName, authTokenString);
                 if (success) {
                     qDebug() << "Successfully informed capability module about token for:" << pluginName;
                 } else {
@@ -427,13 +431,17 @@ static bool initializeCapabilityModule()
                 // get token for capability_module
                 QString capabilityModuleToken = tokenManager.getToken("capability_module");
                 qDebug() << "Capability module token:" << capabilityModuleToken;
+
+                // get token for core_manager
+                QString coreManagerToken = tokenManager.getToken("core_manager");
+                qDebug() << "Core manager token:" << coreManagerToken;
                 
                 QObject::connect(informTimer, &QTimer::timeout, [=]() {
                     if (coreAPI->getClient("capability_module")->isConnected()) {
                         qDebug() << "Calling informModuleToken on capability module for core_manager";
                         
                         // Call informModuleToken with the core auth token, module name, and module token
-                        bool success = coreAPI->getClient("capability_module")->informModuleToken(capabilityModuleToken, "core_manager", "abc");
+                        bool success = coreAPI->getClient("capability_module")->informModuleToken(capabilityModuleToken, "core_manager", coreManagerToken);
                         if (success) {
                             qDebug() << "Successfully informed capability module about core_manager token";
                         } else {
@@ -478,8 +486,12 @@ static bool initializeCoreManager()
     bool success = coreAPI->getProvider()->registerObject(coreManager->name(), coreManager);
     if (success) {
         qDebug() << "Core manager registered using new API with name:" << coreManager->name();
+        // generate token
+        QUuid coreManagerToken = QUuid::createUuid();
+        QString coreManagerTokenString = coreManagerToken.toString(QUuid::WithoutBraces);
+        qDebug() << "Generated core manager token:" << coreManagerTokenString;
         // TODO: replace this, using test token
-        coreAPI->getTokenManager()->saveToken("core_manager", "abc");
+        coreAPI->getTokenManager()->saveToken("core_manager", coreManagerTokenString);
         qDebug() << "Test token saved for core access";
     } else {
         qWarning() << "Failed to register core manager using new API";
