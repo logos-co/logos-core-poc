@@ -26,4 +26,8 @@ public:
 signals:
     // for now this is required for events, later it might not be necessary if using a proxy
     void eventResponse(const QString& eventName, const QVariantList& data);
+
+// note: this should be defined in interface.h but if not defined here it breaks, unclear why at the moment
+private:
+   LogosAPI* logosAPI = nullptr;
 }; 
