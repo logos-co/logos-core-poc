@@ -230,8 +230,7 @@ QVariant ModuleProxy::callRemoteMethod(const QString& authToken, const QString& 
         qWarning() << "ModuleProxy: Auth token not found in stored tokens";
         qDebug() << "ERROR: =====================  getToken(authToken) is INVALID   =====================";
 
-        // TODO: for now don't block until it's all implemented
-        // return QVariant();
+        return QVariant();
     } else {
         qDebug() << "VALID: =====================  getToken(authToken) is VALID   =====================";
     }
