@@ -36,7 +36,7 @@ PackageManagerView::PackageManagerView(QWidget *parent)
     , m_logosAPI(nullptr)
 {
     // Create own LogosAPI instance if none provided
-    m_logosAPI = new LogosAPI("core", this);
+    // m_logosAPI = new LogosAPI("core", this);
     
     setupUi();
 }

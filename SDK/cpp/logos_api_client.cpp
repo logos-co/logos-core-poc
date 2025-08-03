@@ -2,8 +2,6 @@
 #include "logos_api_consumer.h"
 #include "token_manager.h"
 
-const QString AUTH_TOKEN = "abc";
-
 LogosAPIClient::LogosAPIClient(const QString& module_to_talk_to, const QString& origin_module, TokenManager* token_manager, QObject *parent)
     : QObject(parent)
     , m_consumer(new LogosAPIConsumer(module_to_talk_to, origin_module, token_manager, this))
