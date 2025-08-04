@@ -77,4 +77,4 @@ For some plugins
 
 ## Documentation
 
-- [How to Create a New Module for Logos Core](https://github.com/logos-co/logos-core-poc/wiki/How-to-create-a-Logos-Module)
+Specs at docs/specs.md
