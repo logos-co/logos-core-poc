@@ -1,0 +1,1170 @@
+# Logos Core Platform Specification
+
+note: This document is a living document and it explains the project's current state, though it may not necessarily reflect its intended & future design.
+
+## Table of Contents
+
+- [1. Overview and Goals](#1-overview-and-goals)
+  - [Main Repository Components](#main-repository-components)
+  - [Other Repository Components](#other-repository-components)
+- [2. Architecture](#2-architecture)
+  - [2.1 High-level Structure](#21-high-level-structure)
+  - [2.2 Process Separation and IPC](#22-process-separation-and-ipc)
+  - [2.3 Tokens and Authentication](#23-tokens-and-authentication)
+- [3. API Description](#3-api-description)
+  - [3.1 Core API Functions](#31-core-api-functions)
+  - [3.2 SDK](#32-sdk)
+    - [3.2.0 Basic Interaction](#320-basic-interaction)
+    - [3.2.1 LogosAPI](#321-logosapi)
+    - [3.2.2 LogosAPIProvider](#322-logosapiprovider)
+      - [3.2.2.1 ModuleProxy (internal)](#3221-moduleproxy-internal)
+    - [3.2.3 LogosAPIClient](#323-logosapiclient)
+      - [3.2.3.1 LogosAPIConsumer (internal)](#5231-logosapiconsumer-internal)
+  - [3.3 Plugin Interface and Metadata](#33-plugin-interface-and-metadata)
+  - [3.4 Core Modules](#34-core-modules)
+    - [3.4.1 Capability Module](#341-capability-module)
+    - [3.4.2 Core Manager](#342-core-manager)
+  - [3.5 Other Modules](#35-other-modules)
+    - [3.5.1 Package Manager](#351-package-manager)
+    - [3.5.2 Waku Module](#352-waku-module)
+    - [3.5.3 Chat](#353-chat)
+    - [3.5.3 Logos IRC](#353-logos-irc)
+- [4. Module Implementation](#4-module-implementation)
+  - [4.1 Overview](#41-overview)
+  - [4.2 Required Files](#42-required-files)
+    - [Interface Header](#interface-header)
+    - [Plugin Implementation](#plugin-implementation)
+    - [Metadata File](#metadata-file)
+    - [Build Configuration](#build-configuration)
+- [5. Apps using Core](#5-apps-using-core)
+  - [5.1 LogosApp Example](#51-logosapp-example)
+  - [5.2 ChatApp Example](#52-chatapp-example)
+- [6. Sequence Flows](#6-sequence-flows)
+  - [Full LifeCycle](#full-lifecycle)
+- [7. Experimental](#7-experimental)
+  - [7.1 Direct Core Library Usage in NodeJS & Electron](#71-direct-core-library-usage-in-nodejs--electron)
+  - [7.2 Logos JS SDK](#72-logos-js-sdk)
+    - [7.2.1 Future work: Use reflection for a better API experience](#721-future-work-use-reflection-for-a-better-api-experience)
+- [8. Limitations, Future Improvements & Known Issues](#8-limitations-future-improvements--known-issues)
+  - [8.1 Logos Host (ModuleHost)](#81-logos-host-modulehost)
+  - [8.2 C++ SDK API Improvements & other improvements](#82-c-sdk-api-improvements--other-improvements)
+  - [8.3 Code Generation](#83-code-generation)
+- [9. Build and Run Scripts](#9-build-and-run-scripts)
+  - [9.1 Setup](#91-setup)
+  - [9.2 Build everything and run Logos App](#92-build-everything-and-run-logos-app)
+  - [9.3 Run tests](#93-run-tests)
+  - [9.4 Compiled only modules](#94-compiled-only-modules)
+  - [9.5 Compiled only UI plugins](#95-compiled-only-ui-plugins)
+  - [9.6 Build and run the core](#96-build-and-run-the-core)
+  - [9.7 Library Path Adjustments](#97-library-path-adjustments)
+
+
+## 1. Overview and Goals
+
+Logos Core is a modular platform designed to host and interact with independently developed modules (plugins). The core library (`core/src`) and accompanying C++ SDK (`SDK/cpp`) provide a modular, plug-in-based runtime for decentralised applications. Each module implements a common interface and is launched in its own process for isolation. A software development kit (SDK) exposes a remote-procedure-call (RPC) mechanism so that modules, the core and external modules can call methods on each other or listen for events.
+
+The core exposes an extensible API to load, start, stop and introspect plug-ins, and it wraps Qt Remote Objects to allow modules to call each other's methods asynchronously. The SDK supplies client and provider classes that abstract away remote-object registry and token management, enabling modules to perform RPC-like calls without needing to understand the underlying IPC mechanism
+
+### Main Repository Components
+
+| Component | Purpose |
+|-----------|---------|
+| `core/src` | C/C++ implementation of the core library: discovers, loads and manages modules, provides an API to list modules, load/unload them and call methods on them. |
+| `SDK/cpp` | Client-side SDK that wraps RPC functionality. Modules link against this SDK to call the core and other modules. |
+| `modules/` | Various Modules that can be loaded by the Core (e.g Waku) |
+| `logos_app/app` | Example application that uses the core and modules. |
+| `logos_app/logos_dapps` | UI Plugins for the example application |
+
+### Other Repository Components
+
+| Component | Purpose |
+|-----------|---------|
+| `tests/` | Simple applications meant to test functionality. |
+| `scripts` | Various scripts to build the core, the example app, compile modules |
+| `examples/` | Other example apps, still experimental |
+
+## 2. Architecture
+
+### 2.1 High-level Structure
+
+At a high level Logos Core consists of the following collaborating parts:
+
+**Core** – Discovers available modules and when instructed to launches them in separate processes, maintains a list of known and loaded modules, manages an inter-process remote-object registry and exposes a public API to load/unload modules or call methods. In the PoC, the core is implemented in C++ using Qt (C API in `logos_core.h`).
+
+**Module (Plugin)** – A dynamically loaded component that implements a common `PluginInterface` and optionally exposes other methods to be called remotely. Each module registers itself with the core when loaded. Each module is a Qt Plugin
+
+**Module Host** – A lightweight executable (`logos_host`) that loads a single module in its own process. It communicates with the core over a local socket to receive an authentication token and registers the module's object with the remote registry.
+
+**SDK/CPP LogosAPI** – A client library used by modules and external applications to call methods on remote modules and to listen for events. It encapsulates connection management, token handling and asynchronous invocation. Key classes include `LogosAPI`, `LogosAPIProvider`, `LogosAPIClient`, `LogosAPIConsumer`, `ModuleProxy` and `TokenManager`.
+
+**Remote Object Registry** – A registry that maintains a mapping of module names to remote object replicas and forwards method calls/events. In the PoC it is implemented using `QRemoteObjectRegistryHost` and `QRemoteObjectHost`. The core and each module maintain their own registry in which an object is exposed.
+
+### 2.2 Process Separation and IPC
+
+Each module runs in its own process to improve robustness and security. The core spawns a `logos_host` process per module and communicates via a local inter-process socket. After a module is authenticated, both processes use the remote-object registry to call methods or deliver events. This separation isolates faulty or untrusted modules and allows modules to be written in different languages as long as they implement the agreed RPC protocol.
+
+### 2.3 Tokens and Authentication
+
+Since `QRemoteObjectRegistryHost` has no built-in security mechanisms, by default it's not possible to know the origin of a request and if they are authorized. For this reason internally all remote calls require an authentication token, however this is done under the hood through the API and invisible for the developer when they are using the `LogosAPI` in their modules. When a module is loaded, the core generates a token and sends it to the module process. This way the module can authenticate calls that are coming from the core.
+Then when modules need to communicate with each other, they request authorization from the Capability Module, which issues a token and notifies both. The modules then use this token for subsequent requests.
+Each Module stores tokens in a thread-safe `TokenManager`, this is done internally and is transparent for the Developer.`ModuleProxy` validates tokens before dispatching method calls to the underlying module implementation.
+
+## 3. API Description
+
+### 3.1 Core API Functions
+
+| Function | Purpose |
+|----------|---------|
+| `logos_core_initialize()` | Initializes global state and optionally sets the plugin directory. Creates a QCoreApplication if one does not exist and sets up the remote object registry host. |
+| `logos_core_set_plugins_dir(path)` | Specifies where to look for modules. Must be called before starting. |
+| `logos_core_start()` | Scans the plugin directory, processes metadata, creates the Core Manager module, loads the built-in capability module, and starts the remote object registry. This must be called before any modules can be used. |
+| `logos_core_exec()` | Runs the Qt event loop. Returns when the application exits. |
+| `logos_core_cleanup()` | Unloads all modules, stops processes and cleans up global state. |
+| `logos_core_get_loaded_plugins()` | Returns a list of currently loaded modules (names). |
+| `logos_core_get_known_plugins()` | Returns a list of all modules discovered, even if not loaded. |
+| `logos_core_load_plugin(name)` | Loads a module by name. Starts a logos_host process, sends an auth token, waits for the module to register and records it as loaded. |
+| `logos_core_unload_plugin(name)` | Terminates the module's process and removes it from loaded modules. |
+| `logos_core_process_plugin(path)` | Reads a module file's metadata and adds it to the list of known modules without loading it. |
+| `logos_core_get_token(moduleName)` | Returns the auth token associated with a module. (note: might be removed) |
+
+
+**Experimental**
+
+These are experimental APIs and currently being used by the examples that use NodeJS/Electron. Since apps using NodeJS do not have QT and therefore cannot easily use the QT Remote API directly, they can instead make the calls through the Core. Note that besides this initial call, all other calls between modules still happen directly between modules using Qt Remote and do not go through the core.
+
+| Function                                                                                          | Purpose                                                                                                                                                                                                    |
+| ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `logos_core_call_plugin_method_async(plugin_name, method_name, params_json, callback, user_data)` | Invokes a method on a loaded plugin asynchronously. Parses `params_json` array (`{name,value,type}`), connects via `LogosAPI`, calls `invokeRemoteMethod`, and returns result or error through `callback`. |
+| `logos_core_register_event_listener(plugin_name, event_name, callback, user_data)`                | Registers an event listener on a plugin. Stores listener, waits for plugin readiness, attaches via `LogosAPI`, and triggers `callback` with event JSON (`{"event":"name","data":[...]}`) when emitted.     |
+| `logos_core_process_events()`                                                                     | Processes Qt events without blocking (`g_app->processEvents()`), allowing integration with external event loops.                                                                                           |
+
+### 3.2 SDK
+
+The C++ SDK (SDK/cpp) wraps Qt Remote Objects and token management so that modules can register themselves and call other modules without dealing with sockets or the remote registry. The SDK exposes `LogosAPI` that owns a provider (`LogosAPIProvider`) and a cache of clients (`LogosAPIClient`) for different target modules. Internally it relies on a TokenManager to authenticate remote calls. The SDK is asynchronous: calls return immediately and results are delivered via callbacks/signals.
+
+#### 3.2.0 Basic Interaction
+
+When calling a method from another module, from the Developer perspective they simply do a call such as:
+
+```c++
+bool response = logosAPI->getClient("waku")->invokeRemoteMethod('waku', 'subscribeTopic');
+```
+
+However under the hood the API abstracts things. In this case the call gets re-routed with the appropriate token and goes to a ModuleProxy object that wraps the actual Object. The ModuleProxy validates the call before forwarding it to the object method.
+
+```mermaid
+flowchart LR
+    subgraph Chat_Module["Chat Module"]
+        ChatObject["ChatObject"]
+        LogosAPIClient["LogosAPIClient"]
+    end
+
+    subgraph Waku_Module["Waku Module"]
+        WakuObject["WakuObject"]
+        ModuleProxy["ModuleProxy"]
+    end
+    
+    ChatObject -- "invokeRemoteMethod('waku', 'subscribeTopic')" --> LogosAPIClient
+    LogosAPIClient -- "QInvokeMethod(wakuReplica, 'callRemoteMethod', authToken, 'subscribeTopic')" --> ModuleProxy
+    ModuleProxy -- "QInvokeMethod(object, 'subscribeTopic')" --> WakuObject
+```
+
+- `ModuleProxy` is exposed with `QRemoteObjectRegistryHost`
+- The call between `LogosAPIClient` and `ModuleProxy` is made using `QRemoteObjectNode`
+
+#### 3.2.1 LogosAPI
+
+`LogosAPI` is the entry point for modules and applications. It encapsulates a single provider and a cache of clients and exposes methods to obtain these. A module creates one `LogosAPI` instance during initialisation and passes its own name to it. Internally the constructor constructs a new `LogosAPIProvider` and retrieves a reference to the singleton `TokenManager`. A `QHash` caches `LogosAPIClient` instances keyed by target module so repeated calls reuse the same client.
+
+**Responsibilities**:
+- Initialise and own a `LogosAPIProvider` and a `TokenManager`
+- Create and cache `LogosAPIClient` objects for calling other modules
+- Provide access to the provider and token manager through getters
+
+`LogosAPI` hides the details of registry hosts and consumer connections. Module writers obtain a client via `getClient()` and then call remote methods through that client. They never deal directly with sockets or tokens; the API attaches tokens automatically on calls.
+
+| Method                                                                    | Purpose                                                                                                                     |
+| ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `explicit LogosAPI(const QString& moduleName, QObject *parent = nullptr)` | Constructs an API for `moduleName` and initialises a provider and token manager.                                            |
+| `~LogosAPI()`                                                             | Destructor; child objects (provider, clients) are deleted automatically.                                                    |
+| `LogosAPIProvider* getProvider() const`                                   | Returns the provider that modules use to register themselves for remote access.                                             |
+| `LogosAPIClient* getClient(const QString& targetModule) const`            | Returns a client for calling `targetModule`.  If a client for that module does not yet exist, it creates one and caches it. |
+| `TokenManager* getTokenManager() const`                                   | Returns the token manager used to store and validate authentication tokens.(note: this is meant to be internal but it's exposed for debug purposes)                                                |
+
+#### 3.2.2 LogosAPIProvider
+
+`LogosAPIProvider` runs on the module’s side and exposes local objects over the Qt Remote Objects registry. It owns a `QRemoteObjectRegistryHost` and a `ModuleProxy` that wraps the actual module instance. When a module calls `registerObject(name, object)`, the provider optionally calls `object->initLogos(LogosAPI*)` if that method exists, then wraps the object in a `ModuleProxy` and publishes it over the registry. Only one object can be registered per provider; additional attempts return false
+
+**Responsibilities**:
+
+- Create a registry host bound to `local:logos_<moduleName>` when the first object is registered. For example if the module name is `chat` then the registry host will be at `local:logos_chat`.
+- Wrap the module in a `ModuleProxy` to enforce token validation and to forward events
+- Enable remoting via Qt (enableRemoting) so that other modules can acquire a replica
+- Forward event responses to remote subscribers by invoking `eventResponse` on their replica
+- Save tokens received from other modules by delegating to the `ModuleProxy`
+
+| Method                                                                                       | Purpose                                                                                                                                                                                                                                                        |
+| -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `explicit LogosAPIProvider(const QString& moduleName, QObject *parent = nullptr)`            | Constructs a provider; initialises registry URL `local:logos_<moduleName>`.                                                                                                                                                                                    |
+| `~LogosAPIProvider()`                                                                        | Destructor; `QRemoteObjectRegistryHost` and `ModuleProxy` are deleted as children.                                                                                                                                                                             |
+| `bool registerObject(const QString& name, QObject *object)`                                  | Registers `object` under `name`.  If the object defines `initLogos(LogosAPI*)` it is invoked first, then the object is wrapped in a `ModuleProxy` and exposed via the registry.  Only one registration per provider is allowed; subsequent calls return false. |
+| `QString registryUrl() const`                                                                | Returns the provider’s registry URL.                                                                                                                                                                                                                           |
+| `bool saveToken(const QString& fromModuleName, const QString& token)`                        | Persists a token for `fromModuleName` by delegating to the module proxy.                                                                                                                                                                                       |
+| `void onEventResponse(QObject *replica, const QString& eventName, const QVariantList& data)` | Emits an event on the subscriber’s replica by invoking its `eventResponse` method.                                                                                                                                                                             |
+
+**Usage Example**
+
+This API is used internally (by the core or logos host) and is not meant to be used by the Developer directly.
+
+```c++
+QPluginLoader loader("waku_module.so");
+QObject *wakuPlugin = loader.instance()
+PluginInterface *baseWakuPlugin = qobject_cast<PluginInterface *>(wakuPlugin)
+ 
+logos_api->getProvider()->registerObject(basePlugin->name(), baseWakuPlugin);
+```
+
+This will:
+- Call `initLogos` if it exists and pass `LogosAPI` to the module
+- Wrap `baseWakuPlugin` with `ModuleProxy`
+- Expose the wrapped object with `QRemoteObjectRegistryHost` on `local:logos_<basePlugin->name()>`
+
+#### 3.2.2.1 ModuleProxy (internal)
+
+`ModuleProxy` is an internal class used by the provider to expose a module safely. It wraps the real module object and validates every incoming call against the stored authentication tokens. Each proxy keeps a map of tokens keyed by module name.
+
+Modules never instantiate `ModuleProxy` directly; it is created by the provider and published through Qt Remote Objects. Remote callers interact with it implicitly via `LogosAPIClient` and `LogosAPIConsumer`.
+
+**Responsibilities**:
+- Validate the authentication token on every remote call. In `callRemoteMethod()` the proxy checks that a non‑empty token is provided and verifies it against the `TokenManager`. Calls with invalid or missing tokens return an empty `QVariant`.
+- Dispatch method calls to the underlying module using Qt’s meta‑object system. The proxy locates the requested method by name and argument count, supports up to five arguments, and handles various return types including `void`, `bool`, `int`, `QString`, `QVariant`, `QJsonArray` and `QStringList`
+- Provide an `eventResponse` signal that the provider emits when events are forwarded to subscribers
+- Store tokens issued by other modules via `saveToken(fromModuleName, token)`
+- Allow a module or consumer to inform another module of a token via `informModuleToken(authToken, moduleName, token)`
+
+| Method                                                                                                          | Purpose                                                                                                                             |
+| --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `explicit ModuleProxy(QObject* module, QObject *parent = nullptr)`                                              | Wraps `module` for remote access.                                                                                                   |
+| `QVariant callRemoteMethod(const QString& authToken, const QString& methodName, const QVariantList& args = {})` | Validates `authToken`, locates `methodName` on the module and invokes it.  Supports up to five arguments and multiple return types. This will forward the request to the wrapped object. |
+| `bool informModuleToken(const QString& authToken, const QString& moduleName, const QString& token)`             | Stores `token` for `moduleName` in the global `TokenManager`. This is used by the core and capability module to let this module know that another module will communicate using a certain token,=.                                                                       |
+| `eventResponse(QString eventName, QVariantList data)` (signal)                                                  | Emitted when the proxy forwards an event to subscribers.                                                                            |
+
+#### 3.2.3 LogosAPIClient
+
+`LogosAPIClient` provides a high‑level, asynchronous interface for invoking methods on remote modules and subscribing to events. Each client is bound to a single target module and holds a `LogosAPIConsumer` to manage the underlying connection. The constructor takes the name of the module to talk to, the origin module name and a `TokenManager` pointer
+
+`LogosAPIClient` should be used by modules to perform calls and event subscriptions. It hides the details of connecting, reconnection, token lookup, argument packaging and result deserialization.
+
+**Responsibilities**:
+- Manage the connection to the remote registry and acquire remote object replicas via the consumer
+- Retrieve and attach authentication tokens for calls. Before every call, the client looks up the token for the target module and passes it to the consumer
+- Provide convenience overloads of `invokeRemoteMethod()`` for 0–5 arguments, returning a `QVariant` result
+- Register event listeners with optional callbacks and route event responses back to the origin module
+- Forward token information to another module by calling `informModuleToken()` on the consumer
+
+| Method                                                                                                                                                                                                                                          | Purpose                                                                                                                                                                      |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `explicit LogosAPIClient(const QString& moduleToTalkTo, const QString& originModule, TokenManager* tokenManager, QObject *parent = nullptr)`                                                                                                    | Constructs a client bound to `moduleToTalkTo`; internally creates a `LogosAPIConsumer`.                                                                                      |
+| `QObject* requestObject(const QString& objectName, int timeoutMs = 20000)`                                                                                                                                                                      | Acquires a remote object replica by name through the consumer.                                                                                                               |
+| `bool isConnected() const`                                                                                                                                                                                                                      | Returns whether the client’s consumer is connected to the registry.                                                                                                          |
+| `QString registryUrl() const`                                                                                                                                                                                                                   | Returns the URL of the registry the client is connected to.                                                                                                                  |
+| `bool reconnect()`                                                                                                                                                                                                                              | Reconnects to the registry by creating a new consumer node.                                                                                                                  |
+| `QVariant invokeRemoteMethod(const QString& objectName, const QString& methodName, const QVariantList& args = {}, int timeoutMs = 20000)` and overloads for 1–5 arguments                                                                       | Calls `methodName` on `objectName` asynchronously.  Looks up the caller’s auth token and passes it to the consumer.  Returns the result or an invalid `QVariant` on failure. |
+| `void onEvent(QObject* originObject, QObject* destinationObject, const QString& eventName, std::function<void(const QString&, const QVariantList&)> callback)`                                                                                  | Subscribes to `eventName` emitted by `originObject` and invokes `callback` when triggered.                                                                                   |
+| `void onEvent(QObject* originObject, QObject* destinationObject, const QString& eventName)`                                                                                                                                                     | Subscribes to an event by connecting `originObject`’s `eventResponse` signal to `destinationObject`’s `onEventResponse` slot.                                                |
+| `void onEventResponse(QObject* replica, const QString& eventName, const QVariantList& data)`                                                                                                                                                    | Internal helper; emits `eventResponse` on the replica when events arrive.                                                                                                    |
+| `bool informModuleToken(const QString& authToken, const QString& moduleName, const QString& token)` and `bool informModuleToken_module(const QString& authToken, const QString& originModule, const QString& moduleName, const QString& token)` | Forwards a token to another module via the consumer.                                                                                                                         |
+| `TokenManager* getTokenManager() const`                                                                                                                                                                                                         | Returns the token manager used by this client.                                                                                                                               |
+| `QString getToken(const QString& moduleName)`                                                                                                                                                                                                   | Helper that retrieves the token for `moduleName` from the token manager.                                                                                                     |
+
+**Usage**
+
+This is the most common API that a module developer will use:
+
+Calling a remote method:
+```c++
+logosAPI->getClient("chat")->invokeRemoteMethod("chat", "joinChannel", currentChannel);
+```
+
+Calling a remote method with multiple parameters:
+```c++
+logosAPI->getClient("chat")->invokeRemoteMethod("chat", "sendMessage", currentChannel, username, message)
+```
+
+note: Internally the API will take care of any token negotiation and permissions needed (see Sequence Diagram section)
+
+Listening to Events from another object:
+
+```c++
+QObject *chatObject = m_logosAPI->getClient("chat")->requestObject("chat");
+
+m_logosAPI->getClient("chat")->onEvent(chatObject, this, "chatMessage", [this](const QString &eventName, const QVariantList &data) {
+        handleWakuMessage(data[0].toString().toStdString(), data[1].toString().toStdString(), data[2].toString().toStdString());
+});
+```
+
+Triggering an event:
+
+```c++
+QVariantList data;
+data << timestamp << nick << message;
+
+logosAPI->getClient("chat")->onEventResponse(this, "chatMessage", data);
+```
+
+#### 5.2.3.1 LogosAPIConsumer (internal)
+
+`LogosAPIConsumer` is the low‑level component used by `LogosAPIClient`. It manages the connection to the registry, acquires remote object replicas and invokes methods via Qt Remote Objects. It also handles event subscription and token propagation. The constructor stores the registry URL `local:logos_<targetModule>` and attempts to connect immediately. A `LogosAPIClient` will have multiple `LogosAPIConsumer` instances.
+
+`LogosAPIConsumer` should not be used directly by most developers; it is an implementation detail of `LogosAPIClient`. It provides fine‑grained control over remote calls and event handling and encapsulates the complexity of `QRemoteObjectNode`, replicas and pending calls.
+
+**Responsibilities**:
+- Manage a `QRemoteObjectNode` connection to the registry and reconnect when needed
+- Acquire dynamic replicas of remote objects and wait for them to be ready within a timeout
+- Invoke remote methods either via a `ModuleProxy` (if the replica is a proxy) or directly on the remote object using Qt’s `invokeMethod` and `QRemoteObjectPendingCall`
+- Register event listeners: store callbacks per event and connect to the remote object’s `eventResponse` signal. When events arrive, `invokeCallback()`` iterates through all registered callbacks and invokes them
+- Register simple event subscriptions by connecting the remote `eventResponse` signal directly to a destination slot
+- Forward tokens to another module through a remote `informModuleToken` call on the module’s proxy and support informing tokens for modules loaded by the origin module
+
+| Method                                                                                                                                                              | Purpose                                                                                                                                                                                                                              |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `explicit LogosAPIConsumer(const QString& moduleToTalkTo, const QString& originModule, TokenManager* tokenManager, QObject *parent = nullptr)`                      | Constructs the consumer, sets the registry URL and immediately calls `connectToRegistry()`.                                                                                                                                          |
+| `~LogosAPIConsumer()`                                                                                                                                               | Destructor; disconnects stored connections and clears callbacks.                                                                                                                                                                     |
+| `QObject* requestObject(const QString& objectName, int timeoutMs = 20000)`                                                                                          | Acquires a remote object replica and waits for it to be ready.  Returns `nullptr` on failure.                                                                                                                                        |
+| `bool isConnected() const`                                                                                                                                          | Reports whether the consumer is connected to the registry.                                                                                                                                                                           |
+| `QString registryUrl() const`                                                                                                                                       | Returns the registry URL.                                                                                                                                                                                                            |
+| `bool reconnect()`                                                                                                                                                  | Reconnects by creating a new `QRemoteObjectNode` and calling `connectToRegistry()`.                                                                                                                                                  |
+| `bool connectToRegistry()` (private)                                                                                                                                | Connects to the registry URL using `QRemoteObjectNode::connectToNode` and updates `m_connected`.                                                                                                                                     |
+| `QVariant invokeRemoteMethod(const QString& authToken, const QString& objectName, const QString& methodName, const QVariantList& args = {}, int timeoutMs = 20000)` | Invokes a remote method.  If the replica is a `ModuleProxy`, calls its `callRemoteMethod()` with the provided token.  Otherwise it invokes `callRemoteMethod` on the replica and waits for the `QRemoteObjectPendingCall` to finish. |
+| `void onEvent(QObject* originObject, QObject* destinationObject, const QString& eventName, std::function<void(const QString&, const QVariantList&)> callback)`      | Registers a callback for `eventName` by storing it and ensuring the connection to the origin object’s `eventResponse` signal.                                                                                                        |
+| `void onEvent(QObject* originObject, QObject* destinationObject, const QString& eventName)`                                                                         | Registers an event listener without a callback by connecting `originObject->eventResponse` to the `destinationObject->onEventResponse` slot.                                                                                         |
+| `void invokeCallback(const QString& eventName, const QVariantList& data)` (slot)                                                                                    | Invokes all callbacks registered for `eventName`.                                                                                                                                                                                    |
+| `bool informModuleToken(const QString& authToken, const QString& moduleName, const QString& token)`                                                                 | Informs the capability module’s proxy about a token for `moduleName`.                                                                                                                                                                |
+| `bool informModuleToken_module(const QString& authToken, const QString& originModule, const QString& moduleName, const QString& token)`                             | Informs a module loaded by `originModule` about a token via that module’s proxy.                                                                                                                                                     |
+
+### 3.3 Plugin Interface and Metadata
+
+Every module must implement the Plugin Interface. In the PoC it is defined in C++ as an abstract class `PluginInterface` with the following API:
+
+| Method | Description |
+|--------|-------------|
+| `name()` | Returns the module's unique name (string). |
+| `version()` | Returns a version string. |
+| `init(LogosAPI* api)` | (Not part of the interface but convention) Called on startup; gives access to the LogosAPI object used for RPC. |
+
+**Signals**:
+| Field | Type | Description |
+|-------|------|-------------|
+| `eventResponse(eventName, data)` | (QString, QVariantList) | Used for triggering events from this module. |
+
+Additionally each module must provide a `metadata.json` file containing at least:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | string | Unique module identifier. |
+| `version` | string | Semantic version. |
+| `description` | string | Human readable description. |
+| `author` | string | Author name/contact. |
+| `type` | string | should always be `core` |
+| `dependencies` | array | Names of other modules required. |
+| `capabilities` | array | Capabilities provided. Future use. |
+| `include` | array | Files that must be copied if available when installing this module. |
+
+These fields are read by the core when processing a plugin file using `QPluginLoader`. The metadata file informs the core about dependencies and capabilities and is used to filter which modules can be loaded.
+
+### 3.4 Core Modules
+
+The Logos core comes with a few modules that are shipped alongside the core itself. These modules are just plugins from the core’s point of view – they are registered via the same `PluginInterface` and are loaded through the normal plug‑in mechanism – but they provide fundamental services that every Logos deployment relies on. Two such modules are the Capability Module and the Core Manager.
+    
+#### 3.4.1 Capability Module
+
+The Capability Module is responsible for coordinating authentication tokens between modules. When one module wishes to call another module for the first time it does not yet have a valid token for the target. Instead of bypassing the token system, the caller asks the Capability Module to request the target. The capability module generates a fresh token, informs the target of the requesting module’s name and the new token, and returns that token to the caller. This ensures that both sides know the same secret and that subsequent remote calls can be validated by the target module’s `ModuleProxy` using the token manager. In practice the Capability Module acts like a capability broker and permission controller.
+    
+**Responsibilities**:
+- **Token issuance for inter‑module calls**: When module A wants to call module B, it calls `requestModule(A, B)`` on the capability module. The capability module generates a random UUID token and asks module B to associate that token with module A. It then returns the token to module A so that it can authenticate remote calls
+- **Informing modules of new tokens**: The capability module uses its own `LogosAPIClient` to invoke `informModuleToken_module` on the target module. It passes its own token for that module, the requesting module’s name and the new token. If the remote call succeeds the capability module logs success and returns the token to the caller
+- **Centralised permission management**: While the proof‑of‑concept implementation always grants the request, the design is intended to evolve into a capability/permission manager that can enforce policies and record which modules are allowed to talk to each other. The metadata for the capability module identifies it as a security component and lists capabilities such as module_coordination and permission_management
+    
+**API**
+The module implements a simple interface defined in `capability_module_interface.h` with a single remotely invokable method
+    
+| Method                                                | Purpose                                                                                                             | Implementation notes                                                                                                                                                                |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `requestModule(fromModuleName, moduleName) → QString` | Returns an authentication token that allows the caller (`fromModuleName`) to call the target module (`moduleName`). | Generates a UUID, asks the token manager for its own token for the target, calls `informModuleToken_module()` on the target with that token and the new UUID, and returns the UUID. |
+
+#### 3.4.2 Core Manager
+
+The Core Manager is a built‑in module that exposes the core’s lifecycle and plugin management functions over the same RPC mechanism.
+
+It implements the general `PluginInterface` and registers itself under the name core_manager. Applications or other modules can call into the Core Manager to start the core, set the plug‑in directory, load or unload modules and introspect module methods without linking against the C API. This makes it possible to manage the core entirely through RPC.
+
+**Responsibilities**:
+- **Core lifecycle control**: The core manager exposes `initialize()`, `setPluginsDirectory()`, `start()` and `cleanup()` methods which internally call the corresponding C API functions (`logos_core_set_plugins_dir`, `logos_core_start`, `logos_core_cleanup`) to set up and shut down the core
+- **Plugin discovery and status**: `getLoadedPlugins()` returns the names of currently loaded modules by calling `logos_core_get_loaded_plugins()`. `getKnownPlugins()` builds a JSON array containing every discovered plug‑in with a loaded boolean by combining the `logos_core_get_known_plugins()` list with the loaded set
+- **Plugin management**: `loadPlugin(pluginName)` and `unloadPlugin(pluginName)` wrap the C API functions `logos_core_load_plugin` and `logos_core_unload_plugin` and return whether the operation succeeded. `processPlugin(filePath)` reads a plug‑in file, processes its metadata via `logos_core_process_plugin` and returns the module’s name
+- **Introspection**: `getPluginMethods(pluginName)` uses `LogosAPI` to request a replica of the target module and then uses Qt’s `QMetaObject` introspection to enumerate its methods. It returns a JSON array describing each method’s signature, name, return type and parameters. This allows dynamic UIs to display available methods without pre‑compiled knowledge. Note: however since introducing `ModuleProxy` this method needs to be updated or even removed, as currently it will simply show the methods of `ModuleProxy` that are available (i.e `callRemoteMethod` and `informModuleToken`), the object itself is now wrapped in `ModuleProxy`.
+
+**API**
+The `CoreManagerInterface` defines the functions that the module exposes. The implementation in `CoreManagerPlugin` adds additional convenience methods such as `getKnownPlugins()` and `getPluginMethods()` and implements each call by delegating to the core or using the SDK.
+
+| Method                                      | Purpose                                                                                                  | Notes                                                |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| `initialize(argc, argv)`                    | Prepare the module; currently a no‑op since the main application already creates the `QCoreApplication`. | Reserved for future integration.                     |
+| `setPluginsDirectory(directory)`            | Set the directory where the core should look for modules.  Calls `logos_core_set_plugins_dir`.           | Must be called before `start()`.                     |
+| `start()`                                   | Start the core’s remote object registry and load the built‑in modules by calling `logos_core_start`.     | Required before loading other modules.               |
+| `cleanup()`                                 | Unload all modules and shut down the core via `logos_core_cleanup`.                                      | Should be called before application exit.            |
+| `getLoadedPlugins() → QStringList`          | Return a list of names of currently loaded modules.                                                      | Uses `logos_core_get_loaded_plugins`.                |
+| `getKnownPlugins() → QJsonArray`            | Return a JSON array of all known modules with a `loaded` flag.                                           | Combines discovery and load status.                  |
+| `loadPlugin(pluginName) → bool`             | Load a plug‑in by name via `logos_core_load_plugin`.                                                     | Returns true on success.                             |
+| `unloadPlugin(pluginName) → bool`           | Unload a plug‑in by name via `logos_core_unload_plugin`.                                                 | Returns true on success.                             |
+| `processPlugin(filePath) → QString`         | Read a plug‑in file’s metadata and register it as known via `logos_core_process_plugin`.                 | Returns the module name or an empty string on error. |
+| `getPluginMethods(pluginName) → QJsonArray` | Introspect a module’s methods using `LogosAPIClient` and Qt meta‑object introspection.                   | Useful for dynamic UIs.                              |
+| `initLogos(logosAPIInstance)`               | Store the provided `LogosAPI` pointer so the module can call other modules.                              | Should be called before introspection functions.     |
+
+### 3.5 Other Modules
+
+These modules are examples of how to build services on top of the Logos API and often act as bridges to external protocols or provide convenience around plug‑in management.
+
+#### 3.5.1 Package Manager
+
+The Package Manager module is responsible for installing and listing third‑party plug‑ins. It exposes an API that allows applications or users to copy a plug‑in file into the core’s plug‑in directory and process its metadata so that it becomes a known plug‑in. The module also provides a way to enumerate the contents of a packages directory to display available plug‑ins and their metadata.
+
+Currently this module takes a simple approach, it assumes the existing packages exist in a particular directory, and installs them by simply copying them to the directory the core can load them. In theory the plugin can be replaced by something more complex, for example `getPackages` can get the packages from a p2p network, and `installPlugin` download the package from a p2p network.
+    
+**Responsibilities**:
+- **Installing plug‑ins**: `installPlugin(pluginPath)` verifies that the given file exists, ensures that the plug‑in directory exists (creating it if necessary), copies the plug‑in file and any additional files specified in its metadata to the plug‑in directory, and then calls the core via the core_manager module to process the plug‑in’s metadata. If processing succeeds it returns true, otherwise false.
+- **Listing installed packages**: `getPackages()` scans the application’s packages directory, loads each dynamic library’s metadata using `QPluginLoader`, extracts fields such as name, version, description, category and dependencies, and returns a JSON array of package objects. This makes it easy for UIs to display available extensions.
+
+**API**
+The `PackageManagerInterface` defines a single method for installation, and the implementation adds an additional `getPackages()` convenience function.
+
+| Method                             | Purpose                                                                                                                                                             | Notes                                                                   |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `installPlugin(pluginPath) → bool` | Copy a plug‑in file to the configured plug‑in directory, copy any included files and process the plug‑in via `core_manager.processPlugin()`.                        | Returns `true` if the plug‑in was installed and processed successfully. |
+| `getPackages() → QJsonArray`       | Enumerate `.so/.dll/.dylib` files in the `packages` directory, read their metadata via `QPluginLoader` and return an array of JSON objects describing each package. | Not part of the interface; provided for convenience.                    |
+| `initLogos(logosAPI)`              | Store the `LogosAPI` pointer for later use.  Required before calling methods on `core_manager`.                                                                     | Called automatically by the core during plug‑in initialisation.         |
+
+#### 3.5.2 Waku Module
+
+The Waku Module wraps a libwaku library (nwaku) and exposes functions to configure, start and interact with a Waku node. Other modules, such as the Chat module, depend on this service to publish and subscribe to messages over Waku. This module contains nwaku as a git submodule, and compiles nwaku to use libwaku.so
+
+**Responsibilities**:
+- **Initialisation**: `initWaku(cfg)` creates a new Waku context using the supplied JSON configuration by calling waku_new and stores the resulting handle. `startWaku()` starts the Waku node asynchronously via `waku_start` and reports whether the start succeeded
+- **Event delivery**: `setEventCallback()` registers a callback with the Waku library (`waku_set_event_callback`) so that incoming messages trigger the module’s static event_callback function. That callback packages the message and a timestamp into a QVariantList and forwards it to subscribers via `LogosAPI::onEventResponse()`
+- **Relay messaging**: `relaySubscribe(pubSubTopic)` subscribes the node to a pub/sub topic using `waku_relay_subscribe`, while `relayPublish(pubSubTopic, jsonWakuMessage)` publishes a JSON‑encoded message to a topic via `waku_relay_publish`
+- **Filter and store**: `filterSubscribe(pubSubTopic, contentTopics)` subscribes to messages matching specific content topics using the filter protocol, and `storeQuery(jsonQuery, peerAddr)` executes a historical query via `waku_store_query` to retrieve stored messages. When a store query completes, the module triggers a `storeQueryResponse` event with the results
+
+**API**
+The WakuModuleInterface defines the following remotely invokable methods. Each returns a boolean indicating whether the operation was successfully initiated.
+
+**Metadata**
+The Waku module is identified as a protocol module; its metadata has a `include` value with a list of shared library files (libwaku.so, .dylib and .dll) that must be copied alongside the plug‑in. These files are copied by the package manager when installing the module.
+
+#### 3.5.3 Chat
+
+The Chat module provides a simple chat service built on top of the Waku module. It exposes methods to initialise the chat runtime, join a channel, send messages and retrieve chat history. Internally it uses a helper library defined in `chat_api.h` to interact with the Waku node and handle message encoding/decoding.
+
+Responsibilities
+- **Initialisation**: `initialize()` creates a callback that packages incoming chat messages into a `QVariantList` and forwards them to subscribers via the Logos API. It calls `initAndStart()` from the chat API to initialise and start the chat backend, passing the current Waku relay topic and the callback
+- **Joining channels**: `joinChannel(channelName)` instructs the chat API to join the specified channel using the current relay topic. This method returns a boolean to indicate success.
+- **Sending messages**: `sendMessage(channelName, username, message)` forwards the message to the chat API, which encodes and publishes it via the Waku module. Messages are logged for debugging purposes.
+- **Retrieving history**: `retrieveHistory(channelName)` triggers a store query through the chat API to fetch historic messages. A message callback packages each returned message into a QVariantList and triggers a historyMessage event via the Waku module.
+- **Dependency on Waku**: All chat operations rely on a `LogosAPIClient` for the waku_module to publish, subscribe and retrieve messages. The chat module therefore lists waku_module as a dependency in its metadata
+
+**API**
+The `ChatInterface` defines the chat API. The plugin adds a convenience overload of retrieveHistory that accepts a QString for QML friendliness.
+
+| Method                                        | Purpose                                                       | Notes                                                   |
+| --------------------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------- |
+| `initialize() → bool`                         | Initialise the chat runtime and start listening for messages. | Returns `true` if the backend was successfully started. |
+| `joinChannel(channelName) → bool`             | Join a chat channel via the Waku module.                      | Channel names are plain strings; no `#` prefix.         |
+| `sendMessage(channelName, username, message)` | Publish a message to a channel.                               | Sends the message via the Waku module.                  |
+| `retrieveHistory(channelName) → bool`         | Request the message history for a channel.                    | Emits `historyMessage` events as results arrive.        |
+| `initLogos(logosAPI)`                         | Store the `LogosAPI` pointer for later use.                   | Must be called before other methods.                    |
+
+#### 3.5.3 Logos IRC
+
+The Logos IRC module implements a small IRC server that bridges between IRC clients and the chat module. It allows IRC users to join channels and chat with participants on the Waku network via the chat module. The module runs an embedded IRC server, connects to the chat module via `LogosAPIClient`, and forwards messages and join events in both directions.
+
+**Responsibilities**:
+- **Starting the IRC server**: When the plugin is constructed it creates an IRCServer instance, connects its signals and attempts to listen on 0.0.0.0:6667. If the server starts successfully it logs a message; otherwise it warns
+- **Bridging Waku to IRC**: The plugin calls `initChatBridge()` when `initLogos()` is invoked . It requests the chat object via `LogosAPI`, subscribes to `chatMessage` and `historyMessage` events, and calls the chat module’s `initialize()` method. When chat messages arrive, the plugin prefixes the sender with `[WAKU]` or `[HISTORY][WAKU]` and injects the message into all joined IRC channels using `IRCServer::injectBridgeMessage()`
+- **Bridging IRC to Waku**: The plugin listens to IRCServer signals for `channelJoined` and `messageSent`. When an IRC user joins a channel, the plugin calls `chat.joinChannel()` via RPC and fetches its history. When a message is sent in IRC it calls `chat.sendMessage()` on the chat module
+
+**API**
+The LogosIRCInterface currently defines no public methods as it's not meant to be called by other modules and simply starts the IRC Server when the Module starts.
+
+| Method                | Purpose                                                                                                                | Notes                                                |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| `initLogos(logosAPI)` | Store the `LogosAPI` pointer, start the chat bridge and prepare the IRC server to forward messages.                    | Must be called before the IRC/chat bridge is active. |
+
+## 4. Module Implementation
+
+### 4.1 Overview
+
+A complete module consists of four essential components:
+
+1. **Interface Header** - Defines the module's public API contract
+2. **Plugin Implementation** - Concrete implementation of the interface
+3. **Metadata File** - Describes module properties and dependencies
+4. **Build Configuration** - CMakeLists.txt for compilation
+
+All modules must inherit from `PluginInterface` (found at `core/interface.h`) and implement the required lifecycle methods (`name()`, `version()`, `initLogos()`) and include the `eventResponse` signal for events. Methods exposed to other modules must be marked with `Q_INVOKABLE` to enable Qt's meta-object system to invoke them across process boundaries.
+
+### 4.2 Required Files
+    
+#### Interface Header
+
+The interface header defines your module's public API contract. It must inherit from `PluginInterface` and declare all methods that other modules can invoke remotely.
+
+**Key Requirements:**
+- Inherit from `PluginInterface` (provides `name()`, `version()`, `initLogos()`)
+- Mark all public methods with `Q_INVOKABLE` for remote access
+- Include `eventResponse` signal for event forwarding
+- Use `Q_DECLARE_INTERFACE` macro for Qt's plugin system
+
+```c++
+// MyModuleInterface.h
+#pragma once
+#include <QtCore/QObject>
+#include <QtCore/QJsonArray>
+#include <QtCore/QStringList>
+#include "interface.h"
+
+class MyModuleInterface : public PluginInterface {
+public:
+    virtual ~MyModuleInterface() {}
+    
+    // Public API methods - must be Q_INVOKABLE for remote access
+    Q_INVOKABLE virtual void doSomething(const QString &param) = 0;
+    Q_INVOKABLE virtual QString processData(const QString &input) = 0;
+    Q_INVOKABLE virtual QJsonArray getStatus() = 0;
+
+    Q_INVOKABLE void initLogos(LogosAPI* logosAPIInstance);
+
+signals:
+    // Required for event forwarding between modules
+    void eventResponse(const QString &eventName, const QVariantList &data);
+};
+
+// Register interface with Qt's meta-object system
+#define MyModuleInterface_iid "org.logos.MyModuleInterface"
+Q_DECLARE_INTERFACE(MyModuleInterface, MyModuleInterface_iid)
+```
+
+#### Plugin Implementation
+
+The plugin class provides the concrete implementation of your interface. It must inherit from both `QObject` and your custom interface to enable Qt's plugin and remote object systems.
+
+**Key Requirements:**
+- Inherit from `QObject` and your interface
+- Use `Q_PLUGIN_METADATA` with proper IID and metadata file
+- Register interface with `Q_INTERFACES` macro
+- Implement all pure virtual methods from the interface
+- Store and use `LogosAPI*` for inter-module communication
+
+```c++
+// MyModulePlugin.h
+#pragma once
+#include <QtCore/QObject>
+#include <QtCore/QJsonArray>
+#include <QtCore/QTimer>
+#include "MyModuleInterface.h"
+#include "logos_api.h"
+#include "logos_api_client.h"
+
+class MyModulePlugin : public QObject, public MyModuleInterface {
+    Q_OBJECT
+    Q_PLUGIN_METADATA(IID MyModuleInterface_iid FILE "metadata.json")
+    Q_INTERFACES(MyModuleInterface PluginInterface)
+
+public:
+    MyModulePlugin();
+    ~MyModulePlugin();
+
+    // PluginInterface implementation
+    QString name() const override { return "my_module"; }
+    QString version() const override { return "1.0.0"; }
+
+    void MyModulePlugin::initLogos(LogosAPI* logosAPIInstance) {
+        logosAPI = logosAPIInstance;
+    }
+
+    // Custom API implementation
+    Q_INVOKABLE void doSomething(const QString &param) override {
+        QString result = QString("Processed: %1").arg(param);
+        QDateTime timestamp = QDateTime::currentDateTime();
+
+
+        QVariantList eventData;
+        eventData << result << timestamp.toString();
+        // note this api should be updated to logosAPI->onEventResponse
+        logosAPI->getClient("core_manager")->onEventResponse(this, "dataProcessed", eventData);
+    }
+
+    Q_INVOKABLE QString processData(const QString &input) override {
+        if (input.isEmpty()) {
+            emit errorOccurred("Empty input provided", 1);
+            return QString();
+        }
+        
+        QString result = QString("Processed: %1").arg(input);
+    
+        // example subscribing to an event
+        logosAPI->getClient("chat")->onEvent(chatObject, this, "chatMessage", [this](const QString &eventName, const QVariantList &data) {
+        qDebug() << data[0].toString().toStdString();
+    });
+
+        return result;
+    }
+    
+    Q_INVOKABLE QJsonArray getStatus() override {
+        QJsonArray status;
+        status.append(QJsonObject{
+            {"active", true}, 
+            {"connections", m_connections},
+            {"subscribers", m_eventSubscribers.size()}
+        });
+        return status;
+    }
+
+```
+    
+#### Metadata File
+
+Every module requires a `metadata.json` file that describes the module's properties, dependencies, and capabilities. This file is referenced by the `Q_PLUGIN_METADATA` macro and used by the core for module discovery and dependency resolution.
+
+**Required Fields:**
+- `name`: Unique module identifier (must match the value returned by `name()`)
+- `version`: Semantic version string
+- `description`: Human-readable description
+- `author`: Module author or organization
+- `type`: Module type (always "core" for this PoC)
+- `category`: Module category for organization
+- `main`: Main plugin class name
+- `dependencies`: Array of required module names
+- `capabilities`: Array of capabilities this module provides
+
+**Example metadata.json:**
+```json
+{
+  "name": "my_module",
+  "version": "1.0.0",
+  "description": "Example module demonstrating the plugin API",
+  "author": "Logos Core Team",
+  "type": "core",
+  "category": "utility",
+  "main": "my_module_plugin",
+  "dependencies": ["core_manager"],
+  "capabilities": ["data_processing", "event_handling"],
+  "include": ["external_lib.so", "resources/"]
+}
+```
+
+The core scans for metadata.json files during startup and validates dependencies before loading modules.
+
+#### Build Configuration
+
+Each module needs a `CMakeLists.txt` file to compile into a shared library. The build system must produce a `.so` (Linux), `.dylib` (macOS), or `.dll` (Windows) file that the core can dynamically load.
+
+**Example CMakeLists.txt:**
+```cmake
+cmake_minimum_required(VERSION 3.16)
+project(my_module)
+
+# Find required Qt components
+find_package(Qt6 REQUIRED COMPONENTS Core RemoteObjects)
+
+# Enable Qt's automoc for meta-object code generation
+set(CMAKE_AUTOMOC ON)
+
+# Define the module as a shared library
+add_library(my_module SHARED
+    MyModulePlugin.cpp
+    MyModulePlugin.h
+    MyModuleInterface.h
+)
+
+# Link Qt libraries
+target_link_libraries(my_module
+    Qt6::Core
+    Qt6::RemoteObjects
+)
+
+# Set target properties
+set_target_properties(my_module PROPERTIES
+    CXX_STANDARD 17
+    CXX_STANDARD_REQUIRED ON
+    VERSION ${CMAKE_PROJECT_VERSION}
+    SOVERSION 1
+)
+
+# Install the shared library to the modules directory
+install(TARGETS my_module
+    LIBRARY DESTINATION modules
+    RUNTIME DESTINATION modules
+)
+
+# Install metadata file
+install(FILES metadata.json
+    DESTINATION modules
+)
+```
+
+## 5. Apps using Core
+
+### 5.1 LogosApp Example
+
+```c++
+#include "logos_api.h"
+
+extern "C" {
+    void logos_core_set_plugins_dir(const char* path);
+    void logos_core_start();
+    void logos_core_process_plugin(const char* file);
+    int  logos_core_load_plugin(const char* name);
+    void logos_core_cleanup();
+}
+
+int main(int argc, char *argv[]) {
+    QApplication app(argc, argv);
+
+    // 1. Set plugin dir – points to bin/modules next to the app
+    QString pluginsDir = QDir::cleanPath(QCoreApplication::applicationDirPath()+"/bin/modules");
+    logos_core_set_plugins_dir(pluginsDir.toUtf8().constData());   
+
+    // 2. Start the core (spawns built‑in modules, registry etc.)
+    logos_core_start();                                           
+
+    // 3. (Optional) Preload package_manager plugin
+    QString pluginPath = pluginsDir + "/package_manager_plugin" + pluginExtension;
+    logos_core_process_plugin(pluginPath.toUtf8().constData());   
+    logos_core_load_plugin("package_manager");                     
+
+    // 4. Create a LogosAPI instance for this app
+    LogosAPI logosAPI("core");
+
+    // 5. Pass LogosAPI* into a QMainWindow that will load the UI plug‑in
+    Window w(&logosAPI);  // Window loads plugins/main_ui… see below
+    w.show();
+
+    int ret = app.exec();
+    logos_core_cleanup();
+    return ret;
+}
+```
+
+In `Window::setupUi()` the app loads a UI plug‑in at runtime:
+
+```c++
+// Determine shared library suffix and build path to main_ui.so/.dll/.dylib
+QString pluginPath = QCoreApplication::applicationDirPath() + "/plugins/main_ui" + pluginExtension;
+
+// Load plug‑in with QPluginLoader and create widget via IComponent::createWidget(LogosAPI*)
+QPluginLoader loader(pluginPath);
+QObject *plugin = loader.load() ? loader.instance() : nullptr;
+QWidget *mainContent = nullptr;
+QMetaObject::invokeMethod(plugin, "createWidget", Q_RETURN_ARG(QWidget*, mainContent),
+                          Q_ARG(LogosAPI*, m_logosAPI));            //:contentReference[oaicite:4]{index=4}
+setCentralWidget(mainContent);
+```
+
+To change the UI completely, all one needs to do is switch `main_ui.so` with a different Qt UI Plugin to completly change the UI. This is what the ChatApp Example at 9.2 does.
+
+The App can then use the API to talk to various modules that are loaded.
+
+```c++
+// Query core_manager for known plug‑ins
+LogosAPI api("core");
+auto client = api.getClient("core_manager");
+QVariant result = client->invokeRemoteMethod("core_manager","getKnownPlugins");
+
+// Load or unload a plug‑in when buttons are clicked
+client->invokeRemoteMethod("core_manager","loadPlugin", pluginName);
+client->invokeRemoteMethod("core_manager","unloadPlugin", pluginName);
+```
+
+### 5.2 ChatApp Example
+
+This can work just like the app at 9.1 but it pre-loads modules that it needs:
+
+```c++
+    logos_core_start();
+    logos_core_load_plugin("waku");                                 
+    logos_core_load_plugin("chat");
+```
+
+And then `MainWindow` loads `chat_ui` instead of `main_ui`:
+
+```c++
+// Build path to chat_ui.<ext>
+QString pluginPath = QCoreApplication::applicationDirPath() + "/chat_ui" + pluginExtension;
+QPluginLoader loader(pluginPath);
+QObject *plugin = loader.load() ? loader.instance() : nullptr;
+QWidget* chatWidget = nullptr;
+QMetaObject::invokeMethod(plugin, "createWidget", Q_RETURN_ARG(QWidget*, chatWidget));
+setCentralWidget(chatWidget);
+```
+
+The Chat UI will then contain a `LogosAPI` instance and it can talk to the chat module:
+
+```c++
+// Obtain a chat module replica and subscribe to events
+LogosAPI *api = new LogosAPI("core");
+
+// Start the chat backend
+api->getClient("chat")->invokeRemoteMethod("chat","initialize");
+
+// Join a channel and retrieve history
+api->getClient("chat")->invokeRemoteMethod("chat","joinChannel", channel); 
+api->getClient("chat")->invokeRemoteMethod("chat","retrieveHistory", channel);
+
+// Send a message
+api->getClient("chat")->invokeRemoteMethod("chat","sendMessage", channel, username, msg);
+```
+
+## 6. Sequence Flows
+    
+### Full LifeCycle
+    
+```mermaid
+sequenceDiagram
+    participant App as App
+    participant LogosCore as LogosCore
+    participant Capability as Capability Module
+    participant Chat as Chat Module
+    participant Waku as Waku Module (Waku)
+
+    rect rgb(250, 250, 250)
+    Note over App, Capability: Core Start
+    App->>LogosCore: logos_core_start()
+    LogosCore->>Capability: start logos_host process
+    Capability-->>Capability: QtPluginLoad("capability_module")
+    LogosCore->>Capability: send token_1 (IPC)
+    Capability-->>Capability: save("core", token_1)
+    end
+
+    rect rgb(250, 250, 250)
+    Note over App, Chat: Start a Module
+    App->>LogosCore: logos_core_load_plugin("chat")
+    LogosCore->>Chat: start logos_host process
+    Chat-->>Chat: QtPluginLoad("chat_module")
+    LogosCore->>Chat: send token_2 (IPC)
+    Chat-->>Chat: save("core", token_2)
+
+    LogosCore->>Capability: informModuleToken(token_1, "chat", token_2)
+    Capability-->>Capability: save("chat", token_2)
+    end
+
+    rect rgb(250, 250, 250)
+    Note over App, Waku: Start another Module
+    App->>LogosCore: logos_core_load_plugin("waku")
+    LogosCore->>Waku: start logos_host process
+    Chat-->>Waku: QtPluginLoad("waku_module")
+    LogosCore->>Waku: send token_3 (IPC)
+    Waku-->>Waku: save("core", token_3)
+
+    LogosCore->>Capability: informModuleToken(token_1, "chat", token_3)
+    Capability-->>Capability: save("waku", token_3)
+    end
+
+    rect rgb(250, 250, 250)
+    Note over App, Waku: A request that requires two modules interacting
+    App->>Chat: invokeRemoteMethod(token_2, "joinChannel", "channelName")
+    Chat-->>Chat: check_valid("core", token_2)
+    Chat->>Capability: requestModule(token_2, "waku")
+    Capability->>Waku: informModuleToken(token_3, "chat", token_4)
+    Waku-->>Waku: save("chat", token_4)
+    Capability->>Chat: return token_4
+    Chat->>Waku: invokeMethod(token_4, "subscribeTopic", "channelName")
+    Waku-->>Waku: check_valid("chat", token_4)
+    
+    Waku->>Chat: return subscribeTopic_result
+    Chat->>App: return joinChannel_result
+    end
+```
+
+## 7. Experimental
+
+### 7.1 Direct Core Library Usage in NodeJS & Electron
+
+JavaScript and Electron applications can talk to Logos Core via the experimental C functions exported by liblogos_core. Unlike C++ modules, JavaScript cannot use Qt Remote Objects directly, so it talks to these modules through the core instead. All other calls between modules still happen directly between modules using Qt Remote and do not go through the core.
+
+The experimental API supports asynchronous method calls and event subscription:
+- `logos_core_call_plugin_method_async(plugin_name, method_name, params_json, callback, user_data)` – invokes a method on a loaded plugin without blocking. The `params_json` string should contain a JSON array of `{name,value,type}` objects. When the method completes, the callback is invoked with a success flag and a message.
+- `logos_core_register_event_listener(plugin_name, event_name, callback, user_data)` – subscribes to events emitted by a plugin. When the specified event is emitted, the callback receives a JSON object like `{ "event": "eventName", "data": [...] }`.
+- `logos_core_process_events()` – processes pending Qt events. Because Node.js and Electron do not run the Qt event loop, call this function periodically (e.g. on a timer) to dispatch events to callbacks.
+
+To use the LogosCore C library we use a Foreign Function Interface (FFI) library such as ffi‑napi to load the native shared library and call its functions. ffi‑napi is a Node.js addon for loading and calling dynamic libraries using pure JavaScript, which allows applications to bind to native libraries without writing C++ code.
+
+We first must load the library with FFI and define the expected interface
+
+```javascript
+const ffi = require('ffi-napi');
+const callbackType = ffi.Function('void', ['int', 'string', 'pointer']);
+const libPath = "./liblogos.so";
+const core = ffi.Library(libPath, {
+  logos_core_init: ['void', ['int','pointer']],
+  logos_core_set_plugins_dir: ['void', ['string']],
+  logos_core_start: ['void', []],
+  logos_core_process_plugin: ['string', ['string']],
+  logos_core_load_plugin: ['int', ['string']],
+  logos_core_call_plugin_method_async: ['void', ['string','string','string',callbackType,'pointer']],
+  logos_core_register_event_listener: ['void', ['string','string',callbackType,'pointer']],
+  logos_core_process_events: ['void', []],
+});
+```
+
+Now, the code is somewhat equivalent to the C++ verison. We init and start the core
+
+```javascript
+// Initialize and start the core
+core.logos_core_init(0, null);
+core.logos_core_set_plugins_dir('/path/to/modules');
+core.logos_core_start();
+```
+
+Load relevant plugins
+
+```javascript
+core.logos_core_process_plugin('/path/to/waku.so');
+core.logos_core_load_plugin('waku');
+
+core.logos_core_process_plugin('/path/to/chat_plugin.so');
+core.logos_core_load_plugin('chat');
+```
+
+Then can make calls
+
+```javascript
+// Invoke a plugin method asynchronously
+core.logos_core_call_plugin_method_async('chat', 'initialize', JSON.stringify([]), myCallback, null);
+
+// Invoke a plugin method with parameters
+core.logos_core_call_plugin_method_async('chat', 'joinChannel', JSON.stringify([{name: "channelName", value: "baixa-chiado", type: "string"}]), myCallback, null);
+```
+
+Events are also supported.
+
+```javascript
+const myEventCallback = ffi.Callback('void', ['int', 'string', 'pointer'], 
+    (result, message, userData) => {
+        const parsedMessage = JSON.parse(message);
+        console.log(`\n [${timestamp}] CHAT MESSAGE - Timestamp: ${parsedMessage.data[0]}, Nick: ${parsedMessage.data[1]}, Message: ${parsedMessage.data[2]}`);
+    }
+);
+
+core.logos_core_register_event_listener('chat', 'chatMessage', myEventCallback, null);
+
+// Pump the Qt event loop regularly
+setInterval(() => core.logos_core_process_events(), 50);
+```
+
+### 7.2 Logos JS SDK
+
+_note: the JS SDK still needs to be updated to work with the new token authentication_
+
+An experimental JS SDK exists at `SDK/js/logos-api`. It essentially abstracts what is done in the previous section to provide a cleaner API.
+
+After installing the package (NPM) we simply import it nad initialize it
+
+```javascript
+const LogosAPI = require('logos-api');
+const logos = new LogosAPI();
+logos.start()
+```
+
+load relevant modules:
+
+```javascript
+logos.processAndLoadPlugins(["waku_module", "chat"]);
+```
+
+Then use API.
+
+```javascript
+logos.registerEventListener('chat', 'chatMessage', (success, message, meta) => {
+    console.log("new message received");
+})
+
+const result = await logos.callPluginMethodAsync('chat', 'joinChannel', JSON.stringify([{name: "channelName", value: "baixa-chiado", type: "string"}]));
+```
+
+#### 7.2.1 Future work: Use reflection for a better API experience
+
+The JS SDK can take advantage of the reflection capabilities of Qt and JS to build a pleasant Dev UX experience.
+
+So instead of
+
+```javascript
+const result = await logos.callPluginMethodAsync('chat', 'joinChannel', JSON.stringify([{name: "channelName", value: "baixa-chiado", type: "string"}]));
+```
+
+It should be possible to do this instead:
+
+```javascript
+const result = await logos.chat.joinChannel("baixa-chiado");
+```
+
+as well as:
+
+```javascript
+logos.chat.onChatMessage((message) => console.log(message));
+```
+
+## 8. Limitations, Future Improvements & Known Issues
+
+### 8.1 Logos Host (ModuleHost)
+
+We want modules to run in separate processes so that
+1. If they crash, they don't take the whole system with them.
+2. They can't access each other directly, which is desirable for security reasons.
+3. It allows to measure the memory and cpu usage of each module separately.
+
+Currently when a module is loaded a new process is spawned using `logos_host`.
+`logos_host` is a binary that is compiled separately from liblogos and needs to be available for the core to use. Ideally all we need ever is the `liblogos.so` library and that's it. So this presents some portability issues (for example for the Logos JS Library usage in Electron, the need for the binary to be present and its relative path is challenging and needs work). Furthermore there are also questions about the binary integrity.
+
+A more ideal alternative would be instead:
+1. The core forks itself as it's loaded, creating a process in standby
+2. The core then starts
+3. Whenever a module needs to be loaded the core asks this standby process to fork itself again and load module X
+
+However in practice this approach ran into various issues:
+- Since it's compiled linked to the QT Runtime, the forking creates conflicts.
+- On MacOS: CoreFoundation really doesn't handle well an 'UI' process forking itself. Even though LibLogos is not an "UI" it seems to be treated as such by MacOS probably due to usage of Qt.
+
+### 8.2 C++ SDK API Improvements & other improvements
+
+The `LogosAPI` was shaped by various issues discovered while developing the token authentication between modules and now that is working there are several improvements to do, among them:
+
+- Modules don't really need `LogosAPI` then just need `LogosAPIClient` as they will never use `LogosAPIProvider` (that's done internally) and `getClient` is somewhat redudant given `invokeRemoteMethod` already includes the object name
+
+- Triggering an event
+
+instead of
+
+```c++
+logosAPI->getClient("core_manager")->onEventResponse(this, "getStringListTriggered", eventData);
+```
+
+could be instead:
+
+```c++
+logosAPI->trigger("getStringListTriggered", eventData)
+```
+
+- Listening to an event
+
+instead of
+
+```c++
+QObject *chatObject = logosAPI->getClient("chat")->requestObject("chat");
+logosAPI->getClient("chat")->onEvent(chatObject, this, "chatMessage", callback);
+```
+
+could be instead:
+
+```c++
+logosAPI->onEvent("chat", "chatMessage", callback);
+```
+
+- The `eventResponse` signal and `initLogos` can be defined in the LogosInterface, so the developer doesn't have to define these each time
+
+- There are two methods duplicated `informModuleToken` and `informModuleToken_module`, one is meant to the communicate with the capability module and the other with modules generally. It was done this way due to challenges found during development, but these methods can be now probably merged or at least renamed if they truly have very different purpose.
+
+- Currently the token authentication uses "core", "core_manager" and "capability_manager" interchangeably as if they are the same module for authentication purposes.
+
+
+### 8.3 Code Generation
+
+The API itself can be improved by leveraging the reflection capabilities of QT, in a similar manner to the Logos JS API (see Experimental->Logos JS SDK->Future work), so that code is generated to interact with the API.
+
+So instead of:
+
+```c++
+ QVariant result = logosAPI->getClient("chat")->invokeRemoteMethod("chat", "joinChannel", "baixa-chiado");
+```
+
+The API may look like this:
+
+```c++
+#include "logos/chat.cpp" // generated
+
+Chat& chat = Chat::instance();
+chat->joinChannel("baixa-chiado");
+```
+
+## 9. Build and Run Scripts
+
+To simplify development, the scripts/ folder provides helper shell scripts for building the core, compiling plug‑ins, running the core and example applications, and cleaning build artifacts. These scripts ensure that build outputs are placed in the correct directories and handle platform‑specific nuances such as shared library rpaths.
+
+### 9.1 Setup
+
+Before attempting to compile, one needs to first run
+```bash
+git submodule update --init --recursive
+```
+
+This is due to the waku module using the [nwaku](https://github.com/waku-org/nwaku) submodule at `modules/waku_module/vendor/nwaku` which is then compiled so the module can use `libwaku.so`.
+Technically this is not strictly necessary as the waku_module is just another module. In the future If this module is moved to another repo then this 
+
+### 9.2 Build everything and run Logos App
+
+The simplest is to run:
+```bash
+./scripts/clean.sh && ./scripts/run_app.sh all
+```
+
+This will ensure there are not leftover artifacts and all the changes really take effect.
+
+If the app is already compiled, it can be found at `./logos_app/app/build/LogosApp`
+
+### 9.3 Run tests
+
+Since the workflow to build & run the entire app, install packages, load modules, manually test etc.. it's often desirable to run simpler scripts that test some functionality, current these are:
+
+The main go-to test:
+```bash
+./scripts/clean.sh && ./tests/test_simple/run_test_simple.sh
+```
+
+To test package installation:
+```bash
+./scripts/clean.sh && ./tests/test_install_package/run_test_install_package.sh
+```
+
+The test package installation test can also reveal issues with communication between modules.
+
+#### 9.4 Compiled only modules
+
+```bash
+./scripts/build_core_modules.sh
+```
+
+#### 9.5 Compiled only UI plugins
+
+These are the plugins used by the LogosApp
+
+```bash
+./scripts/build_app_plugins.sh
+```
+
+#### 9.6 Build and run the core
+
+```bash
+# build and run
+./scripts/run_core.sh
+# build only
+./scripts/run_core.sh build
+# rebuild modules and run
+./scripts/run_core.sh all
+```
+
+#### 9.7 Library Path Adjustments
+
+
+One import detail in the build scripts concerns how the Waku plug‑in finds its native library at runtime.  When a module depends on another shared library, the loader must know where to locate that library. For example, because we bundle `libwaku.so`/`libwaku.dylib` alongside the `waku_module_plugin`, the build script rewrites the dynamic library paths so the plug‑in uses a relative search path instead of an absolute one. If we do not do this, then the binaries will not work elsewhere unless the folder project is exactly the same as the project.
+
+* **macOS:**  After building the modules, the script invokes `otool -L` to find the current `libwaku` path in `waku_module_plugin.dylib`, then uses `install_name_tool -change` to replace that path with `@rpath/libwaku.so` and `install_name_tool -id` to set the install name of `libwaku.so` to `@rpath/libwaku.so`.  The `@rpath` token tells the loader to search the plug‑in’s runtime search paths, allowing the plug‑in and its dependent library to live in the same folder.
+
+* **Linux:**  There is no `install_name_tool`, so the script uses `patchelf --set-rpath '$ORIGIN'` on `waku_module_plugin.so`.  `$ORIGIN` instructs the dynamic linker to look in the directory containing the plug‑in for its dependencies.  This ensures that `waku_module_plugin` finds `libwaku.so` without requiring the user to set `LD_LIBRARY_PATH`.
