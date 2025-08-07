@@ -298,8 +298,8 @@ function createWindow() {
   // Load the app
   mainWindow.loadFile('index.html');
 
-  // Open DevTools for development
-  mainWindow.webContents.openDevTools();
+  // DevTools can be opened manually with Ctrl+Shift+I or Cmd+Option+I
+  // mainWindow.webContents.openDevTools();
 
   // Emitted when the window is closed
   mainWindow.on('closed', function () {
