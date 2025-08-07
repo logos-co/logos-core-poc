@@ -139,17 +139,43 @@ static bool loadPlugin(const QString &pluginName)
         return false;
     }
 
-    // Find the logos_host executable
-    QString logosHostPath = QDir::cleanPath(QCoreApplication::applicationDirPath() + "/logos_host");
+    // Find the logos_host executable with multiple strategies
+    QString logosHostPath;
+    // 1) Environment override
+    QByteArray envPathBytes = qgetenv("LOGOS_HOST_PATH");
+    if (!envPathBytes.isEmpty()) {
+        logosHostPath = QString::fromUtf8(envPathBytes);
+    }
+    // 2) Default next to Electron/host executable
+    if (logosHostPath.isEmpty()) {
+        logosHostPath = QDir::cleanPath(QCoreApplication::applicationDirPath() + "/logos_host");
+    }
 #ifdef Q_OS_WIN
-    logosHostPath += ".exe";
+    if (!logosHostPath.endsWith(".exe")) {
+        logosHostPath += ".exe";
+    }
 #endif
 
-    qDebug() << "Logos host path:" << logosHostPath;
+    // 3) Fallback relative to plugins directory (../../core/build/bin/logos_host)
+    if (!QFile::exists(logosHostPath)) {
+        if (!g_plugins_dir.isEmpty()) {
+            QDir pluginsDirCandidate(g_plugins_dir);
+            QString candidate = QDir::cleanPath(pluginsDirCandidate.absoluteFilePath("../bin/logos_host"));
+#ifdef Q_OS_WIN
+            if (!candidate.endsWith(".exe")) candidate += ".exe";
+#endif
+            if (QFile::exists(candidate)) {
+                logosHostPath = candidate;
+            }
+        }
+    }
+
+    qDebug() << "Logos host path (resolved):" << logosHostPath;
 
     // Check if logos_host exists
     if (!QFile::exists(logosHostPath)) {
         qCritical() << "logos_host executable not found at:" << logosHostPath;
+        qCritical() << "Set environment variable LOGOS_HOST_PATH to the absolute path of logos_host or ensure it is next to the Electron executable or under ../bin from the plugins directory.";
         return false;
     }
 
