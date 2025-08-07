@@ -39,6 +39,7 @@ note: This document is a living document and it explains the project's current s
 - [5. Apps using Core](#5-apps-using-core)
   - [5.1 LogosApp Example](#51-logosapp-example)
   - [5.2 ChatApp Example](#52-chatapp-example)
+  - [5.3 Electron Chat Example](#53-electron-chat-example)
 - [6. Sequence Flows](#6-sequence-flows)
   - [Full LifeCycle](#full-lifecycle)
 - [7. Experimental](#7-experimental)
@@ -823,6 +824,26 @@ api->getClient("chat")->invokeRemoteMethod("chat","retrieveHistory", channel);
 api->getClient("chat")->invokeRemoteMethod("chat","sendMessage", channel, username, msg);
 ```
 
+### 5.3 Electron Chat Example
+
+This repository includes an experimental Electron-based chat app that talks to the core via the C API bindings using `ffi-napi`.
+
+Prerequisites
+- **Build the core** (and, optionally, the modules):
+  - Build core only: `./scripts/run_core.sh build`
+  - Or build core and modules: `./scripts/run_core.sh all`
+- Ensure the shared library exists at `./core/build/lib/liblogos_core.dylib` on macOS or `liblogos_core.so` on Linux.
+
+Run the Electron app
+1. Navigate to the example folder: `cd examples/electron_app`
+2. Install dependencies and rebuild native addons for Electron: `npm install`
+   - The project runs `electron-rebuild` automatically via `postinstall` for `ffi-napi` and `ref-napi`.
+3. Start the Electron app: `npm start`
+
+Notes
+- The app sets `process.env.LOGOS_HOST_PATH` automatically to `./core/build/bin/logos_host` relative to the repo, so no symlink is needed as long as you built the core.
+- On first launch the app will initialize the core, process and load the `capability_module`, `waku_module`, and `chat` modules, then auto-join the default channel and stream chat/history events.
+
 ## 6. Sequence Flows
     
 ### Full LifeCycle
@@ -895,7 +916,15 @@ The experimental API supports asynchronous method calls and event subscription:
 - `logos_core_register_event_listener(plugin_name, event_name, callback, user_data)` – subscribes to events emitted by a plugin. When the specified event is emitted, the callback receives a JSON object like `{ "event": "eventName", "data": [...] }`.
 - `logos_core_process_events()` – processes pending Qt events. Because Node.js and Electron do not run the Qt event loop, call this function periodically (e.g. on a timer) to dispatch events to callbacks.
 
-To use the LogosCore C library we use a Foreign Function Interface (FFI) library such as ffi‑napi to load the native shared library and call its functions. ffi‑napi is a Node.js addon for loading and calling dynamic libraries using pure JavaScript, which allows applications to bind to native libraries without writing C++ code.
+To use the LogosCore C library we use a Foreign Function Interface (FFI) library such as ffi‑napi to load the native shared library and call its functions. ffi‑napi is a Node.js addon for loading and calling dynamic libraries using pure JavaScript, which allows applications to bind to native libraries without writing C++ code.
+
+Before initializing the core, applications should set the `LOGOS_HOST_PATH` environment variable to ensure the core can locate the `logos_host` executable:
+
+```javascript
+const path = require('path');
+// Point to the logos_host executable built alongside the core
+process.env.LOGOS_HOST_PATH = path.resolve(__dirname, '../../core/build/bin/logos_host');
+```
 
 We first must load the library with FFI and define the expected interface
 
@@ -1022,7 +1051,14 @@ We want modules to run in separate processes so that
 3. It allows to measure the memory and cpu usage of each module separately.
 
 Currently when a module is loaded a new process is spawned using `logos_host`.
-`logos_host` is a binary that is compiled separately from liblogos and needs to be available for the core to use. Ideally all we need ever is the `liblogos.so` library and that's it. So this presents some portability issues (for example for the Logos JS Library usage in Electron, the need for the binary to be present and its relative path is challenging and needs work). Furthermore there are also questions about the binary integrity.
+`logos_host` is a binary that is compiled separately from liblogos and needs to be available for the core to use. Ideally all we need ever is the `liblogos.so` library and that's 
+it. To address portability concerns, the core now includes multiple fallback strategies for locating the `logos_host` executable:
+
+1. **Environment variable override**: Applications can set `LOGOS_HOST_PATH` to specify the exact path to `logos_host`
+2. **Application directory**: Default search next to the host application (e.g., Electron executable)
+3. **Relative to plugins directory**: Fallback to `../bin/logos_host` relative to the configured plugins directory
+
+This multi-strategy approach significantly improves portability for JavaScript/Electron applications and other deployment scenarios without requiring symlinks or complex path management.
 
 A more ideal alternative would be instead:
 1. The core forks itself as it's loaded, creating a process in standby
