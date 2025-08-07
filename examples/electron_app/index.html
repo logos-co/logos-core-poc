@@ -26,6 +26,14 @@
             overflow: hidden; /* Prevent container scrolling */
         }
         
+        /* Ensure chat interface fills remaining height and allows inner scrolling */
+        #chat-interface {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0; /* Required so children can shrink and scroll */
+        }
+        
         .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -142,6 +150,7 @@
             padding: 20px;
             background-color: #ffffff;
             min-height: 0; /* Important for flex child to shrink */
+            -webkit-overflow-scrolling: touch;
         }
         
         .message {
@@ -196,6 +205,9 @@
             border-top: 1px solid #dee2e6;
             padding: 15px 20px;
             flex-shrink: 0;
+            position: sticky;
+            bottom: 0;
+            z-index: 1;
         }
         
         .message-input-group {

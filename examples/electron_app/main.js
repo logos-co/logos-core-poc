@@ -19,6 +19,15 @@ let username = `LogosUser_${Math.floor(Math.random() * 100).toString().padStart(
 // Initialize LogosCore FFI
 function initializeLogosCore() {
   try {
+    // Ensure logos_host can be located by the core (no symlink needed)
+    const logosHostPath = path.resolve(__dirname, '../../core/build/bin', process.platform === 'win32' ? 'logos_host.exe' : 'logos_host');
+    process.env.LOGOS_HOST_PATH = logosHostPath;
+    if (!fs.existsSync(logosHostPath)) {
+      console.warn(`logos_host not found at: ${logosHostPath}`);
+    } else {
+      console.log(`Using logos_host at: ${logosHostPath}`);
+    }
+
     // Determine library extension based on platform
     const libExtension = process.platform === 'darwin' ? '.dylib' : '.so';
     const libPath = path.resolve(__dirname, '../../core/build/lib', `liblogos_core${libExtension}`);
@@ -374,7 +383,7 @@ ipcMain.handle('initialize-chat-app', async () => {
     console.log('Logos Core initialized successfully!');
 
     // Process and load plugins
-    const pluginsToLoad = ['waku_module', 'chat'];
+    const pluginsToLoad = ['capability_module', 'waku_module', 'chat'];
     const pluginResults = [];
 
     // Determine plugin extension based on platform
@@ -387,21 +396,24 @@ ipcMain.handle('initialize-chat-app', async () => {
       pluginExtension = '.so';
     }
 
-    // First process the plugins
+    // First process the plugins (validate file exists first)
     console.log('Processing plugins...');
     for (const pluginName of pluginsToLoad) {
       console.log(`Processing plugin file: ${pluginName}`);
-      
-      // Construct full plugin path
-      const pluginPath = path.join(pluginsDir, `${pluginName}_plugin${pluginExtension}`);
-      const result = LogosCore.logos_core_process_plugin(pluginPath);
-      
+      const candidatePath = path.join(pluginsDir, `${pluginName}_plugin${pluginExtension}`);
+      if (!fs.existsSync(candidatePath)) {
+        console.warn(`Plugin file not found: ${candidatePath}`);
+        pluginResults.push({ plugin: pluginName, processed: false, processResult: null, missing: true, path: candidatePath });
+        continue;
+      }
+
+      const result = LogosCore.logos_core_process_plugin(candidatePath);
       if (result) {
         console.log(`✓ Processed plugin: ${pluginName}`);
         pluginResults.push({ plugin: pluginName, processed: true, processResult: result });
       } else {
         console.log(`✗ Failed to process plugin file: ${pluginName}`);
-        pluginResults.push({ plugin: pluginName, processed: false, processResult: null });
+        pluginResults.push({ plugin: pluginName, processed: false, processResult: null, path: candidatePath });
       }
     }
 
@@ -429,12 +441,13 @@ ipcMain.handle('initialize-chat-app', async () => {
     // Get final plugin status
     const finalPluginStatus = printLoadedPlugins();
     console.log('Final plugin status:', finalPluginStatus);
+    console.log('Plugin processing results:', pluginResults);
     
     // Start event processing
     startEventProcessing();
-    
-    // Auto-initialize chat
-    setTimeout(() => autoInitializeChat(), 1000);
+
+    // Give plugins extra time to boot their processes and establish connections
+    setTimeout(() => autoInitializeChat(), 3000);
     
     return { 
       success: true, 

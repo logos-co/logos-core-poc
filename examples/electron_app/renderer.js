@@ -82,13 +82,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         messageDiv.innerHTML = messageHTML;
+        const shouldStickToBottom = chatMessages.scrollTop + chatMessages.clientHeight >= chatMessages.scrollHeight - 20;
         chatMessages.appendChild(messageDiv);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+        if (shouldStickToBottom || type !== 'history') {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
     }
 
     // Clear chat messages
     function clearMessages() {
         chatMessages.innerHTML = '';
+        chatMessages.scrollTop = 0;
     }
 
     // Enable/disable UI elements

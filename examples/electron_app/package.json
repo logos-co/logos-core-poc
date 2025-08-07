@@ -1,20 +1,26 @@
 {
   "name": "electron_app",
   "version": "1.0.0",
-  "description": "A simple Hello World Electron application",
+  "description": "Logos Chat Electron application",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
+    "rebuild": "electron-rebuild -f -w ffi-napi,ref-napi",
+    "postinstall": "electron-rebuild -f -w ffi-napi,ref-napi",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
     "electron",
-    "hello-world"
+    "logos",
+    "chat"
   ],
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "electron": "20.0.2",
+    "electron-rebuild": "^3.2.9"
+  },
+  "dependencies": {
     "ffi-napi": "^4.0.3",
     "ref-napi": "^3.0.3"
   }
