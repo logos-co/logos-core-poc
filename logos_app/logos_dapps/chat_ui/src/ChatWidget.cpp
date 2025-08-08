@@ -115,13 +115,13 @@ void ChatWidget::initWaku()
     updateStatus("Status: Initializing Waku...");
 
     // request object from logos api
-    QObject *chatObject = m_logosAPI->getClient("chat")->requestObject("chat");
+    QObject *chatObject = m_logosAPI->module("chat").requestObject();
 
-    m_logosAPI->getClient("chat")->onEvent(chatObject, this, "chatMessage", [this](const QString &eventName, const QVariantList &data) {
+    m_logosAPI->module("chat").on("chatMessage", [this](const QString &eventName, const QVariantList &data) {
         handleWakuMessage(data[0].toString().toStdString(), data[1].toString().toStdString(), data[2].toString().toStdString());
     });
 
-    m_logosAPI->getClient("chat")->onEvent(chatObject, this, "historyMessage", [this](const QString &eventName, const QVariantList &data) {
+    m_logosAPI->module("chat").on("historyMessage", [this](const QString &eventName, const QVariantList &data) {
         QString historyPrefix = "[HISTORY] ";
         QString nick = data[1].toString();
         QString message = data[2].toString();
@@ -132,7 +132,7 @@ void ChatWidget::initWaku()
         }, Qt::QueuedConnection);
     });
 
-    QVariant result = m_logosAPI->getClient("chat")->invokeRemoteMethod("chat", "initialize");
+    QVariant result = m_logosAPI->module("chat").callVariant("initialize");
     bool success = result.toBool();
 
     if (!success) {
@@ -191,7 +191,7 @@ void ChatWidget::onJoinChannelClicked() {
         return;
     }
     
-            QVariant result = m_logosAPI->getClient("chat")->invokeRemoteMethod("chat", "joinChannel", currentChannel);
+            QVariant result = m_logosAPI->module("chat").callVariant("joinChannel", currentChannel);
     bool success = result.toBool();
     if (success) {
         updateStatus("Joined channel: " + currentChannel);
@@ -203,7 +203,7 @@ void ChatWidget::onJoinChannelClicked() {
         chatDisplay->append("<i>--- Message History ---</i>");
 
         // Call retrieveHistory - history messages will come via historyMessage events
-        QVariant historyResult = m_logosAPI->getClient("chat")->invokeRemoteMethod("chat", "retrieveHistory", currentChannel);
+        QVariant historyResult = m_logosAPI->module("chat").callVariant("retrieveHistory", currentChannel);
         qDebug() << "LogosAPI retrieveHistory result:" << historyResult;
     } else {
         updateStatus("Failed to join channel: " + currentChannel);
@@ -226,7 +226,7 @@ void ChatWidget::onSendButtonClicked() {
     }
 
     if (m_logosAPI && m_logosAPI->getClient("chat")->isConnected()) {
-        QVariant result = m_logosAPI->getClient("chat")->invokeRemoteMethod("chat", "sendMessage", currentChannel, username, message);
+        QVariant result = m_logosAPI->module("chat").callVariant("sendMessage", currentChannel, username, message);
         qDebug() << "LogosAPI sendMessage result:" << result;
     } else {
         qDebug() << "LogosAPI not connected";

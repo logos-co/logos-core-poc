@@ -1,6 +1,8 @@
 #include "logos_api_client.h"
 #include "logos_api_consumer.h"
 #include "token_manager.h"
+#include "module_ref.h"
+#include <QDebug>
 
 LogosAPIClient::LogosAPIClient(const QString& module_to_talk_to, const QString& origin_module, TokenManager* token_manager, QObject *parent)
     : QObject(parent)
@@ -176,4 +178,8 @@ QString LogosAPIClient::getToken(const QString& module_name)
     // TODO: this is breaking here for core_manager
     // return AUTH_TOKEN;
     return "";
+}
+
+ModuleRef LogosAPIClient::module(const QString& target_module) const {
+    return ModuleRef(const_cast<LogosAPIClient*>(this), target_module);
 }

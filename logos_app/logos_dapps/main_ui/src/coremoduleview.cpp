@@ -175,8 +175,7 @@ void CoreModuleView::updatePluginList()
     
     // Use LogosAPI to get the list of known plugins
     LogosAPI api("core");
-    auto client = api.getClient("core_manager");
-    QVariant result = client->invokeRemoteMethod("core_manager", "getKnownPlugins");
+    QVariant result = api.module("core_manager").callVariant("getKnownPlugins");
     
     if (!result.isValid()) {
         qWarning() << "Failed to get known plugins from core manager";
@@ -283,8 +282,7 @@ void CoreModuleView::onLoadPluginClicked()
 
     // Use LogosAPI to load the plugin
     LogosAPI api("core");
-    auto client = api.getClient("core_manager");
-    QVariant result = client->invokeRemoteMethod("core_manager", "loadPlugin", pluginName);
+    QVariant result = api.module("core_manager").callVariant("loadPlugin", pluginName);
 
     bool success = result.toBool();
     if (success) {
@@ -313,8 +311,7 @@ void CoreModuleView::onUnloadPluginClicked()
 
     // Use LogosAPI to unload the plugin
     LogosAPI api("core");
-    auto client = api.getClient("core_manager");
-    QVariant result = client->invokeRemoteMethod("core_manager", "unloadPlugin", pluginName);
+    QVariant result = api.module("core_manager").callVariant("unloadPlugin", pluginName);
 
     bool success = result.toBool();
     if (success) {
@@ -397,8 +394,7 @@ void CoreModuleView::onAddPluginClicked()
 
     // Use LogosAPI to install the plugin
     LogosAPI api("core");
-    auto client = api.getClient("core_manager");
-    QVariant result = client->invokeRemoteMethod("core_manager", "installPlugin", filePath);
+    QVariant result = api.module("core_manager").callVariant("installPlugin", filePath);
 
     bool success = result.toBool();
     if (!success) {

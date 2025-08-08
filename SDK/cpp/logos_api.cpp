@@ -47,3 +47,8 @@ TokenManager* LogosAPI::getTokenManager() const
 {
     return m_token_manager;
 } 
+
+ModuleRef LogosAPI::module(const QString& target_module) const
+{
+    return ModuleRef(getClient(target_module), target_module);
+}

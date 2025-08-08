@@ -1,6 +1,7 @@
 #include "chat_api.h"
-#include <unordered_set> // Add for storing message hashes
-#include "../../../SDK/cpp/logos_api_client.h"
+#include <unordered_set>
+#include "../../../SDK/cpp/logos_api.h"
+#include "../../../SDK/cpp/module_ref.h"
 
 // Constants
 const std::string TOY_CHAT_CONTENT_TOPIC = "/toy-chat/2/baixa-chiado/proto";
@@ -363,7 +364,7 @@ void sendMessage(LogosAPIClient* logosAPI, const std::string& channelName, const
     std::cout << "Sending message as " << username << ": " << message << std::endl;
     std::cout << "Message JSON: " << messageJson << std::endl;
 
-    logosAPI->invokeRemoteMethod("waku_module", "relayPublish", QString::fromStdString(DEFAULT_PUBSUB_TOPIC), QString::fromStdString(messageJson));
+    logosAPI->module("waku_module").callVariant("relayPublish", QString::fromStdString(DEFAULT_PUBSUB_TOPIC), QString::fromStdString(messageJson));
 }
 
 // Function to initialize and start a Waku node
@@ -389,12 +390,12 @@ void* initAndStart(LogosAPIClient* logosAPI, const std::string& relayTopic, Mess
     std::cout << "Waku node config: " << configStr << std::endl;
 
     // request object waku_module
-    QObject* waku_module = logosAPI->requestObject("waku_module");
+    QObject* waku_module = logosAPI->module("waku_module").requestObject();
 
     std::cout << "Found Waku Plugin, initializing" << std::endl;
     // Call initWaku on the plugin
     // wakuPlugin->initWaku(QString::fromStdString(configStr));
-    logosAPI->invokeRemoteMethod("waku_module", "initWaku", QString::fromStdString(configStr));
+    logosAPI->module("waku_module").callVariant("initWaku", QString::fromStdString(configStr));
 
     std::this_thread::sleep_for(std::chrono::seconds(3));
 
@@ -402,7 +403,7 @@ void* initAndStart(LogosAPIClient* logosAPI, const std::string& relayTopic, Mess
     EventHandlerContext* context = new EventHandlerContext(messageCallback);
 
     // listen to wakuMessage Event and trigger messageCallback with it
-    logosAPI->onEvent(waku_module, nullptr, "wakuMessage", [messageCallback](const QString& eventName, const QVariantList& data) {
+    logosAPI->module("waku_module").on("wakuMessage", [messageCallback](const QString& eventName, const QVariantList& data) {
         // print content topic of this message
         if (!data.isEmpty()) {
             std::string jsonStr = data.first().toString().toStdString();
@@ -515,9 +516,9 @@ void* initAndStart(LogosAPIClient* logosAPI, const std::string& relayTopic, Mess
         }
     });
 
-    logosAPI->invokeRemoteMethod("waku_module", "setEventCallback");
+    logosAPI->module("waku_module").callVariant("setEventCallback");
 
-    logosAPI->invokeRemoteMethod("waku_module", "startWaku");
+    logosAPI->module("waku_module").callVariant("startWaku");
 
     std::this_thread::sleep_for(std::chrono::seconds(2));
     std::cout << "Waku node started successfully" << std::endl;
@@ -540,7 +541,7 @@ bool joinChannel(LogosAPIClient* logosAPI, const std::string& channelName, const
 
     std::string contentTopics = "[\"" + contentTopic + "\"]";
 
-    logosAPI->invokeRemoteMethod("waku_module", "filterSubscribe", QString::fromStdString(relayTopic), QString::fromStdString(contentTopics));
+    logosAPI->module("waku_module").callVariant("filterSubscribe", QString::fromStdString(relayTopic), QString::fromStdString(contentTopics));
     subscribedChannels.push_back(contentTopic);
 
     return true;
@@ -563,24 +564,26 @@ void retrieveHistory(LogosAPIClient* logosAPI, const std::string& channelName, M
     auto nowSeconds = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
     uint64_t timeStart = (nowSeconds - oneDay) * 1000000000ULL; // Convert to nanoseconds
 
-   std::string queryJson = R"({
-       "request_id": "15be8c48-55ce-4bf2-a34-8813d4da2dec",
-       "include_data": true,
-       "content_topics": [")" + contentTopic + R"("],
-       "time_start": 1744123537000000000,
-       "pagination_forward": true,
-       "pagination_limit": 100
-   })";
+    std::string queryJson = std::string("{") +
+        "\n       \"request_id\": \"15be8c48-55ce-4bf2-a34-8813d4da2dec\"," +
+        "\n       \"include_data\": true," +
+        "\n       \"content_topics\": [\"" + contentTopic + "\"]," +
+        "\n       \"time_start\": " + std::to_string(timeStart) + "," +
+        "\n       \"pagination_forward\": true," +
+        "\n       \"pagination_limit\": 100" +
+        "\n   }";
 
     std::cout << "Query JSON: " << queryJson.c_str() << std::endl;
 
     // Create a context to hold the callback
     StoreQueryContext* context = new StoreQueryContext(callback);
 
-    QObject* waku_module = logosAPI->requestObject("waku_module");
+    QObject* waku_module = logosAPI->module("waku_module").requestObject();
     // listen to event from waku module
-    logosAPI->onEvent(waku_module, nullptr, "storeQueryResponse", [context, channelName, callback](const QString& eventName, const QVariantList& data) {
+    logosAPI->module("waku_module").on("storeQueryResponse", [context, channelName, callback](const QString& eventName, const QVariantList& data) {
+        qDebug() << "[chat_api] storeQueryResponse event received. Event:" << eventName << ", items:" << data.size();
         if (!data.isEmpty()) {
+            qDebug() << "[chat_api] storeQueryResponse payload (truncated):" << data.first().toString().left(120);
             std::string jsonStr = data.first().toString().toStdString();
 
             // parse the json and print each message decoded
@@ -618,5 +621,5 @@ void retrieveHistory(LogosAPIClient* logosAPI, const std::string& channelName, M
         }
     });
 
-    logosAPI->invokeRemoteMethod("waku_module", "storeQuery", QString::fromStdString(queryJson), QString::fromStdString(STORE_NODE), 30000);
+    logosAPI->module("waku_module").callVariant("storeQuery", QString::fromStdString(queryJson), QString::fromStdString(STORE_NODE));
 } 

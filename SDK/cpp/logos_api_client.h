@@ -10,6 +10,7 @@
 
 class LogosAPIConsumer;
 class TokenManager;
+class ModuleRef;
 
 /**
  * @brief LogosAPIClient provides a high-level interface for remote method calls
@@ -192,6 +193,10 @@ public:
      * @return QString containing the token
      */
     QString getToken(const QString& module_name);
+
+    // Convenience: get a reflective-like reference bound to a target module
+    ModuleRef module(const QString& target_module) const;
+
 
 public slots:
     /**

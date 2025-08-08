@@ -33,6 +33,8 @@ set(PLUGIN_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/token_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/module_proxy.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/module_proxy.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/module_ref.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/module_ref.h
 )
 
 # Create the plugin library

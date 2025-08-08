@@ -148,7 +148,7 @@ bool PackageManagerPlugin::installPlugin(const QString& pluginPath)
     }
     
     qDebug() << "Calling processPlugin with destinationPath:" << destinationPath;
-    QVariant result = logosAPI->getClient("core_manager")->invokeRemoteMethod("core_manager", "processPlugin", destinationPath);
+    QVariant result = logosAPI->module("core_manager").callVariant("processPlugin", destinationPath);
     if (!result.isValid()) {
         qDebug() << "ERROR: --------------------------------";
         qWarning() << "Failed to process installed plugin:" << destinationPath;

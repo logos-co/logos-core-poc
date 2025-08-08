@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QString>
 #include <QHash>
+#include "module_ref.h"
 
 class LogosAPIClient;
 class LogosAPIProvider;
@@ -49,6 +50,13 @@ public:
      * @return TokenManager* Pointer to the token manager
      */
     TokenManager* getTokenManager() const;
+
+    /**
+     * @brief Convenience: get a reflective-like module reference for ergonomic calls
+     * @param target_module The module to communicate with
+     * @return ModuleRef helper bound to the module
+     */
+    ModuleRef module(const QString& target_module) const;
 
 private:
     QString m_module_name;

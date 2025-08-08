@@ -98,20 +98,20 @@ void LogosIRCPlugin::initChatBridge() {
     qDebug() << "LogosIRCPlugin: Initializing chat bridge...";
     
     // Request chat object from logos api (similar to ChatWidget::initWaku)
-    chatObject = logosAPI->getClient("chat")->requestObject("chat");
+    chatObject = logosAPI->module("chat").requestObject();
     
     // Listen for chat messages (similar to ChatWidget)
-    logosAPI->getClient("chat")->onEvent(chatObject, this, "chatMessage", [this](const QString &eventName, const QVariantList &data) {
+    logosAPI->module("chat").on("chatMessage", [this](const QString &eventName, const QVariantList &data) {
         onChatMessage(eventName, data);
     });
     
     // Listen for history messages (similar to ChatWidget)
-    logosAPI->getClient("chat")->onEvent(chatObject, this, "historyMessage", [this](const QString &eventName, const QVariantList &data) {
+    logosAPI->module("chat").on("historyMessage", [this](const QString &eventName, const QVariantList &data) {
         onHistoryMessage(eventName, data);
     });
     
     // Initialize the chat module
-    QVariant result = logosAPI->getClient("chat")->invokeRemoteMethod("chat", "initialize");
+    QVariant result = logosAPI->module("chat").callVariant("initialize");
     bool success = result.toBool();
     
     if (success) {
@@ -199,7 +199,7 @@ void LogosIRCPlugin::onIRCChannelJoined(const QString& channel) {
     qDebug() << "LogosIRCPlugin: IRC user joined channel" << channel << ", joining chat channel:" << channelName;
     
     // Join the channel on the chat side
-    QVariant joinResult = logosAPI->getClient("chat")->invokeRemoteMethod("chat", "joinChannel", channelName);
+    QVariant joinResult = logosAPI->module("chat").callVariant("joinChannel", channelName);
     if (joinResult.toBool()) {
         qDebug() << "LogosIRCPlugin: Successfully joined chat channel:" << channelName;
         
@@ -208,7 +208,7 @@ void LogosIRCPlugin::onIRCChannelJoined(const QString& channel) {
         
         // Automatically retrieve message history for the joined channel
         qDebug() << "LogosIRCPlugin: Retrieving message history for channel:" << channelName;
-        QVariant historyResult = logosAPI->getClient("chat")->invokeRemoteMethod("chat", "retrieveHistory", channelName);
+        QVariant historyResult = logosAPI->module("chat").callVariant("retrieveHistory", channelName);
         qDebug() << "LogosIRCPlugin: retrieveHistory result:" << historyResult;
     } else {
         qWarning() << "LogosIRCPlugin: Failed to join chat channel:" << channelName;
@@ -230,7 +230,7 @@ void LogosIRCPlugin::onIRCMessageSent(const QString& channel, const QString& nic
     qDebug() << "LogosIRCPlugin: Forwarding IRC message from" << nick << "in channel" << channelName << ":" << message;
     
     // Send the message to the chat module
-    QVariant result = logosAPI->getClient("chat")->invokeRemoteMethod("chat", "sendMessage", channelName, nick, message);
+    QVariant result = logosAPI->module("chat").callVariant("sendMessage", channelName, nick, message);
     if (result.toBool()) {
         qDebug() << "LogosIRCPlugin: Successfully sent message to chat module";
     } else {
