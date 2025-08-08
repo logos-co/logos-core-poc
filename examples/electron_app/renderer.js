@@ -18,6 +18,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentUsername = '';
     let currentChannel = '';
     let chatReady = false;
+    const pendingMessages = [];
+    const seenHistory = new Set();
 
     // Initialize the chat application
     async function initializeChatApp() {
@@ -56,9 +58,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Add message to chat display
-    function addMessage(sender, content, type = 'other', timestamp = null) {
+    // options: { pending: boolean, pendingId: string }
+    function addMessage(sender, content, type = 'other', timestamp = null, options = {}) {
         const messageDiv = document.createElement('div');
-        messageDiv.className = `message ${type}`;
+        const isPending = !!options.pending;
+        const classes = ['message', type];
+        if (isPending) classes.push('pending');
+        messageDiv.className = classes.join(' ');
+        if (isPending) {
+            messageDiv.dataset.pending = 'true';
+            messageDiv.dataset.messageText = content;
+            if (options.pendingId) messageDiv.dataset.pendingId = options.pendingId;
+        }
         
         const now = timestamp ? new Date(timestamp) : new Date();
         const timeStr = now.toLocaleTimeString();
@@ -74,8 +85,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="message-content">${content}</div>
                 `;
             } else {
+                const pendingBadge = isPending ? ' <span class="badge">(sending...)</span>' : '';
                 messageHTML = `
-                    <div class="message-header">${timeStr} - ${sender}</div>
+                    <div class="message-header">${timeStr} - ${sender}${pendingBadge}</div>
                     <div class="message-content">${content}</div>
                 `;
             }
@@ -87,6 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (shouldStickToBottom || type !== 'history') {
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
+        return messageDiv;
     }
 
     // Clear chat messages
@@ -117,6 +130,12 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             messageInput.disabled = true;
             sendBtn.disabled = true;
+            updateStatus('Sending message...', 'info');
+
+            // Show a pending message bubble immediately
+            const pendingId = `p_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+            const pendingEl = addMessage(currentUsername, message, 'own', null, { pending: true, pendingId });
+            pendingMessages.push({ id: pendingId, text: message, el: pendingEl, createdAt: Date.now() });
             
             const result = await window.electronAPI.sendMessage(message);
             
@@ -124,13 +143,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Clear input
                 messageInput.value = '';
                 // Note: The actual message will appear via the chat event
+                // Keep status as sending until event arrives; fallback clear later
             } else {
                 console.error('Failed to send message:', result.error);
                 addMessage('System', `Failed to send message: ${result.error}`, 'system');
+                // Mark last pending (matching text) as failed
+                const idx = pendingMessages.findIndex(p => p.text === message);
+                if (idx !== -1) {
+                    const el = pendingMessages[idx].el;
+                    const header = el.querySelector('.message-header');
+                    if (header) header.innerHTML += ' <span class="badge error">(failed)</span>';
+                    el.classList.remove('pending');
+                    el.classList.add('failed');
+                    pendingMessages.splice(idx, 1);
+                }
+                updateStatus('Failed to send message', 'error');
             }
         } catch (error) {
             console.error('Error sending message:', error);
             addMessage('System', `Error sending message: ${error.message}`, 'system');
+            updateStatus('Error sending message', 'error');
         } finally {
             if (chatReady) {
                 messageInput.disabled = false;
@@ -160,6 +192,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateStatus(`Connected to channel: ${currentChannel}`, 'ready');
                 addMessage('System', `You have joined channel: ${currentChannel}`, 'system');
                 addMessage('System', '--- Message History ---', 'system');
+                // Reset history duplicate tracker for new channel
+                seenHistory.clear();
             } else {
                 console.error('Failed to join channel:', result.error);
                 updateStatus(`Failed to join channel: ${result.error}`, 'error');
@@ -237,7 +271,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 const message = eventData[2];
                 
                 // Check if this is your own message or from another user
-                const messageType = (nick === currentUsername) ? 'own' : 'other';
+                const isOwn = (nick === currentUsername);
+                if (isOwn) {
+                    // Try to resolve a pending bubble instead of duplicating
+                    const idx = pendingMessages.findIndex(p => p.text === message);
+                    if (idx !== -1) {
+                        const el = pendingMessages[idx].el;
+                        const header = el.querySelector('.message-header');
+                        if (header) {
+                            const date = new Date(timestamp);
+                            const timeStr = date.toLocaleTimeString();
+                            // Strip any existing badge and update timestamp
+                            header.innerHTML = `${timeStr} - ${nick}`;
+                        }
+                        el.classList.remove('pending');
+                        pendingMessages.splice(idx, 1);
+                        updateStatus('Message sent', 'ready');
+                        return;
+                    }
+                }
+                const messageType = isOwn ? 'own' : 'other';
                 addMessage(nick, message, messageType, timestamp);
             }
         } else if (data.eventName === 'historyMessage') {
@@ -246,6 +299,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const timestamp = eventData[0];
                 const nick = eventData[1];
                 const message = eventData[2];
+                // Deduplicate history items (some backends may emit them multiple times)
+                const key = `${timestamp}|${nick}|${message}`;
+                if (seenHistory.has(key)) {
+                    return; // skip duplicates
+                }
+                seenHistory.add(key);
                 addMessage(nick, message, 'history', timestamp);
             }
         }
@@ -259,6 +318,15 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             console.error('Method failed:', data.message);
             addMessage('System', `Operation failed: ${data.message}`, 'system');
+            // Mark any outstanding pending message as failed for visibility
+            if (pendingMessages.length > 0) {
+                const { el } = pendingMessages.shift();
+                const header = el.querySelector('.message-header');
+                if (header) header.innerHTML += ' <span class="badge error">(failed)</span>';
+                el.classList.remove('pending');
+                el.classList.add('failed');
+            }
+            updateStatus('Operation failed', 'error');
         }
     });
 
