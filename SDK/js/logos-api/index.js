@@ -37,6 +37,25 @@ class LogosAPI {
     if (this.options.autoInit) {
       this.init();
     }
+
+    // Cache for reflective plugin proxies
+    this._pluginProxies = new Map();
+
+    // Return a proxy to enable reflective access like logos.chat.joinChannel(...)
+    return new Proxy(this, {
+      get: (target, prop, receiver) => {
+        // Preserve access to existing properties/methods
+        if (prop in target) {
+          return Reflect.get(target, prop, receiver);
+        }
+        // Support Symbol utilities without treating them as plugins
+        if (typeof prop !== 'string') {
+          return undefined;
+        }
+        // Dynamically create and return a plugin proxy
+        return target._getPluginProxy(prop);
+      }
+    });
   }
   
   /**
@@ -491,6 +510,103 @@ class LogosAPI {
         }
       }
     );
+  }
+
+  // ===== Reflective API helpers =====
+
+  _getPluginProxy(pluginName) {
+    if (this._pluginProxies.has(pluginName)) {
+      return this._pluginProxies.get(pluginName);
+    }
+    const proxy = this._createReflectivePluginProxy(pluginName);
+    this._pluginProxies.set(pluginName, proxy);
+    return proxy;
+  }
+
+  _createReflectivePluginProxy(pluginName) {
+    const decapitalize = (s) => s.length ? s.charAt(0).toLowerCase() + s.slice(1) : s;
+    const makeParamsJson = (args) => {
+      const toParam = (arg, index) => {
+        const inferred = this._inferTypeAndValue(arg);
+        return { name: `arg${index}`, value: inferred.value, type: inferred.type };
+      };
+      return JSON.stringify(Array.from(args).map(toParam));
+    };
+
+    const api = this; // capture
+
+    return new Proxy({}, {
+      get(_t, property) {
+        if (property === 'pluginName') return pluginName;
+        if (property === 'toString') return () => `[LogosPluginProxy ${pluginName}]`;
+        // Avoid being mistaken for a thenable/Promise
+        if (property === 'then') return undefined;
+
+        if (typeof property !== 'string') {
+          return undefined;
+        }
+
+        // Event subscription: on<EventName>(callback)
+        if (property.startsWith('on') && property.length > 2) {
+          const eventName = decapitalize(property.slice(2));
+          return (callback) => {
+            if (typeof callback !== 'function') {
+              throw new Error(`Callback must be a function for ${pluginName}.${property}`);
+            }
+            return api.registerEventListener(pluginName, eventName, (success, message /* parsed or string */, meta) => {
+              // Forward parsed event payload if available
+              if (success) {
+                // message is already parsed in _createFFICallback if JSON
+                callback(message);
+              } else {
+                callback({ error: true, message });
+              }
+            });
+          };
+        }
+
+        // Method invocation: returns a Promise
+        return (...args) => new Promise((resolve, reject) => {
+          try {
+            const params = makeParamsJson(args);
+            api.callPluginMethodAsync(pluginName, property, params, (success, message /* parsed or string */, meta) => {
+              if (success) {
+                resolve(message);
+              } else {
+                reject(message);
+              }
+            });
+          } catch (err) {
+            reject(err);
+          }
+        });
+      }
+    });
+  }
+
+  _inferTypeAndValue(value) {
+    if (value === null || value === undefined) {
+      return { type: 'string', value: '' };
+    }
+    const t = typeof value;
+    if (t === 'boolean') {
+      return { type: 'bool', value: value ? 'true' : 'false' };
+    }
+    if (t === 'number') {
+      if (Number.isInteger(value)) {
+        return { type: 'int', value: String(value) };
+      }
+      return { type: 'double', value: String(value) };
+    }
+    if (t === 'string') {
+      return { type: 'string', value };
+    }
+    // Fallback: stringify complex values
+    try {
+      return { type: 'string', value: JSON.stringify(value) };
+    } catch (_e) {
+      return { type: 'string', value: String(value) };
+    }
   }
 }
 

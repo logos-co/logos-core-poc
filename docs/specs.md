@@ -1019,27 +1019,29 @@ logos.registerEventListener('chat', 'chatMessage', (success, message, meta) => {
 const result = await logos.callPluginMethodAsync('chat', 'joinChannel', JSON.stringify([{name: "channelName", value: "baixa-chiado", type: "string"}]));
 ```
 
-#### 7.2.1 Future work: Use reflection for a better API experience
+#### 7.2.1 Reflective API
 
-The JS SDK can take advantage of the reflection capabilities of Qt and JS to build a pleasant Dev UX experience.
+The JS SDK now supports a reflective API that maps plugins and their methods directly to JavaScript objects and functions for a more ergonomic developer experience.
 
-So instead of
+- Method calls: `logos.<plugin>.<method>(...args)` return a Promise resolving to the parsed result
+- Events: `logos.<plugin>.on<EventName>(callback)` registers a listener for events (e.g. `onChatMessage`)
 
-```javascript
-const result = await logos.callPluginMethodAsync('chat', 'joinChannel', JSON.stringify([{name: "channelName", value: "baixa-chiado", type: "string"}]));
-```
-
-It should be possible to do this instead:
+Examples:
 
 ```javascript
-const result = await logos.chat.joinChannel("baixa-chiado");
+await logos.chat.initialize();
+await logos.chat.joinChannel("baixa-chiado");
+await logos.chat.sendMessage("baixa-chiado", "nick", "hello!");
+
+const listenerId = logos.chat.onChatMessage((evt) => {
+  console.log('chat event:', evt);
+});
 ```
 
-as well as:
-
-```javascript
-logos.chat.onChatMessage((message) => console.log(message));
-```
+Details:
+- Positional arguments are automatically converted into the core’s expected parameter format `[{name,value,type}]`. Names are generated as `arg0`, `arg1`, …
+- Types are inferred as `string`, `int`, `double`, or `bool`. Non-primitive objects are stringified to JSON
+- Low-level functions `callPluginMethodAsync(...)` and `registerEventListener(...)` remain available for advanced use cases
 
 ## 8. Limitations, Future Improvements & Known Issues
 

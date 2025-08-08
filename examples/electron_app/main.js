@@ -35,67 +35,76 @@ async function autoInitializeChat() {
     
     // Initialize chat
     console.log('🔧 Calling chat initialize() method...');
-    const noParams = JSON.stringify([]);
-    logos.callPluginMethodAsync('chat', 'initialize', noParams, (success, message, meta) => {
+    try {
+      const message = await logos.chat.initialize();
       const timestamp = new Date().toISOString();
       if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send('chat-method-result', { success, message, timestamp });
+        mainWindow.webContents.send('chat-method-result', { success: true, message, timestamp });
       }
-    });
+    } catch (message) {
+      const timestamp = new Date().toISOString();
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('chat-method-result', { success: false, message, timestamp });
+      }
+    }
     
     // Wait a bit for initialization
     await new Promise(resolve => setTimeout(resolve, 1000));
     
     // Register event listeners
     console.log('📡 Registering event listeners for chat...');
-    const forwardEvent = (success, parsedMessage) => {
+    const forwardEvent = (eventObj) => {
       const timestamp = new Date().toISOString();
-      if (!success) {
+      if (!eventObj || typeof eventObj !== 'object') {
         if (mainWindow && !mainWindow.isDestroyed()) {
-          mainWindow.webContents.send('chat-event', { success: false, message: parsedMessage, timestamp });
+          mainWindow.webContents.send('chat-event', { success: false, message: eventObj, timestamp });
         }
         return;
       }
-      const eventName = parsedMessage.event || 'raw';
-      const data = parsedMessage.data;
+      const eventName = eventObj.event || 'raw';
+      const data = eventObj.data;
       if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send('chat-event', { eventName, data, timestamp, rawMessage: JSON.stringify(parsedMessage) });
+        mainWindow.webContents.send('chat-event', { eventName, data, timestamp, rawMessage: JSON.stringify(eventObj) });
       }
     };
-    logos.registerEventListener('chat', 'chatMessage', forwardEvent);
-    logos.registerEventListener('chat', 'historyMessage', forwardEvent);
+    logos.chat.onChatMessage(forwardEvent);
+    logos.chat.onHistoryMessage(forwardEvent);
     
     // Wait a bit for event registration
     await new Promise(resolve => setTimeout(resolve, 500));
     
     // Join default channel
     console.log(`🚪 Joining default channel: ${currentChannel}`);
-    const params = JSON.stringify([
-      {
-        name: "channel",
-        value: currentChannel,
-        type: "string"
-      }
-    ]);
-    
-    logos.callPluginMethodAsync('chat', 'joinChannel', params, (success, message, meta) => {
+    try {
+      const message = await logos.chat.joinChannel(currentChannel);
       const timestamp = new Date().toISOString();
       if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send('chat-method-result', { success, message, timestamp });
+        mainWindow.webContents.send('chat-method-result', { success: true, message, timestamp });
       }
-    });
+    } catch (message) {
+      const timestamp = new Date().toISOString();
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('chat-method-result', { success: false, message, timestamp });
+      }
+    }
     
     // Wait a bit for channel join
     await new Promise(resolve => setTimeout(resolve, 1000));
     
     // Retrieve history
     console.log(`📜 Retrieving history for channel: ${currentChannel}`);
-    logos.callPluginMethodAsync('chat', 'retrieveHistory', params, (success, message, meta) => {
+    try {
+      const message = await logos.chat.retrieveHistory(currentChannel);
       const timestamp = new Date().toISOString();
       if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send('chat-method-result', { success, message, timestamp });
+        mainWindow.webContents.send('chat-method-result', { success: true, message, timestamp });
       }
-    });
+    } catch (message) {
+      const timestamp = new Date().toISOString();
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('chat-method-result', { success: false, message, timestamp });
+      }
+    }
     
     chatInitialized = true;
     
@@ -337,19 +346,20 @@ ipcMain.handle('send-message', async (event, message) => {
       }
     ]);
     
-    console.log(`📤 Calling sendMessage with params: ${params}`);
-    console.log(`📤 Parameter breakdown:`);
-    console.log(`   - Plugin: "chat"`);
-    console.log(`   - Method: "sendMessage"`);
-    console.log(`   - Params: ${params}`);
-    console.log(`🚀 Invoking callPluginMethodAsync...`);
+  console.log(`🚀 Invoking logos.chat.sendMessage...`);
     
-    logos.callPluginMethodAsync('chat', 'sendMessage', params, (success, resp, meta) => {
+    try {
+      const resp = await logos.chat.sendMessage(currentChannel, username, message.trim());
       const timestamp = new Date().toISOString();
       if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send('chat-method-result', { success, message: resp, timestamp });
+        mainWindow.webContents.send('chat-method-result', { success: true, message: resp, timestamp });
       }
-    });
+    } catch (resp) {
+      const timestamp = new Date().toISOString();
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('chat-method-result', { success: false, message: resp, timestamp });
+      }
+    }
     
     console.log('✅ Send message call completed, waiting for callback...');
     console.log(`📨 SEND MESSAGE REQUEST COMPLETED\n`);
@@ -376,29 +386,33 @@ ipcMain.handle('join-channel', async (event, channelName) => {
     currentChannel = channelName.trim();
     console.log(`🚪 Joining channel: ${currentChannel}`);
     
-    const params = JSON.stringify([
-      {
-        name: "channel",
-        value: currentChannel,
-        type: "string"
-      }
-    ]);
-    
-    logos.callPluginMethodAsync('chat', 'joinChannel', params, (success, resp, meta) => {
+    try {
+      const resp = await logos.chat.joinChannel(currentChannel);
       const timestamp = new Date().toISOString();
       if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send('chat-method-result', { success, message: resp, timestamp });
+        mainWindow.webContents.send('chat-method-result', { success: true, message: resp, timestamp });
       }
-    });
+    } catch (resp) {
+      const timestamp = new Date().toISOString();
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('chat-method-result', { success: false, message: resp, timestamp });
+      }
+    }
     
     // Retrieve history after joining
-    setTimeout(() => {
-      logos.callPluginMethodAsync('chat', 'retrieveHistory', params, (success, resp, meta) => {
+    setTimeout(async () => {
+      try {
+        const resp = await logos.chat.retrieveHistory(currentChannel);
         const timestamp = new Date().toISOString();
         if (mainWindow && !mainWindow.isDestroyed()) {
-          mainWindow.webContents.send('chat-method-result', { success, message: resp, timestamp });
+          mainWindow.webContents.send('chat-method-result', { success: true, message: resp, timestamp });
         }
-      });
+      } catch (resp) {
+        const timestamp = new Date().toISOString();
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('chat-method-result', { success: false, message: resp, timestamp });
+        }
+      }
     }, 500);
     
     return { success: true, message: `Joining channel: ${currentChannel}`, currentChannel };
