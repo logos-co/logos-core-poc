@@ -5,8 +5,8 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "rebuild": "electron-rebuild -f -w ffi-napi,ref-napi",
-    "postinstall": "electron-rebuild -f -w ffi-napi,ref-napi",
+    "rebuild": "electron-rebuild -f",
+    "postinstall": "electron-rebuild -f",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -21,7 +21,6 @@
     "electron-rebuild": "^3.2.9"
   },
   "dependencies": {
-    "ffi-napi": "^4.0.3",
-    "ref-napi": "^3.0.3"
+    "logos-api": "file:../../SDK/js/logos-api"
   }
 }
