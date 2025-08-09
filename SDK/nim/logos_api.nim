@@ -16,7 +16,7 @@ type
     cb: LogosCallback
 
   PluginProxy* = object
-    api*: ptr LogosAPI
+    api*: LogosAPI
     name*: string
 
   LogosAPI* = ref object
@@ -214,15 +214,23 @@ proc processEventsTick*(self: LogosAPI) =
   self.p_logos_core_process_events()
 
 proc plugin*(self: LogosAPI, name: string): PluginProxy =
-  result = PluginProxy(api: addr self, name: name)
+  result = PluginProxy(api: self, name: name)
 
-proc call*(p: PluginProxy, methodName: string, paramsJson: string, cb: LogosCallback) =
-  p.api[].callPluginMethodAsync(p.name, methodName, paramsJson, cb)
+proc call*(p: PluginProxy, methodName: string, paramsJsonOrValue: string, cb: LogosCallback) =
+  # If the provided string already looks like a JSON array, assume it is the full
+  # params JSON and pass through. Otherwise, treat it as a single string argument
+  # and wrap it using the standard Param format.
+  let s = paramsJsonOrValue.strip()
+  if s.len > 0 and s[0] == '[':
+    p.api.callPluginMethodAsync(p.name, methodName, s, cb)
+  else:
+    let wrapped = inferParams([paramsJsonOrValue])
+    p.api.callPluginMethodAsync(p.name, methodName, wrapped, cb)
 
 proc callStrings*(p: PluginProxy, methodName: string, values: openArray[string], cb: LogosCallback) =
   p.call(methodName, inferParams(values), cb)
 
 proc on*(p: PluginProxy, eventName: string, cb: LogosCallback) =
-  p.api[].registerEventListener(p.name, eventName, cb)
+  p.api.registerEventListener(p.name, eventName, cb)
 
 

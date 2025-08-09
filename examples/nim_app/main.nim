@@ -42,14 +42,13 @@ proc main() =
 
   # Join a default channel and request history
   let channel = "baixa-chiado"
-  let oneParam = "[{\"name\":\"arg0\",\"value\":\"" & channel & "\",\"type\":\"string\"}]"
-  api.plugin("chat").call("joinChannel", oneParam) do (success: bool, message: string):
+  api.plugin("chat").call("joinChannel", channel) do (success: bool, message: string):
     echo &"[joinChannel] success={success} message={message}"
 
   for i in 0..10:
     api.processEventsTick()
     sleep 50
-  api.plugin("chat").call("retrieveHistory", oneParam) do (success: bool, message: string):
+  api.plugin("chat").call("retrieveHistory", channel) do (success: bool, message: string):
     echo &"[retrieveHistory] success={success} message={message}"
 
   # Keep pumping events so callbacks arrive
