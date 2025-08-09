@@ -40,12 +40,14 @@ note: This document is a living document and it explains the project's current s
   - [5.1 LogosApp Example](#51-logosapp-example)
   - [5.2 ChatApp Example](#52-chatapp-example)
   - [5.3 Electron Chat Example](#53-electron-chat-example)
+  - [5.4 Nim App Example](#54-nim-app-example)
 - [6. Sequence Flows](#6-sequence-flows)
   - [Full LifeCycle](#full-lifecycle)
 - [7. Experimental](#7-experimental)
   - [7.1 Direct Core Library Usage in NodeJS & Electron](#71-direct-core-library-usage-in-nodejs--electron)
   - [7.2 Logos JS SDK](#72-logos-js-sdk)
     - [7.2.1 Future work: Use reflection for a better API experience](#721-future-work-use-reflection-for-a-better-api-experience)
+  - [7.3 Nim SDK (Nim LogosAPI)](#73-nim-sdk-nim-logosapi)
 - [8. Limitations, Future Improvements & Known Issues](#8-limitations-future-improvements--known-issues)
   - [8.1 Logos Host (ModuleHost)](#81-logos-host-modulehost)
   - [8.2 C++ SDK API Improvements & other improvements](#82-c-sdk-api-improvements--other-improvements)
@@ -766,7 +768,7 @@ QPluginLoader loader(pluginPath);
 QObject *plugin = loader.load() ? loader.instance() : nullptr;
 QWidget *mainContent = nullptr;
 QMetaObject::invokeMethod(plugin, "createWidget", Q_RETURN_ARG(QWidget*, mainContent),
-                          Q_ARG(LogosAPI*, m_logosAPI));            //:contentReference[oaicite:4]{index=4}
+                          Q_ARG(LogosAPI*, m_logosAPI));
 setCentralWidget(mainContent);
 ```
 
@@ -989,6 +991,32 @@ core.logos_core_register_event_listener('chat', 'chatMessage', myEventCallback, 
 setInterval(() => core.logos_core_process_events(), 50);
 ```
 
+### 5.4 Nim App Example
+
+This repository includes an example Nim app demonstrating the Nim SDK under `examples/nim_app/main.nim`.
+
+Prerequisites
+
+- Build the core (and modules):
+
+```bash
+./scripts/run_core.sh all
+```
+
+Build and run the Nim app
+
+```bash
+nim c -r examples/nim_app/main.nim
+```
+
+What it does
+
+- Initialises the core and starts it
+- Processes and loads `capability_module`, `waku_module`, and `chat`
+- Subscribes to `chatMessage` and `historyMessage`
+- Calls `chat.initialize()`, `chat.joinChannel(<channel>)`, and `chat.retrieveHistory(<channel>)`
+- Pumps events in a loop by calling `processEventsTick()`
+
 ### 7.2 Logos JS SDK
 
 _note: the JS SDK still needs to be updated to work with the new token authentication_
@@ -1105,6 +1133,63 @@ could be instead:
 ```c++
 logosAPI->onEvent("chat", "chatMessage", callback);
 ```
+
+### 7.3 Nim SDK (Nim LogosAPI)
+
+The Nim SDK provides a thin wrapper over the experimental C API exposed by `liblogos_core`, enabling Nim applications to initialise the core, load modules, invoke plugin methods, and subscribe to events using a simple, callback-based API. It lives at `SDK/nim/logos_api.nim` with an example app at `examples/nim_app/main.nim`.
+
+Key types and helpers:
+
+- `LogosAPI`: main handle. Functions include `newLogosAPI(...)`, `start()`, `cleanup()`, `processAndLoadPlugins([...])`, `getLoadedPlugins()`, `getKnownPlugins()`, and `processEventsTick()` for manual event pumping.
+- `PluginProxy`: returned by `api.plugin(name)`. Exposes:
+  - `call(methodName, paramsJsonOrValue, cb)`: invoke a method and deliver the result to `cb(success, message)`.
+  - `callStrings(methodName, values, cb)`: convenience overload to pass multiple string params.
+  - `on(eventName, cb)`: register an event listener.
+- Parameter helpers: `toJson(params: openArray[Param])` and `inferParams(values: openArray[string])` build the core’s expected parameter JSON format.
+
+Improved parameter passing:
+
+- Calls can now pass either the full params JSON array string (e.g. `"[]"`) or a simple string value. When a non-JSON string is provided, the SDK wraps it automatically using `inferParams` as `[ {"name":"arg0","value":"<value>","type":"string"} ]`.
+- For multiple values, use `callStrings(methodName, @["val0","val1"])` which becomes `[ {arg0: val0}, {arg1: val1} ]` with `type: "string"` inferred for each.
+
+Usage example (simplified from `examples/nim_app/main.nim`):
+
+```nim
+import ../../SDK/nim/logos_api
+
+var api = newLogosAPI(autoInit = true)
+discard api.start()
+
+# Load core modules and chat
+discard api.processAndLoadPlugins(["capability_module", "waku_module", "chat"])
+
+# Subscribe to events
+api.plugin("chat").on("chatMessage") do (ok: bool, msg: string):
+  echo "[chatMessage] ", ok, " ", msg
+
+# Initialize chat (explicit params JSON)
+api.plugin("chat").call("initialize", "[]") do (ok: bool, msg: string):
+  echo "[initialize] ", ok
+
+# Join channel (single param inferred)
+let channel = "baixa-chiado"
+api.plugin("chat").call("joinChannel", channel) do (ok: bool, msg: string):
+  echo "[joinChannel] ", ok
+
+# Request history (single param inferred)
+api.plugin("chat").call("retrieveHistory", channel) do (ok: bool, msg: string):
+  echo "[retrieveHistory] ", ok
+
+# Manually pump the Qt event loop via the core
+while true:
+  api.processEventsTick()
+  sleep 50
+```
+
+Notes:
+
+- The SDK resolves default paths to `liblogos_core` and the plugins directory relative to `core/build` and sets `LOGOS_HOST_PATH` automatically to the built `logos_host` binary. Custom paths can be supplied to `newLogosAPI(libPath=..., pluginsDir=...)` if needed.
+- Because Nim apps do not run the Qt event loop, periodically call `processEventsTick()` to dispatch results and events.
 
 - The `eventResponse` signal and `initLogos` can be defined in the LogosInterface, so the developer doesn't have to define these each time
 
