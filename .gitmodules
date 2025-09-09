@@ -2,3 +2,6 @@
 	path = modules/waku_module/vendor/nwaku
 	url = https://github.com/iurimatias/nwaku.git
 	branch = template_fix
+[submodule "examples/nim_nora/vendor/nora-poc"]
+	path = examples/nim_nora/vendor/nora-poc
+	url = https://github.com/logos-co/nora-poc

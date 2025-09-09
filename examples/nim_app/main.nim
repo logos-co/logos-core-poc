@@ -26,14 +26,14 @@ proc main() =
     sleep 50
 
   # Register events
-  api.plugin("chat").on("chatMessage") do (success: bool, message: string):
+  api.chat.on("chatMessage") do (success: bool, message: string):
     echo &"[chatMessage] success={success} message={message}"
 
-  api.plugin("chat").on("historyMessage") do (success: bool, message: string):
+  api.chat.on("historyMessage") do (success: bool, message: string):
     echo &"[historyMessage] success={success} message={message}"
 
   # Initialize chat
-  api.plugin("chat").call("initialize", "[]") do (success: bool, message: string):
+  api.chat.call("initialize", "[]") do (success: bool, message: string):
     echo &"[initialize] success={success} message={message}"
 
   for i in 0..20:
@@ -42,13 +42,13 @@ proc main() =
 
   # Join a default channel and request history
   let channel = "baixa-chiado"
-  api.plugin("chat").call("joinChannel", channel) do (success: bool, message: string):
+  api.chat.call("joinChannel", channel) do (success: bool, message: string):
     echo &"[joinChannel] success={success} message={message}"
 
   for i in 0..10:
     api.processEventsTick()
     sleep 50
-  api.plugin("chat").call("retrieveHistory", channel) do (success: bool, message: string):
+  api.chat.call("retrieveHistory", channel) do (success: bool, message: string):
     echo &"[retrieveHistory] success={success} message={message}"
 
   # Keep pumping events so callbacks arrive

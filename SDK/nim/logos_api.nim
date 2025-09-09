@@ -1,6 +1,9 @@
 import os, strformat
 import dynlib
 import std/[strutils]
+import macros
+
+{.experimental: "dotOperators".}
 
 type
   AsyncCallbackC* = proc(result: cint, message: cstring, user_data: pointer) {.cdecl.}
@@ -215,6 +218,72 @@ proc processEventsTick*(self: LogosAPI) =
 
 proc plugin*(self: LogosAPI, name: string): PluginProxy =
   result = PluginProxy(api: self, name: name)
+
+## Transparent dotted access: api.chat -> api.plugin("chat")
+## This macro is invoked only when normal field/proc resolution fails,
+## keeping existing members like `api.start()` or `api.isStarted` intact.
+macro `.`*(self: LogosAPI, field: untyped): untyped =
+  var pluginNameStr: string
+  case field.kind
+  of nnkIdent, nnkSym:
+    pluginNameStr = $field
+  of nnkStrLit:
+    pluginNameStr = field.strVal
+  else:
+    error "Unsupported accessor form for LogosAPI: expected identifier or string literal", field
+  let pluginStr = newStrLitNode(pluginNameStr)
+  result = quote do:
+    `self`.plugin(`pluginStr`)
+
+## Generic sugar: allow api[chat] or api["chat"] to access a plugin without coupling
+macro `[]`*(self: LogosAPI, name: untyped): untyped =
+  var pluginNameStr: string
+  case name.kind
+  of nnkIdent, nnkSym:
+    pluginNameStr = $name
+  of nnkStrLit:
+    pluginNameStr = name.strVal
+  else:
+    error "LogosAPI indexing expects an identifier or string literal", name
+  let pluginStr = newStrLitNode(pluginNameStr)
+  result = quote do:
+    `self`.plugin(`pluginStr`)
+
+## Optional short alias: api.p(chat) or api.p("chat")
+macro p*(self: LogosAPI, name: untyped): untyped =
+  var pluginNameStr: string
+  case name.kind
+  of nnkIdent, nnkSym:
+    pluginNameStr = $name
+  of nnkStrLit:
+    pluginNameStr = name.strVal
+  else:
+    error "p() expects an identifier or string literal", name
+  let pluginStr = newStrLitNode(pluginNameStr)
+  result = quote do:
+    `self`.plugin(`pluginStr`)
+
+## DSL macro to define project-specific plugin accessors without coupling the SDK
+## Example usage in app code:
+##   definePluginAccessors(chat, waku_module)
+## Then you can write: api.chat.on("evt") or api.waku_module.call(...)
+macro definePluginAccessors*(names: varargs[untyped]): untyped =
+  result = newStmtList()
+  for n in names:
+    var pluginNameStr: string
+    case n.kind
+    of nnkIdent, nnkSym:
+      pluginNameStr = $n
+    of nnkStrLit:
+      pluginNameStr = n.strVal
+    else:
+      error "definePluginAccessors expects identifiers or string literals", n
+    let templName = ident(pluginNameStr)
+    let pluginStr = newStrLitNode(pluginNameStr)
+    result.add(quote do:
+      template `templName`*(self: LogosAPI): PluginProxy =
+        self.plugin(`pluginStr`)
+    )
 
 proc call*(p: PluginProxy, methodName: string, paramsJsonOrValue: string, cb: LogosCallback) =
   # If the provided string already looks like a JSON array, assume it is the full
