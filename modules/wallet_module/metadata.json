@@ -1,0 +1,14 @@
+{
+  "name": "wallet_module",
+  "version": "1.0.0",
+  "description": "Wallet module using go-wallet-sdk C library",
+  "author": "Logos Core Team",
+  "type": "core",
+  "category": "wallet",
+  "main": "wallet_module_plugin",
+  "dependencies": [],
+  "include": ["libgowalletsdk.so", "libgowalletsdk.dylib", "libgowalletsdk.dll"],
+  "capabilities": []
+}
+
+

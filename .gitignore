@@ -2,6 +2,7 @@
 .DS_Store
 modules/waku/lib/libwaku.so
 modules/waku_module/lib/libwaku.so
+modules/wallet_module/lib/*
 .vscode/**
 **/node_modules/**
 examples/node_app_using_lib/plugins/*

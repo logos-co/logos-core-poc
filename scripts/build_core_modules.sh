@@ -12,6 +12,10 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 echo "Building libwaku..."
 "$SCRIPT_DIR/../modules/waku_module/build_libwaku.sh"
 
+# Build wallet library
+echo "Building wallet library..."
+"$SCRIPT_DIR/../modules/wallet_module/build_wallet_lib.sh"
+
 # Navigate to modules directory
 cd modules
 
