@@ -28,7 +28,8 @@ note: This document is a living document and it explains the project's current s
     - [3.5.1 Package Manager](#351-package-manager)
     - [3.5.2 Waku Module](#352-waku-module)
     - [3.5.3 Chat](#353-chat)
-    - [3.5.3 Logos IRC](#353-logos-irc)
+    - [3.5.4 Logos IRC](#354-logos-irc)
+    - [3.5.5 Wallet Module](#355-wallet-module)
 - [4. Module Implementation](#4-module-implementation)
   - [4.1 Overview](#41-overview)
   - [4.2 Required Files](#42-required-files)
@@ -485,7 +486,7 @@ The `ChatInterface` defines the chat API. The plugin adds a convenience overload
 | `retrieveHistory(channelName) → bool`         | Request the message history for a channel.                    | Emits `historyMessage` events as results arrive.        |
 | `initLogos(logosAPI)`                         | Store the `LogosAPI` pointer for later use.                   | Must be called before other methods.                    |
 
-#### 3.5.3 Logos IRC
+#### 3.5.4 Logos IRC
 
 The Logos IRC module implements a small IRC server that bridges between IRC clients and the chat module. It allows IRC users to join channels and chat with participants on the Waku network via the chat module. The module runs an embedded IRC server, connects to the chat module via `LogosAPIClient`, and forwards messages and join events in both directions.
 
@@ -500,6 +501,36 @@ The LogosIRCInterface currently defines no public methods as it's not meant to b
 | Method                | Purpose                                                                                                                | Notes                                                |
 | --------------------- | ---------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
 | `initLogos(logosAPI)` | Store the `LogosAPI` pointer, start the chat bridge and prepare the IRC server to forward messages.                    | Must be called before the IRC/chat bridge is active. |
+
+#### 3.5.5 Wallet Module
+
+_note: this module is still under active development and the current APIs are purely for testing_
+
+The Wallet Module provides blockchain wallet functionality by wrapping the GoWalletSDK C library. It enables applications to interact with Ethereum-compatible blockchains, retrieve account balances, and perform wallet operations. The module uses a Go-based wallet SDK compiled as a shared library (`libgowalletsdk`) that exposes blockchain functionality through a C API.
+
+**Responsibilities**:
+- **Wallet initialization**: `initWallet(configJson)` creates a new wallet client connected to an Ethereum RPC endpoint using the GoWalletSDK. It establishes a connection handle that is used for subsequent operations
+- **Chain information**: `chainId(rpcUrl)` retrieves the chain ID of the connected blockchain network, which is essential for transaction signing and network identification
+- **Balance queries**: `getEthBalance(rpcUrl, address)` fetches the native ETH balance for a given Ethereum address by querying the blockchain through the RPC connection
+- **Token balance queries**: `getErc20Balances(rpcUrl, address, tokenAddresses)` is designed to retrieve ERC-20 token balances for multiple token contracts (currently stubbed for future implementation)
+- **Resource management**: The module properly manages the wallet client handle lifecycle, creating it on initialization and cleaning it up on destruction to prevent memory leaks
+
+**Technical Implementation**:
+The module integrates with the GoWalletSDK through C FFI (Foreign Function Interface). The Go SDK is compiled to a shared library that exposes C-compatible functions for wallet operations. The module handles string conversion between Qt's QString and C strings, error handling from the Go layer, and proper memory management for C strings returned by the Go SDK.
+
+**API**
+The `WalletModuleInterface` defines the wallet operations available to other modules. The implementation automatically initializes the wallet client if needed when operations are called.
+
+| Method                                                                        | Purpose                                                                                           | Notes                                                      |
+| ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| `initWallet(configJson) → bool`                                              | Initialize the wallet client with the given configuration (currently uses hardcoded RPC URL).    | Returns `true` if the client was successfully created.    |
+| `chainId(rpcUrl) → QString`                                                   | Retrieve the chain ID of the connected blockchain network.                                        | Auto-initializes wallet client if not already done.       |
+| `getEthBalance(rpcUrl, address) → QString`                                    | Get the native ETH balance for the specified Ethereum address.                                    | Returns balance as a string in wei units.                 |
+| `getErc20Balances(rpcUrl, address, tokenAddresses) → QString`                | Get ERC-20 token balances for multiple token contracts.                                           | Currently not implemented; returns empty string.          |
+| `initLogos(logosAPI)`                                                         | Store the `LogosAPI` pointer for inter-module communication.                                      | Called automatically during module initialization.         |
+
+**Metadata**
+The Wallet module metadata identifies it as a wallet category module and includes the GoWalletSDK shared libraries (`libgowalletsdk.so`, `.dylib`, `.dll`) in the `include` field. These libraries are copied alongside the plugin when installed via the package manager.
 
 ## 4. Module Implementation
 
@@ -712,6 +743,126 @@ install(TARGETS my_module
 install(FILES metadata.json
     DESTINATION modules
 )
+```
+
+### 4.3 Plugin Development Gotchas and Best Practices
+
+This section covers common issues and best practices when developing plugins, particularly around library dependencies and runtime loading.
+
+#### 4.3.1 External Library Dependencies and Runtime Loading
+
+**Problem**: When your plugin depends on external shared libraries (`.so`, `.dylib`, `.dll`), the dynamic loader must be able to find these libraries at runtime. Common issues include:
+
+1. **Absolute paths in binaries**: Libraries compiled with absolute paths won't work when deployed to different systems
+2. **Missing library search paths**: The plugin can't find its dependencies when loaded by the core
+3. **Install name issues on macOS**: Libraries with incorrect install names cause loading failures
+
+##### macOS Library Path Handling
+
+On macOS, use `@rpath` for portable library references. Here's the pattern used in the wallet module:
+
+```cmake
+if(APPLE)
+    # Set proper rpath for the plugin
+    set_target_properties(my_module_plugin PROPERTIES
+        INSTALL_RPATH "@loader_path"
+        INSTALL_NAME_DIR "@rpath"
+        BUILD_WITH_INSTALL_NAME_DIR TRUE)
+
+    # If you have external libraries to copy and fix
+    if(EXTERNAL_LIB_PATH)
+        # Copy the library to the build directory
+        add_custom_command(TARGET my_module_plugin PRE_LINK
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${EXTERNAL_LIB_PATH}
+            ${CMAKE_BINARY_DIR}/modules/libexternal.dylib
+            COMMENT "Copying external library to modules directory"
+        )
+
+        # Fix install names after build using a CMake script
+        add_custom_command(TARGET my_module_plugin POST_BUILD
+            COMMAND install_name_tool -id "@rpath/my_module_plugin.dylib" $<TARGET_FILE:my_module_plugin>
+            COMMAND ${CMAKE_COMMAND} -DLIB_PATH=${CMAKE_BINARY_DIR}/modules/libexternal.dylib 
+                    -DPLUGIN_PATH=${CMAKE_BINARY_DIR}/modules/my_module_plugin.dylib 
+                    -P ${CMAKE_CURRENT_SOURCE_DIR}/fix_install_names.cmake
+            COMMENT "Updating library paths for macOS"
+        )
+    endif()
+endif()
+```
+
+Create a `fix_install_names.cmake` script:
+```cmake
+# fix_install_names.cmake
+if(EXISTS "${LIB_PATH}")
+    message(STATUS "Fixing install name for external library: ${LIB_PATH}")
+    execute_process(
+        COMMAND install_name_tool -id "@rpath/libexternal.dylib" "${LIB_PATH}"
+        RESULT_VARIABLE result
+    )
+    if(result)
+        message(WARNING "Failed to update install name for external library")
+    endif()
+    
+    # Update plugin to reference the library with @rpath
+    execute_process(
+        COMMAND install_name_tool -change "/old/absolute/path/libexternal.dylib" "@rpath/libexternal.dylib" "${PLUGIN_PATH}"
+        RESULT_VARIABLE result
+    )
+    if(result)
+        message(WARNING "Failed to update library reference in plugin")
+    endif()
+else()
+    message(STATUS "External library not found, skipping install name update")
+endif()
+```
+
+##### Linux Library Path Handling
+
+On Linux, use `$ORIGIN` for relative library paths:
+
+```cmake
+else() # Linux
+    # Set rpath to look in the same directory as the plugin
+    set_target_properties(my_module_plugin PROPERTIES
+        INSTALL_RPATH "$ORIGIN"
+        INSTALL_RPATH_USE_LINK_PATH FALSE)
+
+    # Copy external library if it exists
+    if(EXTERNAL_LIB_PATH)
+        add_custom_command(TARGET my_module_plugin PRE_LINK
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${EXTERNAL_LIB_PATH}
+            ${CMAKE_BINARY_DIR}/modules/libexternal.so
+            COMMENT "Copying external library to modules directory"
+        )
+    endif()
+endif()
+```
+
+#### 4.3.2 Testing Library Dependencies
+
+Before deploying your plugin, verify that library dependencies are correctly resolved:
+
+**macOS**:
+```bash
+# Check what libraries your plugin depends on
+otool -L your_plugin.dylib
+
+# Check the install name of a library
+otool -D your_library.dylib
+
+# Verify @rpath resolution
+install_name_tool -id "@rpath/your_library.dylib" your_library.dylib
+```
+
+**Linux**:
+```bash
+# Check library dependencies
+ldd your_plugin.so
+
+# Check rpath settings
+readelf -d your_plugin.so | grep RPATH
 ```
 
 ## 5. Apps using Core
