@@ -42,6 +42,7 @@ note: This document is a living document and it explains the project's current s
   - [5.2 ChatApp Example](#52-chatapp-example)
   - [5.3 Electron Chat Example](#53-electron-chat-example)
   - [5.4 Nim App Example](#54-nim-app-example)
+  - [5.5 Electron Wallet Example](#55-electron-wallet-example)
 - [6. Sequence Flows](#6-sequence-flows)
   - [Full LifeCycle](#full-lifecycle)
 - [7. Experimental](#7-experimental)
@@ -996,6 +997,46 @@ Run the Electron app
 Notes
 - The app sets `process.env.LOGOS_HOST_PATH` automatically to `./core/build/bin/logos_host` relative to the repo, so no symlink is needed as long as you built the core.
 - On first launch the app will initialize the core, process and load the `capability_module`, `waku_module`, and `chat` modules, then auto-join the default channel and stream chat/history events.
+
+### 5.5 Electron Wallet Example
+
+This repository includes an experimental Electron-based wallet app that uses the Logos JS SDK to talk to the core and the `wallet_module`.
+
+Prerequisites
+- **Build the core** (and, optionally, the modules):
+  - Build core only: `./scripts/run_core.sh build`
+  - Or build core and modules: `./scripts/run_core.sh all`
+- Ensure the shared library exists at `./core/build/lib/liblogos_core.dylib` on macOS or `liblogos_core.so` on Linux.
+
+Run the Electron wallet app
+1. Navigate to the example folder: `cd examples/wallet_app`
+2. Install dependencies and rebuild native addons for Electron: `npm install`
+   - The project runs `electron-rebuild` automatically via `postinstall` for `ffi-napi` and `ref-napi`.
+   - Alternatively, you can copy `node_modules` from `examples/electron_app` to reuse a known working setup.
+3. Start the Electron app: `npm start`
+
+This is a super simple test app
+- On first launch the app will initialize the core, process and load the `capability_module` and `wallet_module`, and start event processing.
+- The UI allows you to:
+  - Initialize the core and load modules
+  - Initialize the wallet client (config accepts `rpcUrl`)
+  - Query `chainId(rpcUrl)`
+  - Query `getEthBalance(rpcUrl, address)`
+
+Project structure (simplified)
+```
+examples/wallet_app/
+  ├─ package.json        # Electron app config, depends on local SDK `SDK/js/logos-api`
+  ├─ main.js             # Initializes LogosAPI, loads modules, wires IPC
+  ├─ preload.js          # Exposes wallet IPC to renderer: initialize, initWallet, chainId, ethBalance
+  ├─ index.html          # Minimal UI with RPC URL + address inputs and action buttons
+  └─ renderer.js         # Calls the exposed IPC and renders results/status
+```
+
+Implementation details
+- Uses the Logos JS SDK (`logos-api`) to locate `liblogos_core` and the plugins directory under `./core/build`.
+- Loads `capability_module` and `wallet_module` via `processAndLoadPlugins`.
+- Exposes wallet actions via IPC in the preload script under `window.walletAPI`.
 
 ## 6. Sequence Flows
     

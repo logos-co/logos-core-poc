@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Logos Wallet</title>
+    <style>
+      body { font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif; margin: 0; background: #0b1220; color: #e6edf3; }
+      header { padding: 16px 20px; background: #111a2e; border-bottom: 1px solid #1f2a44; }
+      h1 { margin: 0; font-size: 18px; }
+      main { padding: 20px; display: grid; grid-template-columns: 1fr; gap: 16px; }
+      .card { background: #111a2e; border: 1px solid #1f2a44; border-radius: 12px; padding: 16px; }
+      .row { display: flex; gap: 8px; margin-top: 8px; }
+      input, button, select { height: 36px; border-radius: 8px; border: 1px solid #1f2a44; background: #0b1220; color: #e6edf3; padding: 0 10px; }
+      input { flex: 1; }
+      button { background: #2b72ff; border: none; cursor: pointer; }
+      button.secondary { background: #223154; }
+      .status { font-size: 12px; opacity: 0.85; margin-top: 6px; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+      .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      label { display: block; font-size: 12px; opacity: 0.85; margin-bottom: 6px; }
+      .value { font-weight: 600; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Logos Wallet</h1>
+    </header>
+    <main>
+      <div class="card" id="init-card">
+        <div><strong>Initialize</strong></div>
+        <div class="grid2">
+          <div>
+            <label>RPC URL</label>
+            <input id="rpcUrl" placeholder="https://ethereum-rpc.publicnode.com" />
+          </div>
+          <div>
+            <label>Address</label>
+            <input id="address" placeholder="0x..." />
+          </div>
+        </div>
+        <div class="row">
+          <button id="btnInit">Initialize Core & Wallet Module</button>
+          <button class="secondary" id="btnWalletInit">Init Wallet Client</button>
+        </div>
+        <div class="status mono" id="status"></div>
+      </div>
+
+      <div class="card">
+        <div><strong>Queries</strong></div>
+        <div class="row">
+          <button id="btnChainId">Get Chain ID</button>
+          <button id="btnBalance">Get ETH Balance</button>
+        </div>
+        <div class="status mono" id="result"></div>
+      </div>
+    </main>
+
+    <script src="renderer.js"></script>
+  </body>
+  </html>
+
