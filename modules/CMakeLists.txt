@@ -14,6 +14,15 @@ else()
     set(QT_VERSION_MAJOR 5)
 endif()
 
+# Ensure cpp-generator is built before building modules
+set(CPP_GENERATOR_COMPILE_SCRIPT "${CMAKE_SOURCE_DIR}/../SDK/cpp-generator/compile.sh")
+add_custom_target(cpp_generator_build
+    COMMAND bash "${CPP_GENERATOR_COMPILE_SCRIPT}"
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/.."
+    COMMENT "Building logos-cpp-generator via SDK/cpp-generator/compile.sh"
+    VERBATIM
+)
+
 # Look for the logos_core library
 find_library(LOGOS_CORE_LIB logos_core PATHS 
     ${CMAKE_BINARY_DIR}/../core/build/lib 
@@ -28,10 +37,19 @@ else()
 endif()
 
 # Add subdirectories for each plugin
-add_subdirectory(chat)
 add_subdirectory(capability_module)
 add_subdirectory(package_manager)
-add_subdirectory(template_module)
 add_subdirectory(waku_module)
+add_subdirectory(chat)
 add_subdirectory(logos_irc)
+add_subdirectory(template_module)
 add_subdirectory(wallet_module)
+
+# Make all module plugin targets depend on cpp_generator_build
+add_dependencies(capability_module_plugin cpp_generator_build)
+add_dependencies(package_manager_plugin cpp_generator_build)
+add_dependencies(waku_module_plugin cpp_generator_build)
+add_dependencies(chat cpp_generator_build)
+add_dependencies(logos_irc_plugin cpp_generator_build)
+add_dependencies(template_module_plugin cpp_generator_build)
+add_dependencies(wallet_module_plugin cpp_generator_build)

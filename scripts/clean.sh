@@ -26,6 +26,16 @@ for dir in "${directories[@]}"; do
   fi
 done
 
+# Clean generated SDK C++ files but keep the directory
+GEN_DIR="./SDK/cpp/generated"
+if [ -d "$GEN_DIR" ]; then
+  echo "Removing generated SDK files in $GEN_DIR ..."
+  find "$GEN_DIR" -type f -name "*_api.cpp" -delete
+  find "$GEN_DIR" -type f -name "*_api.h" -delete
+  find "$GEN_DIR" -type f -name "logos_sdk.h" -delete
+  find "$GEN_DIR" -type f -name "logos_sdk.cpp" -delete
+fi
+
 # Find and remove any additional build directories that might be missed
 echo "Searching for other build directories..."
 for build_dir in $(find . -type d -name "build" -not -path "*/node_modules/*" -not -path "*/.git/*" -not -path "*/vendor/*"); do

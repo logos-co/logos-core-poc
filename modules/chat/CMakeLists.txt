@@ -11,6 +11,22 @@ if (NOT Qt6_FOUND)
     find_package(Qt5 5.15 COMPONENTS Core RemoteObjects REQUIRED)
 endif()
 
+# Run Logos C++ generator on metadata before compilation
+set(CPP_GENERATOR "${CMAKE_SOURCE_DIR}/../build/cpp-generator/bin/logos-cpp-generator")
+set(REPO_ROOT "${CMAKE_SOURCE_DIR}/..")
+set(PLUGINS_OUTPUT_DIR "${CMAKE_BINARY_DIR}/modules")
+set(METADATA_JSON "${CMAKE_CURRENT_SOURCE_DIR}/metadata.json")
+add_custom_target(run_cpp_generator_chat
+    COMMAND "${CPP_GENERATOR}" --metadata "${METADATA_JSON}" --module-dir "${PLUGINS_OUTPUT_DIR}"
+    WORKING_DIRECTORY "${REPO_ROOT}"
+    COMMENT "Running logos-cpp-generator on ${METADATA_JSON} with module-dir ${PLUGINS_OUTPUT_DIR}"
+    VERBATIM
+)
+# Ensure generator binary exists before running
+add_dependencies(run_cpp_generator_chat cpp_generator_build)
+
+# (deps generator added after metadata parsing below)
+
 # Set automoc on
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
@@ -20,6 +36,8 @@ set(CMAKE_AUTOUIC ON)
 find_package(Protobuf REQUIRED)
 find_package(Threads REQUIRED)
 find_package(absl QUIET)
+
+## Do not compile generated SDK wrappers here; they are for consumer modules
 
 # Generate protobuf files
 set(PROTO_FILE "${CMAKE_CURRENT_SOURCE_DIR}/src/protobuf/message.proto")
@@ -60,13 +78,18 @@ add_library(chat SHARED
     ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/module_proxy.h
 )
 
+## Intentionally not adding generated SDK sources to 'chat'
+
 # Make sure protocol buffers are generated before building
 add_dependencies(chat generate_protos)
+add_dependencies(chat run_cpp_generator_chat)
 
 # Set output name without lib prefix and with _plugin postfix
 set_target_properties(chat PROPERTIES
     PREFIX ""
     OUTPUT_NAME "chat_plugin")
+
+# No extra dependency printing; generator handles dependencies via --module-dir
 
 # Include directories
 target_include_directories(chat PRIVATE
@@ -76,6 +99,7 @@ target_include_directories(chat PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR}
     ${Protobuf_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/generated
 )
 
 # Link against libraries

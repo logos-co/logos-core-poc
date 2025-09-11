@@ -34,6 +34,7 @@ ChatWidget::ChatWidget(QWidget* parent)
     activeWidget = this;
     
     m_logosAPI = new LogosAPI("core", this);
+    logos = new LogosModules(m_logosAPI);
     
     // Generate random username with 2 digits that will persist during this class lifetime
     int randomNum = rand() % 100;
@@ -132,8 +133,7 @@ void ChatWidget::initWaku()
         }, Qt::QueuedConnection);
     });
 
-    QVariant result = m_logosAPI->getClient("chat")->invokeRemoteMethod("chat", "initialize");
-    bool success = result.toBool();
+    bool success = logos->chat.initialize();
 
     if (!success) {
         updateStatus("Error: Failed to initialize Waku");
@@ -190,9 +190,8 @@ void ChatWidget::onJoinChannelClicked() {
         QMessageBox::warning(this, "Waku Error", "Waku is not running. Please initialize Waku first.");
         return;
     }
-    
-            QVariant result = m_logosAPI->getClient("chat")->invokeRemoteMethod("chat", "joinChannel", currentChannel);
-    bool success = result.toBool();
+
+    bool success = logos->chat.joinChannel(currentChannel);
     if (success) {
         updateStatus("Joined channel: " + currentChannel);
         QString joinMessage = "You have joined channel: " + currentChannel;
@@ -203,8 +202,8 @@ void ChatWidget::onJoinChannelClicked() {
         chatDisplay->append("<i>--- Message History ---</i>");
 
         // Call retrieveHistory - history messages will come via historyMessage events
-        QVariant historyResult = m_logosAPI->getClient("chat")->invokeRemoteMethod("chat", "retrieveHistory", currentChannel);
-        qDebug() << "LogosAPI retrieveHistory result:" << historyResult;
+        bool _hist = logos->chat.retrieveHistory(currentChannel);
+        qDebug() << "LogosAPI retrieveHistory result:" << _hist;
     } else {
         updateStatus("Failed to join channel: " + currentChannel);
         QMessageBox::warning(this, "Channel Error", "Failed to join channel: " + currentChannel);
@@ -226,8 +225,8 @@ void ChatWidget::onSendButtonClicked() {
     }
 
     if (m_logosAPI && m_logosAPI->getClient("chat")->isConnected()) {
-        QVariant result = m_logosAPI->getClient("chat")->invokeRemoteMethod("chat", "sendMessage", currentChannel, username, message);
-        qDebug() << "LogosAPI sendMessage result:" << result;
+        logos->chat.sendMessage(currentChannel, username, message);
+        qDebug() << "LogosAPI sendMessage called";
     } else {
         qDebug() << "LogosAPI not connected";
     }
