@@ -9,16 +9,17 @@
 class PluginInterface
 {
 public:
-    virtual ~PluginInterface() {}
-    
-    // Common plugin methods
-    virtual QString name() const = 0;
-    virtual QString version() const = 0;
+	virtual ~PluginInterface() {}
+	
+	// Common plugin methods
+	virtual QString name() const = 0;
+	virtual QString version() const = 0;
 
-    // TODO: this should be defined here and removed from the modules, but needs some work
-    // Q_INVOKABLE void initLogos(LogosAPI* logosAPIInstance);
+	// TODO: this should be defined here and removed from the modules, but needs some work
+	// Q_INVOKABLE void initLogos(LogosAPI* logosAPIInstance);
 
-    LogosAPI* logosAPI;
+	// Ensure default-initialization to avoid undefined pointer usage
+	LogosAPI* logosAPI = nullptr;
 };
 
 // Define the interface ID used by Qt's plugin system
