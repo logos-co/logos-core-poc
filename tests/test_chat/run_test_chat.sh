@@ -7,7 +7,7 @@ echo "Building and running Test Chat application..."
 
 # Get the script directory (where this script is located)
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
+JOBS=$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 2)
 # Navigate to the project root
 cd "$SCRIPT_DIR/../.."
 
@@ -21,13 +21,6 @@ fi
 mkdir -p build
 cd build
 cmake ..
-if command -v nproc >/dev/null 2>&1; then
-    JOBS=$(nproc)
-elif command -v sysctl >/dev/null 2>&1; then
-    JOBS=$(sysctl -n hw.ncpu)
-else
-    JOBS=2
-fi
 make -j$JOBS
 echo "Core build completed!"
 
@@ -57,14 +50,6 @@ cmake ..
 
 # Build the application
 echo "Building test_chat application..."
-if command -v nproc >/dev/null 2>&1; then
-    JOBS=$(nproc)
-elif command -v sysctl >/dev/null 2>&1; then
-    JOBS=$(sysctl -n hw.ncpu)
-else
-    JOBS=2
-fi
-
 make -j$JOBS test_chat
 
 echo "Build completed successfully!"
