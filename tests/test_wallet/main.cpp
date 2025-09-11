@@ -3,6 +3,9 @@
 #include <QString>
 #include <QCoreApplication>
 #include <QDebug>
+#include <QJsonArray>
+#include <QJsonObject>
+#include <QRemoteObjectPendingCall>
 #include "../../core/src/logos_core.h"
 #include "../../SDK/cpp/logos_api.h"
 #include "../../SDK/cpp/logos_api_client.h"
@@ -35,6 +38,49 @@ int main(int argc, char *argv[])
     if (!walletObj) {
         qCritical() << "Failed to get wallet_module object";
         return 1;
+    }
+
+    // Invoke getPluginMethods() on the ModuleProxy (remote) and print the methods
+    {
+        QRemoteObjectPendingCall pending;
+        bool ok = QMetaObject::invokeMethod(
+            walletObj,
+            "getPluginMethods",
+            Qt::DirectConnection,
+            Q_RETURN_ARG(QRemoteObjectPendingCall, pending)
+        );
+
+        if (!ok) {
+            qCritical() << "Failed to invoke getPluginMethods on wallet_module";
+            return 1;
+        }
+
+        pending.waitForFinished(20000);
+        if (!pending.isFinished() || pending.error() != QRemoteObjectPendingCall::NoError) {
+            qCritical() << "getPluginMethods() call failed or timed out:" << pending.error();
+            return 1;
+        }
+
+        QVariant ret = pending.returnValue();
+        QJsonArray methods = ret.toJsonArray();
+        qDebug() << "wallet_module methods (" << methods.size() << ")";
+        for (const QJsonValue &val : methods) {
+            QJsonObject obj = val.toObject();
+            qDebug() << "-" << obj.value("name").toString()
+                     << "|" << obj.value("signature").toString()
+                     << "| returns" << obj.value("returnType").toString();
+            if (obj.contains("parameters")) {
+                QJsonArray params = obj.value("parameters").toArray();
+                QStringList paramStrs;
+                for (const QJsonValue &pv : params) {
+                    QJsonObject pObj = pv.toObject();
+                    paramStrs << (pObj.value("type").toString() + " " + pObj.value("name").toString());
+                }
+                if (!paramStrs.isEmpty()) {
+                    qDebug() << "  params:" << paramStrs.join(", ");
+                }
+            }
+        }
     }
 
     // Call chainId()

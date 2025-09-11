@@ -8,6 +8,7 @@
 #include <QHash>
 #include <QMetaObject>
 #include <QString>
+#include <QJsonArray>
 
 /**
  * @brief ModuleProxy provides a proxy interface for module interactions
@@ -59,6 +60,12 @@ public:
      * @return bool true if token was saved successfully, false otherwise
      */
     bool saveToken(const QString& from_module_name, const QString& token);
+
+    /**
+     * @brief Get a list of methods for the encapsulated module
+     * @return QJsonArray of method metadata (name, signature, returnType, parameters)
+     */
+    Q_INVOKABLE QJsonArray getPluginMethods();
 
 signals:
     void eventResponse(const QString& eventName, const QVariantList& data);

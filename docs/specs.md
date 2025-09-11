@@ -243,6 +243,7 @@ Modules never instantiate `ModuleProxy` directly; it is created by the provider 
 **Responsibilities**:
 - Validate the authentication token on every remote call. In `callRemoteMethod()` the proxy checks that a non‑empty token is provided and verifies it against the `TokenManager`. Calls with invalid or missing tokens return an empty `QVariant`.
 - Dispatch method calls to the underlying module using Qt’s meta‑object system. The proxy locates the requested method by name and argument count, supports up to five arguments, and handles various return types including `void`, `bool`, `int`, `QString`, `QVariant`, `QJsonArray` and `QStringList`
+- Introspect the wrapped module’s API via `getPluginMethods()`, returning a `QJsonArray` describing each method (name, signature, return type, parameters)
 - Provide an `eventResponse` signal that the provider emits when events are forwarded to subscribers
 - Store tokens issued by other modules via `saveToken(fromModuleName, token)`
 - Allow a module or consumer to inform another module of a token via `informModuleToken(authToken, moduleName, token)`
@@ -252,7 +253,22 @@ Modules never instantiate `ModuleProxy` directly; it is created by the provider 
 | `explicit ModuleProxy(QObject* module, QObject *parent = nullptr)`                                              | Wraps `module` for remote access.                                                                                                   |
 | `QVariant callRemoteMethod(const QString& authToken, const QString& methodName, const QVariantList& args = {})` | Validates `authToken`, locates `methodName` on the module and invokes it.  Supports up to five arguments and multiple return types. This will forward the request to the wrapped object. |
 | `bool informModuleToken(const QString& authToken, const QString& moduleName, const QString& token)`             | Stores `token` for `moduleName` in the global `TokenManager`. This is used by the core and capability module to let this module know that another module will communicate using a certain token,=.                                                                       |
+| `QJsonArray getPluginMethods()`                                                                                 | Enumerates the wrapped module’s methods using Qt meta‑object introspection and returns a JSON array with signatures and parameters. |
 | `eventResponse(QString eventName, QVariantList data)` (signal)                                                  | Emitted when the proxy forwards an event to subscribers.                                                                            |
+
+Example: Listing methods of a module (from a consumer)
+
+```c++
+// Acquire the module's proxy (replica)
+QObject* walletObj = api.getClient("wallet_module")->requestObject("wallet_module");
+
+// Invoke the introspection method exposed by ModuleProxy
+QRemoteObjectPendingCall pending;
+QMetaObject::invokeMethod(walletObj, "getPluginMethods", Qt::DirectConnection,
+                          Q_RETURN_ARG(QRemoteObjectPendingCall, pending));
+pending.waitForFinished(20000);
+QJsonArray methods = pending.returnValue().toJsonArray();
+```
 
 #### 3.2.3 LogosAPIClient
 
@@ -407,7 +423,7 @@ It implements the general `PluginInterface` and registers itself under the name 
 - **Core lifecycle control**: The core manager exposes `initialize()`, `setPluginsDirectory()`, `start()` and `cleanup()` methods which internally call the corresponding C API functions (`logos_core_set_plugins_dir`, `logos_core_start`, `logos_core_cleanup`) to set up and shut down the core
 - **Plugin discovery and status**: `getLoadedPlugins()` returns the names of currently loaded modules by calling `logos_core_get_loaded_plugins()`. `getKnownPlugins()` builds a JSON array containing every discovered plug‑in with a loaded boolean by combining the `logos_core_get_known_plugins()` list with the loaded set
 - **Plugin management**: `loadPlugin(pluginName)` and `unloadPlugin(pluginName)` wrap the C API functions `logos_core_load_plugin` and `logos_core_unload_plugin` and return whether the operation succeeded. `processPlugin(filePath)` reads a plug‑in file, processes its metadata via `logos_core_process_plugin` and returns the module’s name
-- **Introspection**: `getPluginMethods(pluginName)` uses `LogosAPI` to request a replica of the target module and then uses Qt’s `QMetaObject` introspection to enumerate its methods. It returns a JSON array describing each method’s signature, name, return type and parameters. This allows dynamic UIs to display available methods without pre‑compiled knowledge. Note: however since introducing `ModuleProxy` this method needs to be updated or even removed, as currently it will simply show the methods of `ModuleProxy` that are available (i.e `callRemoteMethod` and `informModuleToken`), the object itself is now wrapped in `ModuleProxy`.
+- **Introspection**: Prefer calling `getPluginMethods()` directly on a module’s `ModuleProxy` (remote replica) to enumerate the wrapped module’s methods via Qt meta‑object introspection. A JSON array is returned with each method’s signature, name, return type and parameters. The Core Manager’s own `getPluginMethods(pluginName)` may still exist but is no longer required for introspection use‑cases.
 
 **API**
 The `CoreManagerInterface` defines the functions that the module exposes. The implementation in `CoreManagerPlugin` adds additional convenience methods such as `getKnownPlugins()` and `getPluginMethods()` and implements each call by delegating to the core or using the SDK.
@@ -423,7 +439,7 @@ The `CoreManagerInterface` defines the functions that the module exposes. The im
 | `loadPlugin(pluginName) → bool`             | Load a plug‑in by name via `logos_core_load_plugin`.                                                     | Returns true on success.                             |
 | `unloadPlugin(pluginName) → bool`           | Unload a plug‑in by name via `logos_core_unload_plugin`.                                                 | Returns true on success.                             |
 | `processPlugin(filePath) → QString`         | Read a plug‑in file’s metadata and register it as known via `logos_core_process_plugin`.                 | Returns the module name or an empty string on error. |
-| `getPluginMethods(pluginName) → QJsonArray` | Introspect a module’s methods using `LogosAPIClient` and Qt meta‑object introspection.                   | Useful for dynamic UIs.                              |
+| `getPluginMethods(pluginName) → QJsonArray` | Introspect a module’s methods using `LogosAPIClient` and Qt meta‑object introspection.                   | Optional. Prefer `ModuleProxy::getPluginMethods()` remotely. |
 | `initLogos(logosAPIInstance)`               | Store the provided `LogosAPI` pointer so the module can call other modules.                              | Should be called before introspection functions.     |
 
 ### 3.5 Other Modules
