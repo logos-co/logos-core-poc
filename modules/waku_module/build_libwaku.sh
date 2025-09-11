@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-set -e
+set -euo pipefail
 
 # Set base directory
 SCRIPT_DIR="$(dirname "$0")"

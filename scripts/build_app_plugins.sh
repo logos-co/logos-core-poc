@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # build_app_plugins.sh
 # Script to build plugins from logos_app/logos_dapps/ and place them in appropriate directories:
@@ -33,7 +33,7 @@ for plugin_name in "${plugins[@]}"; do
     (
         cd "$plugin_dir/build"
         cmake .. -DCMAKE_BUILD_TYPE=Release
-        make -j$(sysctl -n hw.ncpu)
+        make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 2)
     )
 done
 

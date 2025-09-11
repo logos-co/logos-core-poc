@@ -1,9 +1,9 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Script to build and run the Chat Qt App
 
 # Exit on error
-set -e
+set -euo pipefail
 
 SCRIPT_DIR=$(dirname "$0")
 BUILD_DIR="$SCRIPT_DIR/build"

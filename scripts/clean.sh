@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # clean.sh - Script to remove all build directories in the project
 # This script safely removes build folders without using dangerous commands
@@ -20,7 +20,7 @@ directories=(
 for dir in "${directories[@]}"; do
   if [ -d "$dir" ]; then
     echo "Removing $dir..."
-    rm -r "$dir"
+    rm -rf "$dir"
   else
     echo "Directory $dir does not exist, skipping."
   fi
@@ -30,7 +30,7 @@ done
 echo "Searching for other build directories..."
 for build_dir in $(find . -type d -name "build" -not -path "*/node_modules/*" -not -path "*/.git/*" -not -path "*/vendor/*"); do
   echo "Removing $build_dir..."
-  rm -r "$build_dir"
+  rm -rf "$build_dir"
 done
 
 echo "Clean completed successfully!" 

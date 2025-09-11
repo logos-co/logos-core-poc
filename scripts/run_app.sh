@@ -1,7 +1,5 @@
-#!/bin/bash
-
-# Exit on error
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
 
 echo "Building core..."
 ./scripts/run_core.sh build

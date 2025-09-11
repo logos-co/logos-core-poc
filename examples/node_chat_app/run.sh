@@ -1,7 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Exit on error
-set -e
+set -euo pipefail
 
 echo "Logos Core Node.js Example Runner"
 echo "================================="

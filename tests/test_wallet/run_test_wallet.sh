@@ -1,9 +1,10 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -euo pipefail
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 ROOT_DIR="$SCRIPT_DIR/../.."
+JOBS=$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 2)
 
 # Ensure Go 1.23 in PATH as requested
 export PATH=/opt/homebrew/opt/go@1.23/bin:$PATH
@@ -17,7 +18,6 @@ cd "$ROOT_DIR/core"
 rm -rf build
 mkdir -p build && cd build
 cmake -DCMAKE_BUILD_TYPE=Debug ..
-if command -v sysctl >/dev/null 2>&1; then JOBS=$(sysctl -n hw.ncpu); else JOBS=4; fi
 make -j"$JOBS"
 
 # Build wallet C lib and plugin

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Simple compilation test for LogosAPI
 # This script compiles the LogosAPI files to check for syntax and compilation errors

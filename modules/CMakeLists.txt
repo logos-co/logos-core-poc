@@ -15,10 +15,19 @@ else()
 endif()
 
 # Look for the logos_core library
-find_library(LOGOS_CORE_LIB logos_core PATHS 
+# Prefer the core build output under project root, then local build lib paths
+find_library(LOGOS_CORE_LIB NAMES logos_core PATHS 
+    ${CMAKE_SOURCE_DIR}/../core/build/lib
     ${CMAKE_BINARY_DIR}/../core/build/lib 
     ${CMAKE_BINARY_DIR}/lib
+    ${CMAKE_SOURCE_DIR}/../core/lib
+    NO_DEFAULT_PATH
 )
+
+# If not found in explicit paths, allow default search locations as a fallback
+if(NOT LOGOS_CORE_LIB)
+    find_library(LOGOS_CORE_LIB NAMES logos_core)
+endif()
 
 # Message about logos_core library status
 if(LOGOS_CORE_LIB)
