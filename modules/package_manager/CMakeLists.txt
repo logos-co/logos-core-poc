@@ -1,5 +1,22 @@
 set(CMAKE_AUTOMOC ON)
 
+## No Python parsing; generator handles dependencies via --module-dir
+
+# Run Logos C++ generator on metadata before compilation
+set(CPP_GENERATOR "${CMAKE_SOURCE_DIR}/../build/cpp-generator/bin/logos-cpp-generator")
+set(REPO_ROOT "${CMAKE_SOURCE_DIR}/..")
+set(PLUGINS_OUTPUT_DIR "${CMAKE_BINARY_DIR}/modules")
+set(METADATA_JSON "${CMAKE_CURRENT_SOURCE_DIR}/metadata.json")
+add_custom_target(run_cpp_generator_package_manager
+    COMMAND "${CPP_GENERATOR}" --metadata "${METADATA_JSON}" --module-dir "${PLUGINS_OUTPUT_DIR}"
+    WORKING_DIRECTORY "${REPO_ROOT}"
+    COMMENT "Running logos-cpp-generator on ${METADATA_JSON} with module-dir ${PLUGINS_OUTPUT_DIR}"
+    VERBATIM
+)
+add_dependencies(run_cpp_generator_package_manager cpp_generator_build)
+
+# No separate per-dependency loop needed; handled by --module-dir
+
 # Plugin sources
 set(PLUGIN_SOURCES
     package_manager_plugin.cpp
@@ -23,9 +40,16 @@ set(PLUGIN_SOURCES
 # Create the plugin library
 add_library(package_manager_plugin SHARED ${PLUGIN_SOURCES})
 
+## Do not compile generated SDK wrappers here; consumer modules include logos_sdk.cpp
+
 # Set output name without lib prefix
 set_target_properties(package_manager_plugin PROPERTIES
     PREFIX "")
+
+## No extra dependency printing
+
+# Ensure generator runs before building the plugin
+add_dependencies(package_manager_plugin run_cpp_generator_package_manager)
 
 # Link Qt libraries
 target_link_libraries(package_manager_plugin PRIVATE Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::RemoteObjects)
@@ -35,6 +59,7 @@ target_include_directories(package_manager_plugin PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/../core
     ${CMAKE_SOURCE_DIR}/../SDK/cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/generated
 )
 
 # Set common properties for both platforms

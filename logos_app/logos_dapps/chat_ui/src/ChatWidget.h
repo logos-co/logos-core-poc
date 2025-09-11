@@ -10,6 +10,7 @@
 #include <string>
 #include "logos_api.h"
 #include "logos_api_client.h"
+#include "logos_sdk.h"
 
 class ChatWidget : public QWidget {
     Q_OBJECT
@@ -42,6 +43,7 @@ private:
     
     // LogosAPI instance for remote method calls
     LogosAPI* m_logosAPI;
+    LogosModules* logos;
     
     // Connection status
     bool isWakuInitialized;

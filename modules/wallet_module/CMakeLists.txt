@@ -3,6 +3,21 @@ set(CMAKE_AUTOMOC ON)
 # Find Qt RemoteObjects (needed for LogosAPI)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core RemoteObjects)
 
+## No Python parsing; generator handles dependencies via --module-dir
+
+# Run Logos C++ generator on metadata before compilation
+set(CPP_GENERATOR "${CMAKE_SOURCE_DIR}/../build/cpp-generator/bin/logos-cpp-generator")
+set(REPO_ROOT "${CMAKE_SOURCE_DIR}/..")
+set(PLUGINS_OUTPUT_DIR "${CMAKE_BINARY_DIR}/modules")
+set(METADATA_JSON "${CMAKE_CURRENT_SOURCE_DIR}/metadata.json")
+add_custom_target(run_cpp_generator_wallet
+    COMMAND "${CPP_GENERATOR}" --metadata "${METADATA_JSON}" --module-dir "${PLUGINS_OUTPUT_DIR}"
+    WORKING_DIRECTORY "${REPO_ROOT}"
+    COMMENT "Running logos-cpp-generator on ${METADATA_JSON} with module-dir ${PLUGINS_OUTPUT_DIR}"
+    VERBATIM
+)
+add_dependencies(run_cpp_generator_wallet cpp_generator_build)
+
 # Find the wallet C library built from go-wallet-sdk
 find_library(LIBWALLET_PATH
     NAMES libgowalletsdk.so libgowalletsdk.dylib libgowalletsdk.dll
@@ -38,9 +53,13 @@ set(PLUGIN_SOURCES
 # Create the plugin library
 add_library(wallet_module_plugin SHARED ${PLUGIN_SOURCES})
 
+## Do not compile generated SDK wrappers here; consumer modules include logos_sdk.cpp
+
 # Set output name without lib prefix
 set_target_properties(wallet_module_plugin PROPERTIES
     PREFIX "")
+
+## No extra dependency printing
 
 # Link Qt libraries and the wallet C library if present
 target_link_libraries(wallet_module_plugin PRIVATE 
@@ -57,6 +76,7 @@ target_include_directories(wallet_module_plugin PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/lib
     ${CMAKE_SOURCE_DIR}/../core
     ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/generated
 )
 
 # Set common properties for both platforms
@@ -112,3 +132,7 @@ else()
 endif()
 
 
+# No separate per-dependency loop needed; handled by --module-dir
+
+# Ensure generator runs before building the plugin
+add_dependencies(wallet_module_plugin run_cpp_generator_wallet)

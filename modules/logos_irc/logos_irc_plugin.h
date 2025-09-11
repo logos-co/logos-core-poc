@@ -7,6 +7,7 @@
 #include "../../SDK/cpp/logos_api.h"
 #include "../../SDK/cpp/logos_api_client.h"
 #include "ircserver.h"
+#include "logos_sdk.h"
 
 class LogosIRCPlugin : public QObject, public LogosIRCInterface
 {
@@ -35,6 +36,7 @@ private:
     void onHistoryMessage(const QString& eventName, const QVariantList& data);
     
     LogosAPI* logosAPI = nullptr;
+    LogosModules* logos = nullptr;
     IRCServer* ircServer = nullptr;
     QObject* chatObject = nullptr;
     QStringList joinedChannels;
