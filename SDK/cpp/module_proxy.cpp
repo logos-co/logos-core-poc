@@ -4,6 +4,7 @@
 #include <QMetaMethod>
 #include <QMetaType>
 #include <QJsonArray>
+#include <QJsonObject>
 #include <QStringList>
 #include "../../core/interface.h"
 #include "../../SDK/cpp/logos_api.h"
@@ -381,6 +382,47 @@ bool ModuleProxy::informModuleToken(const QString& authToken, const QString& mod
     qDebug() << "ModuleProxy: Token saved successfully";
 
     return true;
+}
+
+QJsonArray ModuleProxy::getPluginMethods()
+{
+    QJsonArray methodsArray;
+
+    const QMetaObject* metaObject = m_module->metaObject();
+
+    for (int i = 0; i < metaObject->methodCount(); ++i) {
+        QMetaMethod method = metaObject->method(i);
+
+        if (method.enclosingMetaObject() != metaObject) {
+            continue;
+        }
+
+        QJsonObject methodObj;
+        methodObj["signature"] = QString::fromUtf8(method.methodSignature());
+        methodObj["name"] = QString::fromUtf8(method.name());
+        methodObj["returnType"] = QString::fromUtf8(method.typeName());
+        methodObj["isInvokable"] = method.isValid() && (method.methodType() == QMetaMethod::Method || method.methodType() == QMetaMethod::Slot);
+
+        if (method.parameterCount() > 0) {
+            QJsonArray params;
+            for (int p = 0; p < method.parameterCount(); ++p) {
+                QJsonObject paramObj;
+                paramObj["type"] = QString::fromUtf8(method.parameterTypeName(p));
+                QByteArrayList paramNames = method.parameterNames();
+                if (p < paramNames.size() && !paramNames.at(p).isEmpty()) {
+                    paramObj["name"] = QString::fromUtf8(paramNames.at(p));
+                } else {
+                    paramObj["name"] = QString("param%1").arg(p);
+                }
+                params.append(paramObj);
+            }
+            methodObj["parameters"] = params;
+        }
+
+        methodsArray.append(methodObj);
+    }
+
+    return methodsArray;
 }
 
 // Include MOC for template instantiation
