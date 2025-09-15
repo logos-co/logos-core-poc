@@ -50,12 +50,54 @@ set(SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp/module_proxy.h
 )
 
+# Use umbrella source that includes all generated wrappers to avoid duplicate symbols
+set(GENERATED_LOGOS_SDK_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp/generated)
+set(GENERATED_LOGOS_SDK_CPP ${GENERATED_LOGOS_SDK_DIR}/logos_sdk.cpp)
+set(GENERATED_LOGOS_SDK_H   ${GENERATED_LOGOS_SDK_DIR}/logos_sdk.h)
+set_source_files_properties(${GENERATED_LOGOS_SDK_CPP} PROPERTIES GENERATED TRUE)
+list(APPEND SOURCES ${GENERATED_LOGOS_SDK_CPP})
+
+# Run Logos C++ generator on metadata before compilation
+set(CPP_GENERATOR "${CMAKE_SOURCE_DIR}/../../../build/cpp-generator/bin/logos-cpp-generator")
+set(REPO_ROOT "${CMAKE_SOURCE_DIR}/../../../")
+set(PLUGINS_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/../../../modules/build/modules")
+set(METADATA_JSON "${CMAKE_CURRENT_SOURCE_DIR}/src/metadata.json")
+
+if(APPLE)
+    set(PLUGIN_SUFFIX ".dylib")
+elseif(WIN32)
+    set(PLUGIN_SUFFIX ".dll")
+else()
+    set(PLUGIN_SUFFIX ".so")
+endif()
+
+if(EXISTS "${CPP_GENERATOR}" AND EXISTS "${METADATA_JSON}")
+    add_custom_command(
+        OUTPUT ${GENERATED_LOGOS_SDK_CPP} ${GENERATED_LOGOS_SDK_H}
+        COMMAND "${CPP_GENERATOR}" --metadata "${METADATA_JSON}" --module-dir "${PLUGINS_OUTPUT_DIR}"
+        WORKING_DIRECTORY "${REPO_ROOT}"
+        DEPENDS ${METADATA_JSON}
+        COMMENT "Generating umbrella ${GENERATED_LOGOS_SDK_CPP} and wrappers for main_ui"
+        VERBATIM
+    )
+    add_custom_target(run_cpp_generator_main_ui DEPENDS ${GENERATED_LOGOS_SDK_CPP})
+else()
+    add_custom_target(run_cpp_generator_main_ui
+        COMMAND ${CMAKE_COMMAND} -E echo "logos-cpp-generator or metadata.json not found; skipping generation for main_ui."
+        VERBATIM
+    )
+endif()
+
 add_library(main_ui SHARED ${SOURCES})
+
+# Ensure generator runs before building the plugin
+add_dependencies(main_ui run_cpp_generator_main_ui)
 
 # Add include directories before target_link_libraries
 target_include_directories(main_ui PRIVATE 
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp/generated
 )
 
 # Add Qt definitions

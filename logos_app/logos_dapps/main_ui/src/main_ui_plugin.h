@@ -18,7 +18,7 @@ public:
     ~MainUIPlugin();
 
     // IComponent implementation
-    Q_INVOKABLE QWidget* createWidget(LogosAPI* logosAPI = nullptr);
+    Q_INVOKABLE QWidget* createWidget(LogosAPI* logosAPI = nullptr) override;
     void destroyWidget(QWidget* widget) override;
 
     // UI-specific methods

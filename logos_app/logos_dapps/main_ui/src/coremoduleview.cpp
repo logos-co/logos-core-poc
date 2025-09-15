@@ -15,6 +15,7 @@
 #include "pluginmethodsview.h"
 #include <QJsonArray>
 #include <QJsonObject>
+#include "logos_sdk.h"
 
 CoreModuleView::CoreModuleView(QWidget *parent)
     : QWidget(parent)
@@ -173,16 +174,14 @@ void CoreModuleView::updatePluginList()
 {
     qDebug() << "\n\n----------> Updating plugin list\n\n";
     
-    // Use LogosAPI to get the list of known plugins
+    // Use old API to get the list of known plugins from core_manager
     LogosAPI api("core");
     auto client = api.getClient("core_manager");
     QVariant result = client->invokeRemoteMethod("core_manager", "getKnownPlugins");
-    
     if (!result.isValid()) {
         qWarning() << "Failed to get known plugins from core manager";
         return;
     }
-    
     QJsonArray pluginsArray = result.toJsonArray();
 
     qDebug() << "================================";
@@ -281,11 +280,10 @@ void CoreModuleView::onLoadPluginClicked()
 
     qDebug() << "Loading plugin:" << pluginName;
 
-    // Use LogosAPI to load the plugin
+    // Use old API to load the plugin via core_manager
     LogosAPI api("core");
     auto client = api.getClient("core_manager");
     QVariant result = client->invokeRemoteMethod("core_manager", "loadPlugin", pluginName);
-
     bool success = result.toBool();
     if (success) {
         qDebug() << "Successfully loaded plugin:" << pluginName;
@@ -311,11 +309,10 @@ void CoreModuleView::onUnloadPluginClicked()
 
     qDebug() << "Unloading plugin:" << pluginName;
 
-    // Use LogosAPI to unload the plugin
+    // Use old API to unload the plugin via core_manager
     LogosAPI api("core");
     auto client = api.getClient("core_manager");
     QVariant result = client->invokeRemoteMethod("core_manager", "unloadPlugin", pluginName);
-
     bool success = result.toBool();
     if (success) {
         qDebug() << "Successfully unloaded plugin:" << pluginName;
@@ -395,11 +392,10 @@ void CoreModuleView::onAddPluginClicked()
 
     qDebug() << "Selected plugin file:" << filePath;
 
-    // Use LogosAPI to install the plugin
+    // Use old API via package_manager to install the plugin
     LogosAPI api("core");
-    auto client = api.getClient("core_manager");
-    QVariant result = client->invokeRemoteMethod("core_manager", "installPlugin", filePath);
-
+    auto client = api.getClient("package_manager");
+    QVariant result = client->invokeRemoteMethod("package_manager", "installPlugin", filePath);
     bool success = result.toBool();
     if (!success) {
         QMessageBox::warning(this, "Warning", "Failed to install plugin file.");

@@ -303,7 +303,11 @@ void ModulesView::onLoadComponent(const QString& name)
         // Create the component widget
         QWidget* componentWidget = nullptr;
         try {
-            componentWidget = component->createWidget();
+            LogosAPI* logosAPI = nullptr;
+            if (m_mainWindow) {
+                logosAPI = m_mainWindow->getLogosAPI();
+            }
+            componentWidget = component->createWidget(logosAPI);
             if (!componentWidget) {
                 qDebug() << "Component returned null widget:" << name;
                 loader.unload();

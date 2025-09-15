@@ -17,6 +17,7 @@
 #include <QDir>
 #include <QFile>
 #include <QTimer>
+#include "logos_sdk.h"
 
 PackageManagerView::PackageManagerView(QWidget *parent)
     : QWidget(parent)
