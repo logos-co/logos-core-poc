@@ -10,6 +10,7 @@
 #include <QRemoteObjectPendingCall>
 #include "logos_api.h"
 #include "logos_api_client.h"
+#include "logos_sdk.h"
 
 PluginMethodsView::PluginMethodsView(const QString& pluginName, QWidget* parent)
     : QWidget(parent)

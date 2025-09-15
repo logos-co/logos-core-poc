@@ -23,6 +23,8 @@ public:
     
     // Get the MDI view
     MdiView* getMdiView() const { return m_mdiView; }
+    // Get the LogosAPI instance
+    LogosAPI* getLogosAPI() const { return m_logosAPI; }
     
     // Refresh the core module view
     void refreshCoreModuleView();

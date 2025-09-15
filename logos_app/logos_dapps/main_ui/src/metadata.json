@@ -5,7 +5,9 @@
   "author": "Logos Core Team",
   "type": "ui",
   "main": "main_ui",
-  "dependencies": [],
+  "dependencies": [
+    "package_manager"
+  ],
   "category": "ui",
   "build": {
     "type": "cmake",
