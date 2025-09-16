@@ -36,4 +36,4 @@ signals:
 
 private:
     std::string currentRelayTopic;
-}; 
+};

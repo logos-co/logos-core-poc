@@ -326,23 +326,27 @@ logosAPI->getClient("chat")->invokeRemoteMethod("chat", "sendMessage", currentCh
 
 note: Internally the API will take care of any token negotiation and permissions needed (see Sequence Diagram section)
 
-Listening to Events from another object:
+Listening to events from another module via the generated helpers:
 
 ```c++
-QObject *chatObject = m_logosAPI->getClient("chat")->requestObject("chat");
+LogosModules logos(m_logosAPI);
 
-m_logosAPI->getClient("chat")->onEvent(chatObject, this, "chatMessage", [this](const QString &eventName, const QVariantList &data) {
-        handleWakuMessage(data[0].toString().toStdString(), data[1].toString().toStdString(), data[2].toString().toStdString());
+logos.chat.on("chatMessage", [this](const QVariantList& data) {
+    handleWakuMessage(data.value(0).toString().toStdString(),
+                      data.value(1).toString().toStdString(),
+                      data.value(2).toString().toStdString());
 });
 ```
 
-Triggering an event:
+Triggering an event through the helper after setting the source:
 
 ```c++
+logos.chat.setEventSource(this);
+
 QVariantList data;
 data << timestamp << nick << message;
 
-logosAPI->getClient("chat")->onEventResponse(this, "chatMessage", data);
+logos.chat.trigger("chatMessage", data);
 ```
 
 #### 5.2.3.1 LogosAPIConsumer (internal)
@@ -390,7 +394,14 @@ LogosModules logos(api);
 bool ok = logos.chat.initialize();
 logos.chat.joinChannel(currentChannel);
 logos.chat.sendMessage(currentChannel, username, message);
+logos.chat.on("chatMessage", [](const QVariantList& data) {
+    qDebug() << "timestamp:" << data.value(0).toString();
+});
+logos.chat.setEventSource(this);
+logos.chat.trigger("chatMessage", QVariantList{QDateTime::currentDateTime().toString(), "nick", "hello"});
 ```
+
+`setEventSource()` stores the QObject that actually declares the `eventResponse(QString, QVariantList)` signal—typically the plugin instance itself. The wrapper uses that cached pointer when you call the shorthand `trigger(eventName, data)` so it can emit the signal on the correct sender. If you skip `setEventSource()`, use the explicit overload `trigger(eventName, QObject* source, ...)` to provide the emitting object each time.
 
 Build integration (consumers of wrappers):
 - Compile the umbrella source once per binary to avoid duplicate symbols: add `SDK/cpp/generated/logos_sdk.cpp` to your target sources.
@@ -434,7 +445,7 @@ How code generation works (step‑by‑step):
    - The generator walks the plugin instance’s Qt meta‑object (`QMetaObject`) to find invokable methods, capturing name, return type and parameters. This produces a method list the generator uses as its source of truth.
 3. Header/source emission per module
    - The module name is converted to PascalCase for the wrapper class name (e.g., `chat` → `Chat`).
-   - A header `<module>_api.h` declares a wrapper class with one method per invokable target method.
+   - A header `<module>_api.h` declares a wrapper class with the typed method wrappers **and** convenience helpers for events (`on(...)`, `setEventSource(...)`, `trigger(...)`).
    - A source `<module>_api.cpp` implements each method by:
      - Packaging arguments into a `QVariantList` in order.
      - Invoking the remote method via the shared `LogosAPI`/client under the hood.
@@ -448,10 +459,8 @@ How code generation works (step‑by‑step):
    - CMake custom targets call the generator before compiling modules/apps so `SDK/cpp/generated` is always up‑to‑date.
    - The `scripts/clean.sh` script deletes generated files (`*_api.h/.cpp`, `logos_sdk.h/.cpp`) while leaving the directory in place.
 6. Scope and limitations
-   - The generator focuses on typed method calls; events are still subscribed to via `LogosAPIClient::onEvent(...)`.
    - Wrapper method signatures use Qt types (`QString`, `QStringList`, `QJsonArray`, etc.). For unsupported/complex types, the return falls back to `QVariant`.
-
-Note: Event subscription remains via `LogosAPIClient::onEvent(...)` as described above; the generated wrappers focus on method calls.
+   - Event helpers ride on top of `LogosAPIClient::onEvent(...)`/`onEventResponse(...)`; call `setEventSource()` once before emitting events from a module.
 
 ### 3.3 Plugin Interface and Metadata
 
@@ -731,6 +740,7 @@ public:
     void MyModulePlugin::initLogos(LogosAPI* logosAPIInstance) {
         logosAPI = logosAPIInstance;
         logos = new LogosModules(logosAPI); // generated wrappers aggregator
+        logos->core_manager.setEventSource(this); // enable trigger() helper
     }
 
     // Custom API implementation
@@ -741,8 +751,7 @@ public:
 
         QVariantList eventData;
         eventData << result << timestamp.toString();
-        // note this api should be updated to logosAPI->onEventResponse
-        logosAPI->getClient("core_manager")->onEventResponse(this, "dataProcessed", eventData);
+        logos->core_manager.trigger("dataProcessed", eventData);
     }
 
     Q_INVOKABLE QString processData(const QString &input) override {
@@ -757,9 +766,9 @@ public:
         // pattern: logos.<module>.<method>(...)
         // e.g., logos->chat.sendMessage(channel, nick, result);
 
-        // example subscribing to an event (events still use LogosAPIClient)
-        logosAPI->getClient("chat")->onEvent(chatObject, this, "chatMessage", [this](const QString &eventName, const QVariantList &data) {
-            qDebug() << data[0].toString();
+        // example subscribing to an event through the generated helper
+        logos->chat.on("chatMessage", [this](const QVariantList& data) {
+            qDebug() << data.value(0).toString();
         });
 
         return result;
@@ -1430,33 +1439,17 @@ The `LogosAPI` was shaped by various issues discovered while developing the toke
 
 - Modules don't really need `LogosAPI` then just need `LogosAPIClient` as they will never use `LogosAPIProvider` (that's done internally) and `getClient` is somewhat redudant given `invokeRemoteMethod` already includes the object name
 
-- Triggering an event
-
-instead of
+- Triggering an event now happens through the generated convenience API. Call `setEventSource()` once and trigger by name:
 
 ```c++
-logosAPI->getClient("core_manager")->onEventResponse(this, "getStringListTriggered", eventData);
+logos->core_manager.setEventSource(this);
+logos->core_manager.trigger("getStringListTriggered", eventData);
 ```
 
-could be instead:
+- Listening to an event follows the same wrapper pattern:
 
 ```c++
-logosAPI->trigger("getStringListTriggered", eventData)
-```
-
-- Listening to an event
-
-instead of
-
-```c++
-QObject *chatObject = logosAPI->getClient("chat")->requestObject("chat");
-logosAPI->getClient("chat")->onEvent(chatObject, this, "chatMessage", callback);
-```
-
-could be instead:
-
-```c++
-logosAPI->onEvent("chat", "chatMessage", callback);
+logos->chat.on("chatMessage", callback);
 ```
 
 ### 7.3 Nim SDK (Nim LogosAPI)
