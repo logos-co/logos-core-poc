@@ -333,6 +333,211 @@ static QString makeSource(const QString& moduleName, const QString& className, c
     return c;
 }
 
+static QString makeCoreManagerHeader()
+{
+    QString h;
+    QTextStream s(&h);
+    s << "#pragma once\n";
+    s << "#include <QString>\n";
+    s << "#include <QVariant>\n";
+    s << "#include <QStringList>\n";
+    s << "#include <QJsonArray>\n";
+    s << "#include <QObject>\n";
+    s << "#include <QPointer>\n";
+    s << "#include <functional>\n";
+    s << "#include <utility>\n";
+    s << "#include \"logos_api.h\"\n";
+    s << "#include \"logos_api_client.h\"\n\n";
+    s << "class CoreManager {\n";
+    s << "public:\n";
+    s << "    explicit CoreManager(LogosAPI* api);\n\n";
+    s << "    using RawEventCallback = std::function<void(const QString&, const QVariantList&)>;\n";
+    s << "    using EventCallback = std::function<void(const QVariantList&)>;\n\n";
+    s << "    bool on(const QString& eventName, RawEventCallback callback);\n";
+    s << "    bool on(const QString& eventName, EventCallback callback);\n";
+    s << "    void setEventSource(QObject* source);\n";
+    s << "    QObject* eventSource() const;\n";
+    s << "    void trigger(const QString& eventName);\n";
+    s << "    void trigger(const QString& eventName, const QVariantList& data);\n";
+    s << "    template<typename... Args>\n";
+    s << "    void trigger(const QString& eventName, Args&&... args) {\n";
+    s << "        trigger(eventName, packVariantList(std::forward<Args>(args)...));\n";
+    s << "    }\n";
+    s << "    void trigger(const QString& eventName, QObject* source, const QVariantList& data);\n";
+    s << "    template<typename... Args>\n";
+    s << "    void trigger(const QString& eventName, QObject* source, Args&&... args) {\n";
+    s << "        trigger(eventName, source, packVariantList(std::forward<Args>(args)...));\n";
+    s << "    }\n\n";
+    s << "    void initialize(int argc, char* argv[]);\n";
+    s << "    void setPluginsDirectory(const QString& directory);\n";
+    s << "    void start();\n";
+    s << "    void cleanup();\n";
+    s << "    QStringList getLoadedPlugins();\n";
+    s << "    QJsonArray getKnownPlugins();\n";
+    s << "    QJsonArray getPluginMethods(const QString& pluginName);\n";
+    s << "    void helloWorld();\n";
+    s << "    bool loadPlugin(const QString& pluginName);\n";
+    s << "    bool unloadPlugin(const QString& pluginName);\n";
+    s << "    QString processPlugin(const QString& filePath);\n\n";
+    s << "private:\n";
+    s << "    QObject* ensureReplica();\n";
+    s << "    template<typename... Args>\n";
+    s << "    static QVariantList packVariantList(Args&&... args) {\n";
+    s << "        QVariantList list;\n";
+    s << "        list.reserve(sizeof...(Args));\n";
+    s << "        using Expander = int[];\n";
+    s << "        (void)Expander{0, (list.append(QVariant::fromValue(std::forward<Args>(args))), 0)...};\n";
+    s << "        return list;\n";
+    s << "    }\n";
+    s << "    LogosAPI* m_api;\n";
+    s << "    LogosAPIClient* m_client;\n";
+    s << "    QString m_moduleName;\n";
+    s << "    QPointer<QObject> m_eventReplica;\n";
+    s << "    QPointer<QObject> m_eventSource;\n";
+    s << "};\n";
+    return h;
+}
+
+static QString makeCoreManagerSource(const QString& headerBaseName)
+{
+    QString c;
+    QTextStream s(&c);
+    s << "#include \"" << headerBaseName << "\"\n\n";
+    s << "#include <QDebug>\n";
+    s << "#include <QStringList>\n\n";
+    s << "CoreManager::CoreManager(LogosAPI* api) : m_api(api), m_client(api->getClient(\"core_manager\")), m_moduleName(QStringLiteral(\"core_manager\")) {}\n\n";
+    s << "QObject* CoreManager::ensureReplica() {\n";
+    s << "    if (!m_eventReplica) {\n";
+    s << "        QObject* replica = m_client->requestObject(m_moduleName);\n";
+    s << "        if (!replica) {\n";
+    s << "            qWarning() << \"CoreManager: failed to acquire remote object for events on\" << m_moduleName;\n";
+    s << "            return nullptr;\n";
+    s << "        }\n";
+    s << "        m_eventReplica = replica;\n";
+    s << "    }\n";
+    s << "    return m_eventReplica.data();\n";
+    s << "}\n\n";
+    s << "bool CoreManager::on(const QString& eventName, RawEventCallback callback) {\n";
+    s << "    if (!callback) {\n";
+    s << "        qWarning() << \"CoreManager: ignoring empty event callback for\" << eventName;\n";
+    s << "        return false;\n";
+    s << "    }\n";
+    s << "    QObject* origin = ensureReplica();\n";
+    s << "    if (!origin) {\n";
+    s << "        return false;\n";
+    s << "    }\n";
+    s << "    m_client->onEvent(origin, nullptr, eventName, callback);\n";
+    s << "    return true;\n";
+    s << "}\n\n";
+    s << "bool CoreManager::on(const QString& eventName, EventCallback callback) {\n";
+    s << "    if (!callback) {\n";
+    s << "        qWarning() << \"CoreManager: ignoring empty event callback for\" << eventName;\n";
+    s << "        return false;\n";
+    s << "    }\n";
+    s << "    return on(eventName, [callback](const QString&, const QVariantList& data) {\n";
+    s << "        callback(data);\n";
+    s << "    });\n";
+    s << "}\n\n";
+    s << "void CoreManager::setEventSource(QObject* source) {\n";
+    s << "    m_eventSource = source;\n";
+    s << "}\n\n";
+    s << "QObject* CoreManager::eventSource() const {\n";
+    s << "    return m_eventSource.data();\n";
+    s << "}\n\n";
+    s << "void CoreManager::trigger(const QString& eventName) {\n";
+    s << "    trigger(eventName, QVariantList{});\n";
+    s << "}\n\n";
+    s << "void CoreManager::trigger(const QString& eventName, const QVariantList& data) {\n";
+    s << "    if (!m_eventSource) {\n";
+    s << "        qWarning() << \"CoreManager: no event source set for trigger\" << eventName;\n";
+    s << "        return;\n";
+    s << "    }\n";
+    s << "    m_client->onEventResponse(m_eventSource.data(), eventName, data);\n";
+    s << "}\n\n";
+    s << "void CoreManager::trigger(const QString& eventName, QObject* source, const QVariantList& data) {\n";
+    s << "    if (!source) {\n";
+    s << "        qWarning() << \"CoreManager: cannot trigger\" << eventName << \"with null source\";\n";
+    s << "        return;\n";
+    s << "    }\n";
+    s << "    m_client->onEventResponse(source, eventName, data);\n";
+    s << "}\n\n";
+    s << "void CoreManager::initialize(int argc, char* argv[]) {\n";
+    s << "    QStringList args;\n";
+    s << "    if (argv) {\n";
+    s << "        for (int i = 0; i < argc; ++i) {\n";
+    s << "            args << QString::fromUtf8(argv[i] ? argv[i] : \"\");\n";
+    s << "        }\n";
+    s << "    }\n";
+    s << "    m_client->invokeRemoteMethod(\"core_manager\", \"initialize\", argc, args);\n";
+    s << "}\n\n";
+    s << "void CoreManager::setPluginsDirectory(const QString& directory) {\n";
+    s << "    m_client->invokeRemoteMethod(\"core_manager\", \"setPluginsDirectory\", directory);\n";
+    s << "}\n\n";
+    s << "void CoreManager::start() {\n";
+    s << "    m_client->invokeRemoteMethod(\"core_manager\", \"start\");\n";
+    s << "}\n\n";
+    s << "void CoreManager::cleanup() {\n";
+    s << "    m_client->invokeRemoteMethod(\"core_manager\", \"cleanup\");\n";
+    s << "}\n\n";
+    s << "QStringList CoreManager::getLoadedPlugins() {\n";
+    s << "    QVariant _result = m_client->invokeRemoteMethod(\"core_manager\", \"getLoadedPlugins\");\n";
+    s << "    return _result.toStringList();\n";
+    s << "}\n\n";
+    s << "QJsonArray CoreManager::getKnownPlugins() {\n";
+    s << "    QVariant _result = m_client->invokeRemoteMethod(\"core_manager\", \"getKnownPlugins\");\n";
+    s << "    return qvariant_cast<QJsonArray>(_result);\n";
+    s << "}\n\n";
+    s << "QJsonArray CoreManager::getPluginMethods(const QString& pluginName) {\n";
+    s << "    QVariant _result = m_client->invokeRemoteMethod(\"core_manager\", \"getPluginMethods\", pluginName);\n";
+    s << "    return qvariant_cast<QJsonArray>(_result);\n";
+    s << "}\n\n";
+    s << "void CoreManager::helloWorld() {\n";
+    s << "    m_client->invokeRemoteMethod(\"core_manager\", \"helloWorld\");\n";
+    s << "}\n\n";
+    s << "bool CoreManager::loadPlugin(const QString& pluginName) {\n";
+    s << "    QVariant _result = m_client->invokeRemoteMethod(\"core_manager\", \"loadPlugin\", pluginName);\n";
+    s << "    return _result.toBool();\n";
+    s << "}\n\n";
+    s << "bool CoreManager::unloadPlugin(const QString& pluginName) {\n";
+    s << "    QVariant _result = m_client->invokeRemoteMethod(\"core_manager\", \"unloadPlugin\", pluginName);\n";
+    s << "    return _result.toBool();\n";
+    s << "}\n\n";
+    s << "QString CoreManager::processPlugin(const QString& filePath) {\n";
+    s << "    QVariant _result = m_client->invokeRemoteMethod(\"core_manager\", \"processPlugin\", filePath);\n";
+    s << "    return _result.toString();\n";
+    s << "}\n\n";
+    return c;
+}
+
+static bool ensureCoreManagerWrapper(const QString& genDirPath, QTextStream& err)
+{
+    const QString headerRel = QStringLiteral("core_manager_api.h");
+    const QString sourceRel = QStringLiteral("core_manager_api.cpp");
+    const QString headerAbs = QDir(genDirPath).filePath(headerRel);
+    const QString sourceAbs = QDir(genDirPath).filePath(sourceRel);
+
+    QString header = makeCoreManagerHeader();
+    QString source = makeCoreManagerSource(headerRel);
+
+    QFile headerFile(headerAbs);
+    if (!headerFile.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text)) {
+        err << "Failed to write core manager header: " << headerAbs << "\n";
+        return false;
+    }
+    headerFile.write(header.toUtf8());
+    headerFile.close();
+
+    QFile sourceFile(sourceAbs);
+    if (!sourceFile.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text)) {
+        err << "Failed to write core manager source: " << sourceAbs << "\n";
+        return false;
+    }
+    sourceFile.write(source.toUtf8());
+    sourceFile.close();
+
+    return true;
+}
+
 static bool writeUmbrellaHeader(const QString& genDirPath, QTextStream& err)
 {
     // Generate SDK/cpp/generated/logos_sdk.h that includes all *_api.h in this dir
@@ -413,6 +618,12 @@ static int generateFromPlugin(const QString& pluginInputPath, QTextStream& out, 
         resolvedPath = fi.absoluteFilePath();
     }
 
+    QString genDirPath = QDir::current().filePath("SDK/cpp/generated");
+    QDir().mkpath(genDirPath);
+    if (!ensureCoreManagerWrapper(genDirPath, err)) {
+        return 9;
+    }
+
     QPluginLoader loader(resolvedPath);
     if (!loader.load()) {
         err << "Failed to load plugin at " << resolvedPath << ": " << loader.errorString() << "\n";
@@ -437,8 +648,6 @@ static int generateFromPlugin(const QString& pluginInputPath, QTextStream& out, 
 
     QJsonArray methods = enumerateMethods(instance);
 
-    QString genDirPath = QDir::current().filePath("SDK/cpp/generated");
-    QDir().mkpath(genDirPath);
     QString className = toPascalCase(moduleName);
     QString headerRel = QString("%1_api.h").arg(moduleName);
     QString sourceRel = QString("%1_api.cpp").arg(moduleName);
@@ -549,6 +758,12 @@ int main(int argc, char* argv[])
                     return 2;
                 }
 
+                QString genDirPath = QDir::current().filePath("SDK/cpp/generated");
+                QDir().mkpath(genDirPath);
+                if (!ensureCoreManagerWrapper(genDirPath, err)) {
+                    return 9;
+                }
+
                 QString suffix;
 #if defined(Q_OS_MACOS)
                 suffix = ".dylib";
@@ -574,6 +789,13 @@ int main(int argc, char* argv[])
                     const int st = generateFromPlugin(pluginPath, out, err);
                     if (st != 0) {
                         overallStatus = st; // remember last non-zero
+                    }
+                }
+                if (overallStatus == 0) {
+                    if (!writeUmbrellaHeader(genDirPath, err)) {
+                        overallStatus = 7;
+                    } else if (!writeUmbrellaSource(genDirPath, err)) {
+                        overallStatus = 8;
                     }
                 }
                 return overallStatus;

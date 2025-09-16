@@ -9,6 +9,7 @@
 #include "../../core/src/logos_core.h"
 #include "../../SDK/cpp/logos_api.h"
 #include "../../SDK/cpp/logos_api_client.h"
+#include "logos_sdk.h"
 
 // Qt-style plugin testing utility class
 class PluginTester {
@@ -244,8 +245,10 @@ int main(int argc, char *argv[])
         // Test package installation via package_manager
     qDebug() << "\n=== Testing Package Installation ===";
     
-            // Initialize LogosAPI for testing
-        LogosAPI testAPI("core");
+    // Initialize LogosAPI for typed interactions with package_manager
+    LogosAPI testAPI("core");
+    LogosModules testModules(&testAPI);
+    auto& packageManager = testModules.package_manager;
     
     // Determine the correct file extension for this platform
     QString libExt;
@@ -273,8 +276,7 @@ int main(int argc, char *argv[])
     qDebug() << "✓ Package file found, proceeding with installation...";
     
     // Call package_manager's installPlugin method
-    QVariant result = testAPI.getClient("package_manager")->invokeRemoteMethod("package_manager", "installPlugin", filePath);
-    bool installSuccess = result.toBool();
+    bool installSuccess = packageManager.installPlugin(filePath);
     
     if (installSuccess) {
         qDebug() << "\n\n\n\nSUCCESS: Package installation completed successfully";
@@ -297,27 +299,21 @@ int main(int argc, char *argv[])
         // Test the event system
         qDebug() << "\n=== Testing Template Module Events ===";
 
-        // Initialize LogosAPI for testing
+        // Initialize LogosAPI for testing template module events
         LogosAPI eventTestAPI("core");
+        LogosModules eventModules(&eventTestAPI);
+        auto& eventTemplateModule = eventModules.template_module;
 
-        // Get template_module object for event listening
-        QObject* templateModuleObj = eventTestAPI.getClient("template_module")->requestObject("template_module");
-        if (!templateModuleObj) {
-            PluginTester::printError("CRITICAL: Failed to get template_module from registry");
-            logos_core_cleanup();
-            exit(1);
-        }
-        
         // Register event listener
         EventTracker::eventReceived = false;
-        eventTestAPI.getClient("template_module")->onEvent(templateModuleObj, nullptr, "fooTriggered", EventTracker::onEvent);
-        
+        eventTemplateModule.on("fooTriggered", EventTracker::onEvent);
+
         // Call foo method using remote API
-        QVariant testParam = "hello_world";
+        QString testParam = QStringLiteral("hello_world");
         qDebug() << "Calling foo() remotely with parameter:" << testParam;
-        
-        QVariant eventResult = eventTestAPI.getClient("template_module")->invokeRemoteMethod("template_module", "foo", testParam);
-        if (!eventResult.isValid() || !eventResult.toBool()) {
+
+        bool eventResult = eventTemplateModule.foo(testParam);
+        if (!eventResult) {
             PluginTester::printError("CRITICAL: Failed to call foo() method or method returned false");
             logos_core_cleanup();
             exit(1);
@@ -332,8 +328,8 @@ int main(int argc, char *argv[])
         if (EventTracker::eventReceived) {
             PluginTester::printSuccess("SUCCESS: Event received!");
             if (EventTracker::lastEventData.size() > 0 && 
-                EventTracker::lastEventData[0].toString() == testParam.toString()) {
-                PluginTester::printSuccess(QString("SUCCESS: Event contains correct parameter: %1").arg(testParam.toString()));
+                EventTracker::lastEventData[0].toString() == testParam) {
+                PluginTester::printSuccess(QString("SUCCESS: Event contains correct parameter: %1").arg(testParam));
             } else {
                 PluginTester::printError("CRITICAL: Event parameter mismatch");
                 logos_core_cleanup();
@@ -347,7 +343,6 @@ int main(int argc, char *argv[])
         
     } else {
         PluginTester::printError("CRITICAL: Package installation failed");
-        PluginTester::printError(QString("Installation result: %1").arg(result.toString()));
         logos_core_cleanup();
         exit(1);
     }

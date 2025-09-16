@@ -8,6 +8,7 @@
 #include "../../core/src/logos_core.h"
 #include "../../SDK/cpp/logos_api.h"
 #include "../../SDK/cpp/logos_api_client.h"
+#include "../../SDK/cpp/generated/logos_sdk.h"
 #include <QTimer>
 #include <QDateTime>
 
@@ -232,21 +233,19 @@ int main(int argc, char *argv[])
     // Test the chat and waku modules
     qDebug() << "\n=== Testing Chat and Waku Modules ===";
 
-            // Initialize LogosAPI for testing waku
-        LogosAPI wakuAPI("core");
+            // Initialize LogosAPI and generated wrappers
+        LogosAPI* logosAPI = new LogosAPI("core");
+        LogosModules* logos = new LogosModules(logosAPI);
 
     // Get waku object for testing
-    QObject* wakuObj = wakuAPI.getClient("waku_module")->requestObject("waku_module");
+    QObject* wakuObj = logosAPI->getClient("waku_module")->requestObject("waku_module");
     if (!wakuObj) {
         PluginTester::printWarning("Waku module object not accessible via registry (this may be expected)");
     } else {
         PluginTester::printSuccess("Successfully got waku object from registry");
     }
-            // Initialize LogosAPI for testing chat
-        LogosAPI chatAPI("core");
-
     // Get chat object for testing
-    QObject* chatObj = chatAPI.getClient("chat")->requestObject("chat");
+    QObject* chatObj = logosAPI->getClient("chat")->requestObject("chat");
     if (!chatObj) {
         PluginTester::printWarning("Chat module object not accessible via registry (this may be expected)");
     } else {
@@ -255,7 +254,7 @@ int main(int argc, char *argv[])
 
     // Add onEvent handler for chatMessage
     qDebug() << "Setting up chatMessage event handler...";
-    chatAPI.getClient("chat")->onEvent(chatObj, nullptr, "chatMessage", [](const QString& eventName, const QVariantList& data) {
+    logos->chat.on("chatMessage", [](const QString& eventName, const QVariantList& data) {
         std::cout << "\n\n\n=== CHAT MESSAGE EVENT RECEIVED ===" << std::endl;
         std::cout << "Event: " << eventName.toStdString() << std::endl;
         if (data.size() >= 3) {
@@ -275,23 +274,23 @@ int main(int argc, char *argv[])
 
     // Call initialize method on chat module
     qDebug() << "Calling chat initialize() method...";
-    QVariant initResult = chatAPI.getClient("chat")->invokeRemoteMethod("chat", "initialize");
-    if (initResult.isValid()) {
+    bool initSuccess = logos->chat.initialize();
+    if (initSuccess) {
         PluginTester::printSuccess("Successfully called chat initialize() method");
-        qDebug() << "Initialize result:" << initResult;
+        qDebug() << "Initialize result:" << initSuccess;
     } else {
-        PluginTester::printWarning("Chat initialize() method call returned invalid result (this may be expected)");
+        PluginTester::printWarning("Chat initialize() method call failed");
         exit(1);
     }
 
     // Join the "baixa-chiado" channel
     qDebug() << "Calling chat joinChannel() method with channel 'baixa-chiado'...";
-    QVariant joinResult = chatAPI.getClient("chat")->invokeRemoteMethod("chat", "joinChannel", QString("baixa-chiado"));
-    if (joinResult.isValid()) {
+    bool joinSuccess = logos->chat.joinChannel(QString("baixa-chiado"));
+    if (joinSuccess) {
         PluginTester::printSuccess("Successfully called chat joinChannel() method");
-        qDebug() << "Join channel result:" << joinResult;
+        qDebug() << "Join channel result:" << joinSuccess;
     } else {
-        PluginTester::printWarning("Chat joinChannel() method call returned invalid result (this may be expected)");
+        PluginTester::printWarning("Chat joinChannel() method call failed");
         exit(1);
     }
 
@@ -319,7 +318,7 @@ int main(int argc, char *argv[])
     // PluginTester::printSuccess("Periodic message timer started (sending every 10 seconds)");
 
     // listen to message history event historyMessage
-    chatAPI.getClient("chat")->onEvent(chatObj, nullptr, "historyMessage", [](const QString& eventName, const QVariantList& data) {
+    logos->chat.on("historyMessage", [](const QString& eventName, const QVariantList& data) {
         std::cout << "\n\n\n=== HISTORY MESSAGE EVENT RECEIVED ===" << std::endl;
         std::cout << "Event: " << eventName.toStdString() << std::endl;
         std::cout << "Data: " << data.first().toString().toStdString() << std::endl;
@@ -336,13 +335,13 @@ int main(int argc, char *argv[])
 
     // Call retrieveHistory method on chat module
     qDebug() << "Calling chat retrieveHistory() method...";
-    QVariant retrieveResult = chatAPI.getClient("chat")->invokeRemoteMethod("chat", "retrieveHistory", QString("baixa-chiado"));
-    if (retrieveResult.isValid()) {
+    bool retrieveSuccess = logos->chat.retrieveHistory(QString("baixa-chiado"));
+    if (retrieveSuccess) {
         PluginTester::printSuccess("Successfully called chat retrieveHistory() method");
-        qDebug() << "Retrieve history result:" << retrieveResult;
+        qDebug() << "Retrieve history result:" << retrieveSuccess;
         // exit(1);
     } else {
-        PluginTester::printWarning("Chat retrieveHistory() method call returned invalid result (this may be expected)");
+        PluginTester::printWarning("Chat retrieveHistory() method call failed");
         exit(1);
     }
 

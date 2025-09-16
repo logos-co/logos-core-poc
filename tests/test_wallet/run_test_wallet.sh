@@ -36,7 +36,7 @@ echo "Building test_wallet..."
 cd "$ROOT_DIR/tests"
 mkdir -p build && cd build
 cmake -DCMAKE_BUILD_TYPE=Debug ..
-make -j"$JOBS" test_wallet
+cmake --build . --target test_wallet -- -j"$JOBS"
 
 # Prepare runtime modules directory
 echo "Setting up modules directory for test runtime..."
@@ -68,5 +68,4 @@ fi
 echo "Running test_wallet..."
 cd bin
 ./test_wallet
-
 

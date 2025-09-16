@@ -1,6 +1,5 @@
 #include "chat_api.h"
 #include <unordered_set> // Add for storing message hashes
-#include "../../../SDK/cpp/logos_api_client.h"
 
 // Constants
 const std::string TOY_CHAT_CONTENT_TOPIC = "/toy-chat/2/baixa-chiado/proto";
@@ -327,31 +326,39 @@ bool encodeProto(const ChatMessage& msg, std::vector<uint8_t>& output) {
 }
 
 // Function to send a message
-void sendMessage(LogosAPIClient* logosAPI, const std::string& channelName, const std::string& username, const std::string& message) {
+void sendMessage(LogosAPI* logosAPI, LogosModules* logos, const std::string& channelName, const std::string& username, const std::string& message) {
+    if (!logosAPI) {
+        std::cerr << "sendMessage: LogosAPI instance is null" << std::endl;
+        return;
+    }
 
-    // print method arguments
-    std::cout << "sendMessage called with channelName: " << channelName << ", username: " << username << ", message: " << message << std::endl;
+    if (!logos) {
+        std::cerr << "sendMessage: LogosModules instance is null" << std::endl;
+        return;
+    }
 
-    // Format the channel name into a content topic if not already formatted
+    auto& wakuModule = logos->waku_module;
+
+    std::cout << "sendMessage called with channelName: " << channelName
+              << ", username: " << username
+              << ", message: " << message << std::endl;
+
     std::string contentTopic = channelName;
     if (channelName.find("/toy-chat/") == std::string::npos) {
         contentTopic = formatContentTopic(channelName);
     }
-    
+
     std::cout << "Sending message to channel: " << channelName << std::endl;
     std::cout << "Using content topic: " << contentTopic << std::endl;
 
-    // Create a new chat message
     ChatMessage chatMsg = createChatMessage(username, message);
-    // Encode the message
     std::vector<uint8_t> encodedBytes = chatMsg.serialize();
     if (encodedBytes.empty()) {
         std::cerr << "Failed to encode message" << std::endl;
         return;
     }
-    // Base64 encode the payload
+
     std::string base64Payload = base64Encode(encodedBytes);
-    // Create the Waku message JSON
     std::string messageJson = R"({
         "payload": ")" + base64Payload + R"(",
         "contentTopic": ")" + contentTopic + R"(",
@@ -363,11 +370,26 @@ void sendMessage(LogosAPIClient* logosAPI, const std::string& channelName, const
     std::cout << "Sending message as " << username << ": " << message << std::endl;
     std::cout << "Message JSON: " << messageJson << std::endl;
 
-    logosAPI->invokeRemoteMethod("waku_module", "relayPublish", QString::fromStdString(DEFAULT_PUBSUB_TOPIC), QString::fromStdString(messageJson));
+    if (!wakuModule.relayPublish(QString::fromStdString(DEFAULT_PUBSUB_TOPIC),
+                                 QString::fromStdString(messageJson))) {
+        std::cerr << "Failed to publish message via WakuModule" << std::endl;
+    }
 }
 
 // Function to initialize and start a Waku node
-void* initAndStart(LogosAPIClient* logosAPI, const std::string& relayTopic, MessageCallback messageCallback) {
+void* initAndStart(LogosAPI* logosAPI, LogosModules* logos, const std::string& relayTopic, MessageCallback messageCallback) {
+    if (!logosAPI) {
+        std::cerr << "initAndStart: LogosAPI instance is null" << std::endl;
+        return nullptr;
+    }
+
+    if (!logos) {
+        std::cerr << "initAndStart: LogosModules instance is null" << std::endl;
+        return nullptr;
+    }
+
+    auto& wakuModule = logos->waku_module;
+
     // Create appropriate Waku config
     std::string configStr = R"({
         "host": "0.0.0.0",
@@ -387,137 +409,107 @@ void* initAndStart(LogosAPIClient* logosAPI, const std::string& relayTopic, Mess
     })";
 
     std::cout << "Waku node config: " << configStr << std::endl;
-
-    // request object waku_module
-    QObject* waku_module = logosAPI->requestObject("waku_module");
-
     std::cout << "Found Waku Plugin, initializing" << std::endl;
-    // Call initWaku on the plugin
-    // wakuPlugin->initWaku(QString::fromStdString(configStr));
-    logosAPI->invokeRemoteMethod("waku_module", "initWaku", QString::fromStdString(configStr));
+    if (!wakuModule.initWaku(QString::fromStdString(configStr))) {
+        std::cerr << "Failed to initialize Waku module" << std::endl;
+        return nullptr;
+    }
 
     std::this_thread::sleep_for(std::chrono::seconds(3));
 
-    // Create event handler context
-    EventHandlerContext* context = new EventHandlerContext(messageCallback);
+    if (!wakuModule.on("wakuMessage", [messageCallback](const QString&, const QVariantList& data) {
+            if (!data.isEmpty()) {
+                std::string jsonStr = data.first().toString().toStdString();
 
-    // listen to wakuMessage Event and trigger messageCallback with it
-    logosAPI->onEvent(waku_module, nullptr, "wakuMessage", [messageCallback](const QString& eventName, const QVariantList& data) {
-        // print content topic of this message
-        if (!data.isEmpty()) {
-            std::string jsonStr = data.first().toString().toStdString();
+                std::cout << "🔍 Checking message hash for duplicates..." << std::endl;
+                size_t hashPos = jsonStr.find("\"messageHash\":");
+                if (hashPos != std::string::npos) {
+                    size_t hashStart = jsonStr.find("\"", hashPos + 14) + 1;
+                    size_t hashEnd = jsonStr.find("\"", hashStart);
+                    if (hashStart != std::string::npos && hashEnd != std::string::npos) {
+                        std::string messageHash = jsonStr.substr(hashStart, hashEnd - hashStart);
 
-            // Process message hash for deduplication
-            std::cout << "🔍 Checking message hash for duplicates..." << std::endl;
-            size_t hashPos = jsonStr.find("\"messageHash\":");
-            if (hashPos != std::string::npos) {
-                size_t hashStart = jsonStr.find("\"", hashPos + 14) + 1;
-                size_t hashEnd = jsonStr.find("\"", hashStart);
-                if (hashStart != std::string::npos && hashEnd != std::string::npos) {
-                    std::string messageHash = jsonStr.substr(hashStart, hashEnd - hashStart);
-
-                    // If we've already processed this message, skip it
-                    if (processedMessageHashes.find(messageHash) != processedMessageHashes.end()) {
-                        std::cout << "🔄 DUPLICATE MESSAGE - Hash already processed: " << messageHash << std::endl;
-                        std::cout << "⏭️ Skipping duplicate message processing" << std::endl;
-                        return;
-                    }
-
-                    // Otherwise, add it to our set of processed hashes
-                    processedMessageHashes.insert(messageHash);
-                    std::cout << "✅ NEW MESSAGE - Hash added to processed set: " << messageHash << std::endl;
-                }
-                else {
-                    std::cout << "⚠️ Could not extract message hash value" << std::endl;
-                }
-            }
-            else {
-                std::cout << "ℹ️ No messageHash field found - treating as new message" << std::endl;
-            }
-
-            // Check if the message contains "contentTopic" field
-            size_t contentTopicPos = jsonStr.find("\"contentTopic\":");
-            if (contentTopicPos != std::string::npos) {
-                // Find the start and end of the content topic value
-                size_t valueStart = jsonStr.find("\"", contentTopicPos + 14) + 1;
-                size_t valueEnd = jsonStr.find("\"", valueStart);
-                if (valueStart != std::string::npos && valueEnd != std::string::npos) {
-                    std::string contentTopic = jsonStr.substr(valueStart, valueEnd - valueStart);
-                    std::cout << "\n\n\n\n\n\nContent Topic: " << contentTopic << std::endl;
-
-                    // Check if the content topic is in our list of subscribed channels
-                    bool isSubscribed = false;
-                    for (const auto &channel : subscribedChannels) {
-                        if (contentTopic == channel) {
-                            isSubscribed = true;
-                            break;
+                        if (processedMessageHashes.find(messageHash) != processedMessageHashes.end()) {
+                            std::cout << "🔄 DUPLICATE MESSAGE - Hash already processed: " << messageHash << std::endl;
+                            std::cout << "⏭️ Skipping duplicate message processing" << std::endl;
+                            return;
                         }
+
+                        processedMessageHashes.insert(messageHash);
+                        std::cout << "✅ NEW MESSAGE - Hash added to processed set: " << messageHash << std::endl;
                     }
+                }
 
-                    if (isSubscribed) {
-                        std::cout << "🎉🎉🎉 FOUND! This content topic is SUBSCRIBED! 🎉🎉🎉" << std::endl;
-                        std::cout << "*** PROCESSING MESSAGE FROM SUBSCRIBED CHANNEL ***" << std::endl;
+                size_t contentTopicPos = jsonStr.find("\"contentTopic\":");
+                if (contentTopicPos != std::string::npos) {
+                    size_t valueStart = jsonStr.find("\"", contentTopicPos + 14) + 1;
+                    size_t valueEnd = jsonStr.find("\"", valueStart);
+                    if (valueStart != std::string::npos && valueEnd != std::string::npos) {
+                        std::string contentTopic = jsonStr.substr(valueStart, valueEnd - valueStart);
+                        std::cout << "\n\n\n\n\n\nContent Topic: " << contentTopic << std::endl;
 
-                        // Extract and decode the payload
-                        size_t payloadPos = jsonStr.find("\"payload\":\"");
-                        if (payloadPos != std::string::npos) {
-                            size_t payloadStart = payloadPos + 11; // Skip "payload":"
-                            size_t payloadEnd = jsonStr.find("\"", payloadStart);
-                            if (payloadStart != std::string::npos && payloadEnd != std::string::npos) {
-                                std::string encodedPayload = jsonStr.substr(payloadStart, payloadEnd - payloadStart);
-                                // std::cout << "📦 Encoded payload: " << encodedPayload << std::endl;
-
-                                // Decode the base64 payload
-                                std::vector<uint8_t> decodedBytes = base64Decode(encodedPayload);
-                                std::cout << "🔓 Decoded " << decodedBytes.size() << " bytes" << std::endl;
-
-                                // Decode the protobuf message
-                                std::cout << "🔍 Decoding protobuf message..." << std::endl;
-                                auto decodedMsg = decodeProto(decodedBytes);
-
-                                if (decodedMsg.success) {
-                                    std::cout << "✅ Successfully decoded message:" << std::endl;
-                                    std::cout << "   📅 Timestamp: " << decodedMsg.timestamp << std::endl;
-                                    std::cout << "   👤 Nick: " << decodedMsg.nick << std::endl;
-                                    std::cout << "   💬 Message: " << decodedMsg.payload << std::endl;
-
-                                    // Call the messageCallback with the decoded message
-                                    messageCallback(decodedMsg.timestamp, decodedMsg.nick, decodedMsg.payload);
-                                }
-                                else {
-                                    std::cout << "❌ Failed to decode protobuf message" << std::endl;
-                                    // Print raw bytes for debugging
-                                    printDecodedMessage(decodedMsg, decodedBytes);
-                                }
-                            }
-                            else {
-                                std::cout << "❌ Could not extract payload from JSON" << std::endl;
+                        bool isSubscribed = false;
+                        for (const auto &channel : subscribedChannels) {
+                            if (contentTopic == channel) {
+                                isSubscribed = true;
+                                break;
                             }
                         }
-                        else {
-                            std::cout << "❌ No payload field found in message" << std::endl;
+
+                        if (isSubscribed) {
+                            std::cout << "🎉🎉🎉 FOUND! This content topic is SUBSCRIBED! 🎉🎉🎉" << std::endl;
+                            std::cout << "*** PROCESSING MESSAGE FROM SUBSCRIBED CHANNEL ***" << std::endl;
+
+                            size_t payloadPos = jsonStr.find("\"payload\":\"");
+                            if (payloadPos != std::string::npos) {
+                                size_t payloadStart = payloadPos + 11;
+                                size_t payloadEnd = jsonStr.find("\"", payloadStart);
+                                if (payloadStart != std::string::npos && payloadEnd != std::string::npos) {
+                                    std::string encodedPayload = jsonStr.substr(payloadStart, payloadEnd - payloadStart);
+
+                                    std::vector<uint8_t> decodedBytes = base64Decode(encodedPayload);
+                                    std::cout << "🔓 Decoded " << decodedBytes.size() << " bytes" << std::endl;
+
+                                    std::cout << "🔍 Decoding protobuf message..." << std::endl;
+                                    auto decodedMsg = decodeProto(decodedBytes);
+
+                                    if (decodedMsg.success) {
+                                        std::cout << "✅ Successfully decoded message:" << std::endl;
+                                        std::cout << "   📅 Timestamp: " << decodedMsg.timestamp << std::endl;
+                                        std::cout << "   👤 Nick: " << decodedMsg.nick << std::endl;
+                                        std::cout << "   💬 Message: " << decodedMsg.payload << std::endl;
+
+                                        if (messageCallback) {
+                                            messageCallback(decodedMsg.timestamp, decodedMsg.nick, decodedMsg.payload);
+                                        }
+                                    } else {
+                                        std::cout << "❌ Failed to decode protobuf message" << std::endl;
+                                        printDecodedMessage(decodedMsg, decodedBytes);
+                                    }
+                                }
+                            }
+                        } else {
+                            std::cout << "ℹ️ Content topic not in subscribed channels list" << std::endl;
                         }
                     }
-                    else {
-                        std::cout << "ℹ️ Content topic not in subscribed channels list" << std::endl;
-                    }
+                } else {
+                    std::cout << "\n\n\n\n\n\nContent Topic: Not found in message" << std::endl;
                 }
-                else {
-                    std::cout << "\n\n\n\n\n\nContent Topic: Could not extract value" << std::endl;
-                }
+            } else {
+                std::cout << "\n\n\n\n\n\nContent Topic: No data available" << std::endl;
             }
-            else {
-                std::cout << "\n\n\n\n\n\nContent Topic: Not found in message" << std::endl;
-            }
-        }
-        else {
-            std::cout << "\n\n\n\n\n\nContent Topic: No data available" << std::endl;
-        }
-    });
+        })) {
+        std::cerr << "Failed to subscribe to wakuMessage events" << std::endl;
+    }
 
-    logosAPI->invokeRemoteMethod("waku_module", "setEventCallback");
+    if (!wakuModule.setEventCallback()) {
+        std::cerr << "Failed to register Waku event callback" << std::endl;
+    }
 
-    logosAPI->invokeRemoteMethod("waku_module", "startWaku");
+    if (!wakuModule.startWaku()) {
+        std::cerr << "Failed to start Waku module" << std::endl;
+        return nullptr;
+    }
 
     std::this_thread::sleep_for(std::chrono::seconds(2));
     std::cout << "Waku node started successfully" << std::endl;
@@ -528,7 +520,19 @@ void* initAndStart(LogosAPIClient* logosAPI, const std::string& relayTopic, Mess
 }
 
 // Function to join a chat channel
-bool joinChannel(LogosAPIClient* logosAPI, const std::string& channelName, const std::string& relayTopic) {
+bool joinChannel(LogosAPI* logosAPI, LogosModules* logos, const std::string& channelName, const std::string& relayTopic) {
+    if (!logosAPI) {
+        std::cerr << "joinChannel: LogosAPI instance is null" << std::endl;
+        return false;
+    }
+
+    if (!logos) {
+        std::cerr << "joinChannel: LogosModules instance is null" << std::endl;
+        return false;
+    }
+
+    auto& wakuModule = logos->waku_module;
+
     // Format the channel name into a content topic if not already formatted
     std::string contentTopic = channelName;
     if (channelName.find("/toy-chat/") == std::string::npos) {
@@ -540,14 +544,30 @@ bool joinChannel(LogosAPIClient* logosAPI, const std::string& channelName, const
 
     std::string contentTopics = "[\"" + contentTopic + "\"]";
 
-    logosAPI->invokeRemoteMethod("waku_module", "filterSubscribe", QString::fromStdString(relayTopic), QString::fromStdString(contentTopics));
+    if (!wakuModule.filterSubscribe(QString::fromStdString(relayTopic),
+                                    QString::fromStdString(contentTopics))) {
+        std::cerr << "Failed to subscribe to content topic: " << contentTopic << std::endl;
+        return false;
+    }
     subscribedChannels.push_back(contentTopic);
 
     return true;
 }
 
 // Function to retrieve message history from store node
-void retrieveHistory(LogosAPIClient* logosAPI, const std::string& channelName, MessageCallback callback) {
+void retrieveHistory(LogosAPI* logosAPI, LogosModules* logos, const std::string& channelName, MessageCallback callback) {
+    if (!logosAPI) {
+        std::cerr << "retrieveHistory: LogosAPI instance is null" << std::endl;
+        return;
+    }
+
+    if (!logos) {
+        std::cerr << "retrieveHistory: LogosModules instance is null" << std::endl;
+        return;
+    }
+
+    auto& wakuModule = logos->waku_module;
+
     // Format the channel name into a content topic if not already formatted
     std::string contentTopic = channelName;
     if (channelName.find("/toy-chat/") == std::string::npos) {
@@ -574,12 +594,7 @@ void retrieveHistory(LogosAPIClient* logosAPI, const std::string& channelName, M
 
     std::cout << "Query JSON: " << queryJson.c_str() << std::endl;
 
-    // Create a context to hold the callback
-    StoreQueryContext* context = new StoreQueryContext(callback);
-
-    QObject* waku_module = logosAPI->requestObject("waku_module");
-    // listen to event from waku module
-    logosAPI->onEvent(waku_module, nullptr, "storeQueryResponse", [context, channelName, callback](const QString& eventName, const QVariantList& data) {
+    if (!wakuModule.on("storeQueryResponse", [channelName, callback](const QString&, const QVariantList& data) {
         if (!data.isEmpty()) {
             std::string jsonStr = data.first().toString().toStdString();
 
@@ -616,7 +631,11 @@ void retrieveHistory(LogosAPIClient* logosAPI, const std::string& channelName, M
             }
             std::cout << "Total messages found: " << messageCount << std::endl;
         }
-    });
+    })) {
+        std::cerr << "Failed to subscribe to storeQueryResponse events" << std::endl;
+    }
 
-    logosAPI->invokeRemoteMethod("waku_module", "storeQuery", QString::fromStdString(queryJson), QString::fromStdString(STORE_NODE), 30000);
-} 
+    if (!wakuModule.storeQuery(QString::fromStdString(queryJson), QString::fromStdString(STORE_NODE))) {
+        std::cerr << "Failed to request message history from Waku store" << std::endl;
+    }
+}

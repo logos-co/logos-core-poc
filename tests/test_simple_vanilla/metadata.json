@@ -1,0 +1,8 @@
+{
+  "name": "test_simple_vanilla",
+  "version": "0.0.1",
+  "description": "Minimal integration test harness for template module",
+  "type": "test",
+  "main": "test_simple",
+  "dependencies": ["template_module"]
+}

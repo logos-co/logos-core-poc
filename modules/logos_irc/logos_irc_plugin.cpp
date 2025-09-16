@@ -118,7 +118,6 @@ void LogosIRCPlugin::initChatBridge() {
     }
 
     // Initialize the chat module
-    // QVariant result = logosAPI->getClient("chat")->invokeRemoteMethod("chat", "initialize");
     QVariant result = logos->chat.initialize();
     bool success = result.toBool();
     
@@ -203,7 +202,6 @@ void LogosIRCPlugin::onIRCChannelJoined(const QString& channel) {
     qDebug() << "LogosIRCPlugin: IRC user joined channel" << channel << ", joining chat channel:" << channelName;
     
     // Join the channel on the chat side
-    // QVariant joinResult = logosAPI->getClient("chat")->invokeRemoteMethod("chat", "joinChannel", channelName);
     QVariant joinResult = logos->chat.joinChannel(channelName);
     if (joinResult.toBool()) {
         qDebug() << "LogosIRCPlugin: Successfully joined chat channel:" << channelName;
@@ -213,7 +211,6 @@ void LogosIRCPlugin::onIRCChannelJoined(const QString& channel) {
         
         // Automatically retrieve message history for the joined channel
         qDebug() << "LogosIRCPlugin: Retrieving message history for channel:" << channelName;
-        // QVariant historyResult = logosAPI->getClient("chat")->invokeRemoteMethod("chat", "retrieveHistory", channelName);
         QVariant historyResult = logos->chat.retrieveHistory(channelName);
         qDebug() << "LogosIRCPlugin: retrieveHistory result:" << historyResult;
     } else {
@@ -236,6 +233,5 @@ void LogosIRCPlugin::onIRCMessageSent(const QString& channel, const QString& nic
     qDebug() << "LogosIRCPlugin: Forwarding IRC message from" << nick << "in channel" << channelName << ":" << message;
     
     // Send the message to the chat module
-    // QVariant result = logosAPI->getClient("chat")->invokeRemoteMethod("chat", "sendMessage", channelName, nick, message);
     logos->chat.sendMessage(channelName, nick, message);
 } 

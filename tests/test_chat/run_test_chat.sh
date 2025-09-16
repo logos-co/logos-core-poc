@@ -65,7 +65,7 @@ else
     JOBS=2
 fi
 
-make -j$JOBS test_chat
+cmake --build . --target test_chat -- -j$JOBS
 
 echo "Build completed successfully!"
 

@@ -17,10 +17,7 @@
 #include <fstream>
 #include "protocol/protocol.h"
 #include "message.pb.h"
-#include "../../modules/waku_module/waku_module_interface.h"
-
-// Forward declaration
-class LogosAPIClient;
+#include "logos_sdk.h"
 
 // Constants
 extern const std::string TOY_CHAT_CONTENT_TOPIC;
@@ -83,15 +80,15 @@ std::vector<uint8_t> base64Decode(const std::string& encoded);
 std::string base64Encode(const std::vector<uint8_t>& data);
 ChatMessage createChatMessage(const std::string& username, const std::string& message);
 bool encodeProto(const ChatMessage& msg, std::vector<uint8_t>& output);
-void sendMessage(LogosAPIClient* logosAPI, const std::string& channelName, const std::string& username, const std::string& message);
+void sendMessage(LogosAPI* logosAPI, LogosModules* logos, const std::string& channelName, const std::string& username, const std::string& message);
 void signalHandler(int signal);
 void relayTopicHealthCallback(int callerRet, const char* msg, size_t len, void* userData);
 void connectionChangeCallback(int callerRet, const char* msg, size_t len, void* userData);
 void storeQueryCallback(int callerRet, const char* msg, size_t len, void* userData);
 void nodeOperationCallback(int callerRet, const char* msg, size_t len, void* userData);
-void retrieveHistory(LogosAPIClient* logosAPI, const std::string& channelName, MessageCallback callback = nullptr);
+void retrieveHistory(LogosAPI* logosAPI, LogosModules* logos, const std::string& channelName, MessageCallback callback = nullptr);
 void event_handler(int callerRet, const char* msg, size_t len, void* userData);
-void* initAndStart(LogosAPIClient* logosAPI, const std::string& relayTopic, MessageCallback messageCallback = nullptr);
-bool joinChannel(LogosAPIClient* logosAPI, const std::string& channelName, const std::string& relayTopic);
+void* initAndStart(LogosAPI* logosAPI, LogosModules* logos, const std::string& relayTopic, MessageCallback messageCallback = nullptr);
+bool joinChannel(LogosAPI* logosAPI, LogosModules* logos, const std::string& channelName, const std::string& relayTopic);
 
 #endif // CHAT_API_H 

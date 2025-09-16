@@ -320,6 +320,16 @@ logosAPI->getClient("chat")->invokeRemoteMethod("chat", "sendMessage", currentCh
 
 note: Internally the API will take care of any token negotiation and permissions needed (see Sequence Diagram section)
 
+Listening to Events from another object:
+
+```c++
+QObject *chatObject = m_logosAPI->getClient("chat")->requestObject("chat");
+
+m_logosAPI->getClient("chat")->onEvent(chatObject, this, "chatMessage", [this](const QString &eventName, const QVariantList &data) {
+          handleWakuMessage(data[0].toString().toStdString(), data[1].toString().toStdString(), data[2].toString().toStdString());
+});
+```
+
 Listening to events from another module via the generated helpers:
 
 ```c++
@@ -332,7 +342,16 @@ logos.chat.on("chatMessage", [this](const QVariantList& data) {
 });
 ```
 
-Triggering an event through the helper after setting the source:
+Triggering an event:
+
+```c++
+QVariantList data;
+data << timestamp << nick << message;
+
+logosAPI->getClient("chat")->onEventResponse(this, "chatMessage", data);
+```
+
+Triggering an event with the generated helpers:
 
 ```c++
 logos.chat.setEventSource(this);
@@ -343,7 +362,7 @@ data << timestamp << nick << message;
 logos.chat.trigger("chatMessage", data);
 ```
 
-#### 5.2.3.1 LogosAPIConsumer (internal)
+#### 3.2.3.1 LogosAPIConsumer (internal)
 
 `LogosAPIConsumer` is the low‑level component used by `LogosAPIClient`. It manages the connection to the registry, acquires remote object replicas and invokes methods via Qt Remote Objects. It also handles event subscription and token propagation. The constructor stores the registry URL `local:logos_<targetModule>` and attempts to connect immediately. A `LogosAPIClient` will have multiple `LogosAPIConsumer` instances.
 
@@ -416,6 +435,7 @@ Generator:
 - Typical invocation from CMake custom targets:
   - `logos-cpp-generator --metadata <path>/metadata.json --module-dir <path>/modules/build/modules`
 - Outputs for each dependency module: `<module>_api.h/.cpp`, plus umbrella `logos_sdk.h/.cpp`.
+- Always emits `core_manager_api.h/.cpp` and wires `CoreManager` into the umbrella even if the metadata does not list `core_manager`.  The core manager plug‑in is built into the core process and therefore cannot be introspected via `QPluginLoader`; generating it unconditionally guarantees SDK consumers can manage the core (initialise, enumerate plug‑ins, load/unload, etc.) without hand‑written bindings.
 - Return types are mapped appropriately (e.g., `bool`, `int`, `double`, `float`, `QString`, `QStringList`, `QJsonArray`, or `QVariant`).
 
 CLI flags and behavior:
@@ -427,7 +447,7 @@ CLI flags and behavior:
 What it does under the hood:
 - Loads each dependency plugin via `QPluginLoader`, creates an instance and enumerates its invokable methods using Qt meta‑object reflection.
 - For each method, emits a type‑safe C++ wrapper function that marshals arguments and converts results from `QVariant` to the expected C++ types.
-- Regenerates an umbrella header/source to include all generated module wrappers and expose a convenience aggregator `LogosModules` with members like `logos.chat`.
+- Regenerates an umbrella header/source to include all generated module wrappers and expose a convenience aggregator `LogosModules` with members like `logos.chat` and `logos.core_manager`.
 
 How code generation works (step‑by‑step):
 1. Input resolution
@@ -511,6 +531,8 @@ The module implements a simple interface defined in `capability_module_interface
 The Core Manager is a built‑in module that exposes the core’s lifecycle and plugin management functions over the same RPC mechanism.
 
 It implements the general `PluginInterface` and registers itself under the name core_manager. Applications or other modules can call into the Core Manager to start the core, set the plug‑in directory, load or unload modules and introspect module methods without linking against the C API. This makes it possible to manage the core entirely through RPC.
+
+Because the Core Manager lives inside the core process and is not deployed as a standalone plugin binary, `logos-cpp-generator` cannot introspect it at build time. Instead, the generator always emits a pre-defined `CoreManager` wrapper and adds it to the `LogosModules` umbrella so SDK consumers consistently have typed access to lifecycle and plugin-management APIs.
 
 **Responsibilities**:
 - **Core lifecycle control**: The core manager exposes `initialize()`, `setPluginsDirectory()`, `start()` and `cleanup()` methods which internally call the corresponding C API functions (`logos_core_set_plugins_dir`, `logos_core_start`, `logos_core_cleanup`) to set up and shut down the core
@@ -1064,14 +1086,17 @@ To change the UI completely, all one needs to do is switch `main_ui.so` with a d
 The App can then use the API to talk to various modules that are loaded.
 
 ```c++
-// Query core_manager for known plug‑ins
+// Query core_manager for known plug-ins using generated wrappers
 LogosAPI api("core");
-auto client = api.getClient("core_manager");
-QVariant result = client->invokeRemoteMethod("core_manager","getKnownPlugins");
+LogosAPIClient* coreClient = api.getClient("core_manager");
+if (coreClient && coreClient->isConnected()) {
+    LogosModules logos(&api);
+    QJsonArray known = logos.core_manager.getKnownPlugins();
 
-// Load or unload a plug‑in when buttons are clicked
-client->invokeRemoteMethod("core_manager","loadPlugin", pluginName);
-client->invokeRemoteMethod("core_manager","unloadPlugin", pluginName);
+    // Load or unload a plug-in when buttons are clicked
+    logos.core_manager.loadPlugin(pluginName);
+    logos.core_manager.unloadPlugin(pluginName);
+}
 ```
 
 ### 5.2 ChatApp Example

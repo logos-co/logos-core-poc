@@ -1,0 +1,8 @@
+{
+  "name": "test_chat",
+  "version": "0.0.1",
+  "description": "Integration test harness for template module",
+  "type": "test",
+  "main": "test_simple",
+  "dependencies": ["chat", "waku_module"]
+}

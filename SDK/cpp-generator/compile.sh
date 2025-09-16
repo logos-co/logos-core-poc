@@ -2,15 +2,6 @@
 
 set -euo pipefail
 
-# Build script for logos-cpp-generator
-# Usage:
-#   ./compile.sh [clean] [--debug|--release] [--prefix PATH]
-#
-# Notes:
-# - If QT_DIR is set, it will be passed to CMake via -DCMAKE_PREFIX_PATH
-# - The build directory is <repo_root>/build/cpp-generator
-
-# Resolve repo root (this script is in SDK/cpp-generator)
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 BUILD_DIR="$REPO_ROOT/build/cpp-generator"

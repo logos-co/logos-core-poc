@@ -37,8 +37,6 @@ find_package(Protobuf REQUIRED)
 find_package(Threads REQUIRED)
 find_package(absl QUIET)
 
-## Do not compile generated SDK wrappers here; they are for consumer modules
-
 # Generate protobuf files
 set(PROTO_FILE "${CMAKE_CURRENT_SOURCE_DIR}/src/protobuf/message.proto")
 set(PROTO_SRC "${CMAKE_CURRENT_BINARY_DIR}/message.pb.cc")
@@ -64,6 +62,7 @@ add_library(chat SHARED
     src/chat_api.cpp
     ${PROTO_SRC}
     ${PROTO_HDR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/generated/logos_sdk.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api_client.cpp
@@ -78,7 +77,7 @@ add_library(chat SHARED
     ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/module_proxy.h
 )
 
-## Intentionally not adding generated SDK sources to 'chat'
+set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/generated/logos_sdk.cpp PROPERTIES GENERATED TRUE)
 
 # Make sure protocol buffers are generated before building
 add_dependencies(chat generate_protos)

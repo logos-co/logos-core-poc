@@ -65,7 +65,7 @@ else
     JOBS=2
 fi
 
-make -j$JOBS
+cmake --build . --target test_install_package -- -j$JOBS
 
 echo "Build completed successfully!"
 

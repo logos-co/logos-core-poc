@@ -14,27 +14,25 @@ add_custom_command(
     BYPRODUCTS
         "${REPO_ROOT}/SDK/cpp/generated/logos_sdk.h"
         "${REPO_ROOT}/SDK/cpp/generated/logos_sdk.cpp"
-        "${REPO_ROOT}/SDK/cpp/generated/wallet_module_api.h"
-        "${REPO_ROOT}/SDK/cpp/generated/wallet_module_api.cpp"
+        "${REPO_ROOT}/SDK/cpp/generated/template_module_api.h"
+        "${REPO_ROOT}/SDK/cpp/generated/template_module_api.cpp"
     WORKING_DIRECTORY "${REPO_ROOT}"
-    COMMENT "Running logos-cpp-generator for test_wallet"
+    COMMENT "Running logos-cpp-generator for test_simple_vanilla"
     VERBATIM
 )
 
-add_custom_target(run_cpp_generator_test_wallet DEPENDS ${GENERATED_STAMP})
+add_custom_target(run_cpp_generator_test_simple_vanilla DEPENDS ${GENERATED_STAMP})
 if (TARGET cpp_generator_build)
-    add_dependencies(run_cpp_generator_test_wallet cpp_generator_build)
+    add_dependencies(run_cpp_generator_test_simple_vanilla cpp_generator_build)
 endif()
 
 # Find Qt RemoteObjects (needed for LogosAPI)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core RemoteObjects)
 
-# Define the test_wallet application sources
-set(TEST_WALLET_SOURCES
+# Define the test_simple application sources
+set(TEST_SIMPLE_SOURCES
     main.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/generated/logos_sdk.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api_client.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api_client.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api_consumer.cpp
@@ -45,25 +43,23 @@ set(TEST_WALLET_SOURCES
 
 set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/generated/logos_sdk.cpp PROPERTIES GENERATED TRUE)
 
-# Create the test_wallet application
-add_executable(test_wallet ${TEST_WALLET_SOURCES})
-add_dependencies(test_wallet run_cpp_generator_test_wallet)
+# Create the test_simple application
+add_executable(test_simple ${TEST_SIMPLE_SOURCES})
+add_dependencies(test_simple run_cpp_generator_test_simple_vanilla)
 
-# Link the test_wallet application with the logos core library and Qt RemoteObjects
-target_link_libraries(test_wallet PRIVATE 
+# Link the test_simple application with the logos core library and Qt RemoteObjects
+target_link_libraries(test_simple PRIVATE 
     ${LOGOS_CORE_LIBRARY} 
     Qt${QT_VERSION_MAJOR}::Core 
     Qt${QT_VERSION_MAJOR}::RemoteObjects
 )
 
-# Include directories for the test_wallet application
-# Add SDK includes to make RE client build
-target_include_directories(test_wallet PRIVATE
+# Include directories for the test_simple application
+target_include_directories(test_simple PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../core/src
     ${CMAKE_CURRENT_SOURCE_DIR}/../../core
     ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/generated
     ${Qt${QT_VERSION_MAJOR}_INCLUDE_DIRS}
-)
-
+) 
