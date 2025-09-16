@@ -115,23 +115,32 @@ void ChatWidget::initWaku()
 {
     updateStatus("Status: Initializing Waku...");
 
-    // request object from logos api
-    QObject *chatObject = m_logosAPI->getClient("chat")->requestObject("chat");
+    if (!logos->chat.on("chatMessage", [this](const QVariantList& data) {
+            if (data.size() < 3) {
+                qWarning() << "ChatWidget: chatMessage payload missing fields";
+                return;
+            }
+            handleWakuMessage(data[0].toString().toStdString(), data[1].toString().toStdString(), data[2].toString().toStdString());
+        })) {
+        qWarning() << "ChatWidget: failed to subscribe to chatMessage events";
+    }
 
-    m_logosAPI->getClient("chat")->onEvent(chatObject, this, "chatMessage", [this](const QString &eventName, const QVariantList &data) {
-        handleWakuMessage(data[0].toString().toStdString(), data[1].toString().toStdString(), data[2].toString().toStdString());
-    });
-
-    m_logosAPI->getClient("chat")->onEvent(chatObject, this, "historyMessage", [this](const QString &eventName, const QVariantList &data) {
-        QString historyPrefix = "[HISTORY] ";
-        QString nick = data[1].toString();
-        QString message = data[2].toString();
-
-        QMetaObject::invokeMethod(activeWidget, [=]() {
+    if (!logos->chat.on("historyMessage", [this](const QVariantList& data) {
+            if (data.size() < 3) {
+                qWarning() << "ChatWidget: historyMessage payload missing fields";
+                return;
+            }
             QString historyPrefix = "[HISTORY] ";
-            activeWidget->displayMessage(historyPrefix + nick, message);
-        }, Qt::QueuedConnection);
-    });
+            QString nick = data[1].toString();
+            QString message = data[2].toString();
+
+            QMetaObject::invokeMethod(activeWidget, [=]() {
+                QString historyPrefix = "[HISTORY] ";
+                activeWidget->displayMessage(historyPrefix + nick, message);
+            }, Qt::QueuedConnection);
+        })) {
+        qWarning() << "ChatWidget: failed to subscribe to historyMessage events";
+    }
 
     bool success = logos->chat.initialize();
 

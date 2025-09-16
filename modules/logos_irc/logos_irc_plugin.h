@@ -32,13 +32,12 @@ private slots:
 
 private:
     void initChatBridge();
-    void onChatMessage(const QString& eventName, const QVariantList& data);
-    void onHistoryMessage(const QString& eventName, const QVariantList& data);
+    void onChatMessage(const QVariantList& data);
+    void onHistoryMessage(const QVariantList& data);
     
     LogosAPI* logosAPI = nullptr;
     LogosModules* logos = nullptr;
     IRCServer* ircServer = nullptr;
-    QObject* chatObject = nullptr;
     QStringList joinedChannels;
 
 signals:

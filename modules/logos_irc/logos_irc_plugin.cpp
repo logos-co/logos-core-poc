@@ -37,7 +37,10 @@ LogosIRCPlugin::~LogosIRCPlugin()
         ircServer = nullptr;
         qDebug() << "LogosIRCPlugin: IRC Server stopped and cleaned up";
     }
-    
+    if (logos) {
+        delete logos;
+        logos = nullptr;
+    }
     if (logosAPI) {
         delete logosAPI;
         logosAPI = nullptr;
@@ -84,6 +87,10 @@ bool LogosIRCPlugin::foo(const QString &bar)
 
 void LogosIRCPlugin::initLogos(LogosAPI* logosAPIInstance) {
     logosAPI = logosAPIInstance;
+    if (logos) {
+        delete logos;
+        logos = nullptr;
+    }
     logos = new LogosModules(logosAPI);
 
     // Initialize chat bridge after LogosAPI is available
@@ -98,18 +105,17 @@ void LogosIRCPlugin::initChatBridge() {
     
     qDebug() << "LogosIRCPlugin: Initializing chat bridge...";
     
-    // Request chat object from logos api (similar to ChatWidget::initWaku)
-    chatObject = logosAPI->getClient("chat")->requestObject("chat");
-    
-    // Listen for chat messages (similar to ChatWidget)
-    logosAPI->getClient("chat")->onEvent(chatObject, this, "chatMessage", [this](const QString &eventName, const QVariantList &data) {
-        onChatMessage(eventName, data);
-    });
-    
-    // Listen for history messages (similar to ChatWidget)
-    logosAPI->getClient("chat")->onEvent(chatObject, this, "historyMessage", [this](const QString &eventName, const QVariantList &data) {
-        onHistoryMessage(eventName, data);
-    });
+    if (!logos->chat.on("chatMessage", [this](const QVariantList& data) {
+            onChatMessage(data);
+        })) {
+        qWarning() << "LogosIRCPlugin: failed to subscribe to chatMessage";
+    }
+
+    if (!logos->chat.on("historyMessage", [this](const QVariantList& data) {
+            onHistoryMessage(data);
+        })) {
+        qWarning() << "LogosIRCPlugin: failed to subscribe to historyMessage";
+    }
 
     // Initialize the chat module
     // QVariant result = logosAPI->getClient("chat")->invokeRemoteMethod("chat", "initialize");
@@ -124,9 +130,7 @@ void LogosIRCPlugin::initChatBridge() {
     }
 }
 
-void LogosIRCPlugin::onChatMessage(const QString& eventName, const QVariantList& data) {
-    Q_UNUSED(eventName)
-    
+void LogosIRCPlugin::onChatMessage(const QVariantList& data) {
     if (data.size() >= 3) {
         QString timestamp = data[0].toString();
         QString nick = data[1].toString();
@@ -152,9 +156,7 @@ void LogosIRCPlugin::onChatMessage(const QString& eventName, const QVariantList&
     }
 }
 
-void LogosIRCPlugin::onHistoryMessage(const QString& eventName, const QVariantList& data) {
-    Q_UNUSED(eventName)
-    
+void LogosIRCPlugin::onHistoryMessage(const QVariantList& data) {
     if (data.size() >= 3) {
         QString timestamp = data[0].toString();
         QString nick = data[1].toString();
