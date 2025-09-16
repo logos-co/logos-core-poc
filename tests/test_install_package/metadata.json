@@ -1,0 +1,8 @@
+{
+  "name": "test_install_package",
+  "version": "0.0.1",
+  "description": "Package manager integration test",
+  "type": "test",
+  "main": "test_install_package",
+  "dependencies": ["package_manager", "template_module"]
+}

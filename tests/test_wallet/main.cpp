@@ -1,14 +1,15 @@
 #include <iostream>
 #include <QDir>
 #include <QString>
+#include <QStringList>
 #include <QCoreApplication>
 #include <QDebug>
 #include <QJsonArray>
 #include <QJsonObject>
-#include <QRemoteObjectPendingCall>
 #include "../../core/src/logos_core.h"
 #include "../../SDK/cpp/logos_api.h"
 #include "../../SDK/cpp/logos_api_client.h"
+#include "logos_sdk.h"
 
 int main(int argc, char *argv[])
 {
@@ -32,77 +33,48 @@ int main(int argc, char *argv[])
     }
     qDebug() << "wallet_module loaded";
 
-    // Create a LogosAPI client and request the wallet_module object
+    // Create a LogosAPI client and typed module wrappers
     LogosAPI api("core");
-    QObject* walletObj = api.getClient("wallet_module")->requestObject("wallet_module");
-    if (!walletObj) {
-        qCritical() << "Failed to get wallet_module object";
-        return 1;
-    }
+    LogosModules logos(&api);
+    auto& coreManager = logos.core_manager;
+    auto& wallet = logos.wallet_module;
 
-    // Invoke getPluginMethods() on the ModuleProxy (remote) and print the methods
-    {
-        QRemoteObjectPendingCall pending;
-        bool ok = QMetaObject::invokeMethod(
-            walletObj,
-            "getPluginMethods",
-            Qt::DirectConnection,
-            Q_RETURN_ARG(QRemoteObjectPendingCall, pending)
-        );
-
-        if (!ok) {
-            qCritical() << "Failed to invoke getPluginMethods on wallet_module";
-            return 1;
-        }
-
-        pending.waitForFinished(20000);
-        if (!pending.isFinished() || pending.error() != QRemoteObjectPendingCall::NoError) {
-            qCritical() << "getPluginMethods() call failed or timed out:" << pending.error();
-            return 1;
-        }
-
-        QVariant ret = pending.returnValue();
-        QJsonArray methods = ret.toJsonArray();
-        qDebug() << "wallet_module methods (" << methods.size() << ")";
-        for (const QJsonValue &val : methods) {
-            QJsonObject obj = val.toObject();
-            qDebug() << "-" << obj.value("name").toString()
-                     << "|" << obj.value("signature").toString()
-                     << "| returns" << obj.value("returnType").toString();
-            if (obj.contains("parameters")) {
-                QJsonArray params = obj.value("parameters").toArray();
-                QStringList paramStrs;
-                for (const QJsonValue &pv : params) {
-                    QJsonObject pObj = pv.toObject();
-                    paramStrs << (pObj.value("type").toString() + " " + pObj.value("name").toString());
-                }
-                if (!paramStrs.isEmpty()) {
-                    qDebug() << "  params:" << paramStrs.join(", ");
-                }
+    // Query the wallet plugin methods via core manager
+    QJsonArray methods = coreManager.getPluginMethods("wallet_module");
+    qDebug() << "wallet_module methods (" << methods.size() << ")";
+    for (const QJsonValue &val : methods) {
+        QJsonObject obj = val.toObject();
+        qDebug() << "-" << obj.value("name").toString()
+                 << "|" << obj.value("signature").toString()
+                 << "| returns" << obj.value("returnType").toString();
+        if (obj.contains("parameters")) {
+            QStringList paramStrs;
+            for (const QJsonValue &pv : obj.value("parameters").toArray()) {
+                QJsonObject pObj = pv.toObject();
+                paramStrs << (pObj.value("type").toString() + " " + pObj.value("name").toString());
+            }
+            if (!paramStrs.isEmpty()) {
+                qDebug() << "  params:" << paramStrs.join(", ");
             }
         }
     }
 
     // Call chainId()
-    QVariant chainId = api.getClient("wallet_module")->invokeRemoteMethod("wallet_module", "chainId", QString("https://ethereum-rpc.publicnode.com"));
-    if (!chainId.isValid()) {
-        qCritical() << "chainId() call failed";
+    const QString rpcUrl = QStringLiteral("https://ethereum-rpc.publicnode.com");
+    QString chainId = wallet.chainId(rpcUrl);
+    if (chainId.isEmpty()) {
+        qCritical() << "chainId() call returned empty result";
         return 1;
     }
-    qDebug() << "chainId:" << chainId.toString();
+    qDebug() << "chainId:" << chainId;
 
     // Call getEthBalance() for zero address as in example
-    QVariant balance = api.getClient("wallet_module")->invokeRemoteMethod(
-        "wallet_module",
-        "getEthBalance",
-        QString("https://ethereum-rpc.publicnode.com"),
-        QString("0x0000000000000000000000000000000000000000")
-    );
-    if (!balance.isValid()) {
-        qCritical() << "getEthBalance() call failed";
+    QString balance = wallet.getEthBalance(rpcUrl, QStringLiteral("0x0000000000000000000000000000000000000000"));
+    if (balance.isEmpty()) {
+        qCritical() << "getEthBalance() call returned empty result";
         return 1;
     }
-    qDebug() << "balance (wei):" << balance.toString();
+    qDebug() << "balance (wei):" << balance;
 
     std::cout << "Test Wallet Completed" << std::endl;
     return 0;

@@ -23,6 +23,7 @@ set(PLUGIN_SOURCES
     package_manager_plugin.h
     package_manager_interface.h
     ${CMAKE_SOURCE_DIR}/../core/interface.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/generated/logos_sdk.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api_client.cpp
@@ -39,6 +40,8 @@ set(PLUGIN_SOURCES
 
 # Create the plugin library
 add_library(package_manager_plugin SHARED ${PLUGIN_SOURCES})
+
+set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/generated/logos_sdk.cpp PROPERTIES GENERATED TRUE)
 
 ## Do not compile generated SDK wrappers here; consumer modules include logos_sdk.cpp
 

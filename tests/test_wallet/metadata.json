@@ -1,0 +1,8 @@
+{
+  "name": "test_wallet",
+  "version": "0.0.1",
+  "description": "Wallet module integration smoke test",
+  "type": "test",
+  "main": "test_wallet",
+  "dependencies": ["wallet_module"]
+}

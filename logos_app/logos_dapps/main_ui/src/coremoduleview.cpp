@@ -174,15 +174,15 @@ void CoreModuleView::updatePluginList()
 {
     qDebug() << "\n\n----------> Updating plugin list\n\n";
     
-    // Use old API to get the list of known plugins from core_manager
     LogosAPI api("core");
-    auto client = api.getClient("core_manager");
-    QVariant result = client->invokeRemoteMethod("core_manager", "getKnownPlugins");
-    if (!result.isValid()) {
-        qWarning() << "Failed to get known plugins from core manager";
+    LogosAPIClient* coreManagerClient = api.getClient("core_manager");
+    if (!coreManagerClient || !coreManagerClient->isConnected()) {
+        qWarning() << "Core manager client is not available";
         return;
     }
-    QJsonArray pluginsArray = result.toJsonArray();
+
+    LogosModules logos(&api);
+    QJsonArray pluginsArray = logos.core_manager.getKnownPlugins();
 
     qDebug() << "================================";
     qDebug() << "pluginsArray:" << pluginsArray;
@@ -280,11 +280,15 @@ void CoreModuleView::onLoadPluginClicked()
 
     qDebug() << "Loading plugin:" << pluginName;
 
-    // Use old API to load the plugin via core_manager
     LogosAPI api("core");
-    auto client = api.getClient("core_manager");
-    QVariant result = client->invokeRemoteMethod("core_manager", "loadPlugin", pluginName);
-    bool success = result.toBool();
+    LogosAPIClient* coreManagerClient = api.getClient("core_manager");
+    if (!coreManagerClient || !coreManagerClient->isConnected()) {
+        qWarning() << "Core manager client is not available";
+        return;
+    }
+
+    LogosModules logos(&api);
+    bool success = logos.core_manager.loadPlugin(pluginName);
     if (success) {
         qDebug() << "Successfully loaded plugin:" << pluginName;
         // Update the UI to reflect the loaded plugin
@@ -309,11 +313,15 @@ void CoreModuleView::onUnloadPluginClicked()
 
     qDebug() << "Unloading plugin:" << pluginName;
 
-    // Use old API to unload the plugin via core_manager
     LogosAPI api("core");
-    auto client = api.getClient("core_manager");
-    QVariant result = client->invokeRemoteMethod("core_manager", "unloadPlugin", pluginName);
-    bool success = result.toBool();
+    LogosAPIClient* coreManagerClient = api.getClient("core_manager");
+    if (!coreManagerClient || !coreManagerClient->isConnected()) {
+        qWarning() << "Core manager client is not available";
+        return;
+    }
+
+    LogosModules logos(&api);
+    bool success = logos.core_manager.unloadPlugin(pluginName);
     if (success) {
         qDebug() << "Successfully unloaded plugin:" << pluginName;
         // Update the UI to reflect the unloaded plugin
@@ -392,11 +400,10 @@ void CoreModuleView::onAddPluginClicked()
 
     qDebug() << "Selected plugin file:" << filePath;
 
-    // Use old API via package_manager to install the plugin
+    // Use new API via LogosModules wrapper
     LogosAPI api("core");
-    auto client = api.getClient("package_manager");
-    QVariant result = client->invokeRemoteMethod("package_manager", "installPlugin", filePath);
-    bool success = result.toBool();
+    LogosModules logos(&api);
+    bool success = logos.package_manager.installPlugin(filePath);
     if (!success) {
         QMessageBox::warning(this, "Warning", "Failed to install plugin file.");
         return;
