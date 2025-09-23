@@ -4,8 +4,8 @@
   <ShortName>Logos SDK</ShortName>
   <Description>Search Logos SDK</Description>
   <InputEncoding>UTF-8</InputEncoding>
-  <Image width="16" height="16" type="image/x-icon">https://logos.example.com/logos-co.github.io/logos-core-poc/img/favicon.ico</Image>
-  <Url type="text/html" method="get" template="https://logos.example.com/logos-co.github.io/logos-core-poc/search?q={searchTerms}"/>
-  <Url type="application/opensearchdescription+xml" rel="self" template="https://logos.example.com/logos-co.github.io/logos-core-poc/opensearch.xml" />
-  <moz:SearchForm>https://logos.example.com/logos-co.github.io/logos-core-poc/</moz:SearchForm>
+  <Image width="16" height="16" type="image/x-icon">https://logos.example.com/logos-core-poc/img/favicon.ico</Image>
+  <Url type="text/html" method="get" template="https://logos.example.com/logos-core-poc/search?q={searchTerms}"/>
+  <Url type="application/opensearchdescription+xml" rel="self" template="https://logos.example.com/logos-core-poc/opensearch.xml" />
+  <moz:SearchForm>https://logos.example.com/logos-core-poc/</moz:SearchForm>
 </OpenSearchDescription>
