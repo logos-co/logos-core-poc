@@ -1,8 +1,0 @@
-[submodule "modules/waku_module/vendor/nwaku"]
-	path = modules/waku_module/vendor/nwaku
-	url = https://github.com/iurimatias/nwaku.git
-	branch = template_fix
-[submodule "modules/wallet_module/vendor/go-wallet-sdk"]
-	path = modules/wallet_module/vendor/go-wallet-sdk
-	url = https://github.com/status-im/go-wallet-sdk.git
-	branch = compile_c_lib

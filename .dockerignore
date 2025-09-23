@@ -1,6 +1,0 @@
-Dockerfile
-.dockerignore
-modules/**/vendor/*
-modules/**/*.so
-modules/build/*
-./**/CMakeCache.txt
