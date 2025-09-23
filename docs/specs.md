@@ -58,10 +58,16 @@ note: This document is a living document and it explains the project's current s
   - [9.1 Setup](#91-setup)
   - [9.2 Build everything and run Logos App](#92-build-everything-and-run-logos-app)
   - [9.3 Run tests](#93-run-tests)
-  - [9.4 Compiled only modules](#94-compiled-only-modules)
-  - [9.5 Compiled only UI plugins](#95-compiled-only-ui-plugins)
-  - [9.6 Build and run the core](#96-build-and-run-the-core)
-  - [9.7 Library Path Adjustments](#97-library-path-adjustments)
+- [9.4 Compiled only modules](#94-compiled-only-modules)
+- [9.5 Compiled only UI plugins](#95-compiled-only-ui-plugins)
+- [9.6 Build and run the core](#96-build-and-run-the-core)
+- [9.7 Library Path Adjustments](#97-library-path-adjustments)
+- [10. Documentation Site](#10-documentation-site)
+  - [10.1 Overview](#101-overview)
+  - [10.2 Local Development](#102-local-development)
+  - [10.3 Editing Content](#103-editing-content)
+  - [10.4 Styling and Assets](#104-styling-and-assets)
+  - [10.5 Deployment Notes](#105-deployment-notes)
 
 
 ## 1. Overview and Goals
@@ -1499,3 +1505,45 @@ One import detail in the build scripts concerns how the Waku plug‑in finds its
 * **macOS:**  After building the modules, the script invokes `otool -L` to find the current `libwaku` path in `waku_module_plugin.dylib`, then uses `install_name_tool -change` to replace that path with `@rpath/libwaku.so` and `install_name_tool -id` to set the install name of `libwaku.so` to `@rpath/libwaku.so`.  The `@rpath` token tells the loader to search the plug‑in’s runtime search paths, allowing the plug‑in and its dependent library to live in the same folder.
 
 * **Linux:**  There is no `install_name_tool`, so the script uses `patchelf --set-rpath '$ORIGIN'` on `waku_module_plugin.so`.  `$ORIGIN` instructs the dynamic linker to look in the directory containing the plug‑in for its dependencies.  This ensures that `waku_module_plugin` finds `libwaku.so` without requiring the user to set `LD_LIBRARY_PATH`.
+
+## 10. Documentation Site
+
+The repository now bundles a Docusaurus v3 documentation site under the `website/` directory. It mirrors the structure and tone of the XMTP docs while explaining the Logos SDK and modules.
+
+### 10.1 Overview
+
+- `website/package.json` pins the Docusaurus toolchain (`@docusaurus/core` and `@docusaurus/preset-classic`).
+- The landing page lives at `website/src/pages/index.js`, featuring a hero, feature grid, and CTA footer aligned with Logos branding.
+- Docs content is organized in `website/docs/` using Markdown/MDX. Generated pages adopt the sidebar hierarchy defined in `website/sidebars.js` (Getting Started, SDK Reference, Guides).
+- Theme configuration—including navbar/footer links and color mode defaults—resides in `website/docusaurus.config.js`.
+
+### 10.2 Local Development
+
+Run the site with Node 18+ from the `website/` folder:
+
+```bash
+cd website
+npm install
+npm run start
+```
+
+`npm run start` launches the local dev server with hot reload (default at `http://localhost:3000`). The build uses dark mode by default but keeps the theme toggle enabled.
+
+### 10.3 Editing Content
+
+- Place Markdown files in `website/docs/` and MDX files where React interactivity is needed (for example tabbed code samples).
+- Front matter `id` fields are optional when files are nested; Docusaurus derives stable IDs from folder structure (`guides/building-chat-experiences.mdx` ⇒ `guides/building-chat-experiences`).
+- Update navigation groupings in `website/sidebars.js`. Each entry should match the derived document ID (`folder/filename`).
+- Global edits (e.g. changing titles/tagline, navbar items, Algolia keys) happen in `website/docusaurus.config.js`.
+
+### 10.4 Styling and Assets
+
+- Custom CSS lives in `website/src/css/custom.css`, which adjusts typography, layout spacing, and the landing page aesthetics.
+- Static assets (logos, illustrations, social cards) belong in `website/static/img/`. The navbar currently references `img/logos.png`, copied from `logos_app/app/icons/logos.png` for consistent branding.
+- Additional pages can be added under `website/src/pages/`—a placeholder privacy policy exists at `website/src/pages/privacy.js` to satisfy footer links.
+
+### 10.5 Deployment Notes
+
+- Produce a static build with `npm run build`; the output is written to `website/build/`.
+- Use `npm run serve` to smoke-test the production bundle locally.
+- When deploying behind a CDN or on static hosting, serve the contents of `website/build/` at the desired base URL (currently `/`). Update the `url`/`baseUrl` fields in `docusaurus.config.js` if the site moves to another domain or subpath.
