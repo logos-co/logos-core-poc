@@ -11,7 +11,7 @@ The Nim SDK provides a thin wrapper over the experimental C API exposed by `libl
 
 The Nim SDK is located at `SDK/nim/logos_api.nim`. To use it in your Nim application, simply import the module:
 
-```javascript
+```nim
 import logos_api
 ```
 
@@ -19,7 +19,7 @@ import logos_api
 
 ### Basic Usage
 
-```javascript
+```nim
 import os, strformat
 import logos_api
 
@@ -42,7 +42,7 @@ while true:
 
 The SDK provides a plugin-based API for method calls and event registration:
 
-```javascript
+```nim
 # Register event listener
 api.plugin("chat").on("chatMessage") do (success: bool, message: string):
   if success:
@@ -60,7 +60,7 @@ api.plugin("chat").call("joinChannel", "baixa-chiado") do (success: bool, messag
 
 The LogosAPI constructor accepts several configuration options:
 
-```javascript
+```nim
 var api = newLogosAPI(
   libPath = "/custom/path/to/liblogos_core.so",  # Custom library path
   pluginsDir = "/custom/plugins/directory",       # Custom plugins directory
@@ -72,7 +72,7 @@ var api = newLogosAPI(
 
 The SDK provides comprehensive plugin management capabilities:
 
-```javascript
+```nim
 # Get plugin status
 let status = api.getPluginStatus()
 echo "Loaded plugins: ", status.loaded
@@ -95,7 +95,7 @@ discard api.unloadPlugin("chat")
 
 The SDK requires manual event processing since Nim applications don't run the Qt event loop automatically:
 
-```javascript
+```nim
 # Manual event processing (required for Nim)
 while true:
   api.processEventsTick()
@@ -160,14 +160,14 @@ Registers an event listener for plugin events.
 The plugin API provides a more ergonomic interface:
 
 #### Method Calls
-```javascript
+```nim
 # Automatically handles parameter conversion
 api.plugin("pluginName").call("methodName", "singleParam", callback)
 api.plugin("pluginName").call("methodName", ["param1", "param2"], callback)
 ```
 
 #### Event Listeners
-```javascript
+```nim
 # Register event listeners with clean syntax
 api.plugin("pluginName").on("eventName") do (success: bool, message: string):
   # Handle event
@@ -185,7 +185,7 @@ The plugin API automatically infers parameter types and converts them to the exp
 
 ### Chat Application
 
-```javascript
+```nim
 import os, strformat
 import logos_api
 
@@ -228,7 +228,7 @@ when isMainModule:
 
 ### Plugin Method with Parameters
 
-```javascript
+```nim
 # Using traditional API with explicit JSON
 let params = toJson([
   Param(name: "channelName", value: "baixa-chiado", ptype: "string"),
@@ -247,7 +247,7 @@ api.plugin("chat").call("joinChannel", ["baixa-chiado", "alice"]) do (success: b
 
 ### Error Handling
 
-```javascript
+```nim
 # Handle method call errors
 api.plugin("chat").call("sendMessage", "nonexistent-channel") do (success: bool, message: string):
   if not success:

@@ -3,6 +3,8 @@ title: Architecture
 description: Internal architecture and design goals of liblogos.
 ---
 
+... needs a lot more detail than this...
+
 ### Publishing Your Own Module
 
 Modules expose their Qt objects through the SDK provider. The generated wrappers automatically enforce token checking by routing calls through the module proxy.
