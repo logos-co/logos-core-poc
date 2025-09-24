@@ -1,0 +1,13 @@
+{
+  "name": "simple_module",
+  "version": "1.0.0",
+  "description": "Simple module",
+  "author": "Logos Core Team",
+  "type": "core",
+  "category": "simple",
+  "main": "simple_module_plugin",
+  "dependencies": [],
+  "capabilities": [
+    "plugin_installation"
+  ]
+} 

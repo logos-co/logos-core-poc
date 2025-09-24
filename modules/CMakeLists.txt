@@ -43,6 +43,7 @@ add_subdirectory(waku_module)
 add_subdirectory(chat)
 add_subdirectory(logos_irc)
 add_subdirectory(template_module)
+add_subdirectory(simple_module)
 add_subdirectory(wallet_module)
 
 # Make all module plugin targets depend on cpp_generator_build
@@ -52,4 +53,5 @@ add_dependencies(waku_module_plugin cpp_generator_build)
 add_dependencies(chat cpp_generator_build)
 add_dependencies(logos_irc_plugin cpp_generator_build)
 add_dependencies(template_module_plugin cpp_generator_build)
+add_dependencies(simple_module_plugin cpp_generator_build)
 add_dependencies(wallet_module_plugin cpp_generator_build)
