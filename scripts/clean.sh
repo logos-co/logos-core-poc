@@ -27,7 +27,7 @@ for dir in "${directories[@]}"; do
 done
 
 # Clean generated SDK C++ files but keep the directory
-GEN_DIR="./SDK/cpp/generated"
+GEN_DIR="./logos-cpp-sdk/cpp/generated"
 if [ -d "$GEN_DIR" ]; then
   echo "Removing generated SDK files in $GEN_DIR ..."
   find "$GEN_DIR" -type f -name "*_api.cpp" -delete

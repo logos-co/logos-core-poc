@@ -6,8 +6,8 @@
 #include <QStringList>
 #include <QJsonArray>
 #include "../../interface.h"
-#include "../../SDK/cpp/logos_api.h"
-#include "../../SDK/cpp/logos_api_client.h"
+#include "../../logos-cpp-sdk/cpp/logos_api.h"
+#include "../../logos-cpp-sdk/cpp/logos_api_client.h"
 
 // Forward declaration
 class LogosAPIClient;

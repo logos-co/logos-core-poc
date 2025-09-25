@@ -8,8 +8,8 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include "../../core/src/logos_core.h"
-#include "../../SDK/cpp/logos_api.h"
-#include "../../SDK/cpp/logos_api_client.h"
+#include "../../logos-cpp-sdk/cpp/logos_api.h"
+#include "../../logos-cpp-sdk/cpp/logos_api_client.h"
 
 // Qt-style plugin testing utility class
 class PluginTester {

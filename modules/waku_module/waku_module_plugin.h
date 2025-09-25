@@ -2,8 +2,8 @@
 
 #include <QtCore/QObject>
 #include "waku_module_interface.h"
-#include "../../SDK/cpp/logos_api.h"
-#include "../../SDK/cpp/logos_api_client.h"
+#include "../../logos-cpp-sdk/cpp/logos_api.h"
+#include "../../logos-cpp-sdk/cpp/logos_api_client.h"
 #include "lib/libwaku.h"
 
 class WakuModulePlugin : public QObject, public WakuModuleInterface

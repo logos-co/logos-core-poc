@@ -540,7 +540,7 @@ static bool ensureCoreManagerWrapper(const QString& genDirPath, QTextStream& err
 
 static bool writeUmbrellaHeader(const QString& genDirPath, QTextStream& err)
 {
-    // Generate SDK/cpp/generated/logos_sdk.h that includes all *_api.h in this dir
+    // Generate logos-cpp-sdk/cpp/generated/logos_sdk.h that includes all *_api.h in this dir
     QDir genDir(genDirPath);
     QStringList headers = genDir.entryList(QStringList() << "*_api.h", QDir::Files | QDir::Readable);
     QString content;
@@ -584,7 +584,7 @@ static bool writeUmbrellaHeader(const QString& genDirPath, QTextStream& err)
 
 static bool writeUmbrellaSource(const QString& genDirPath, QTextStream& err)
 {
-    // Generate SDK/cpp/generated/logos_sdk.cpp that includes all *_api.cpp in this dir
+    // Generate logos-cpp-sdk/cpp/generated/logos_sdk.cpp that includes all *_api.cpp in this dir
     QDir genDir(genDirPath);
     QStringList sources = genDir.entryList(QStringList() << "*_api.cpp", QDir::Files | QDir::Readable);
     QString content;
@@ -618,7 +618,7 @@ static int generateFromPlugin(const QString& pluginInputPath, QTextStream& out, 
         resolvedPath = fi.absoluteFilePath();
     }
 
-    QString genDirPath = QDir::current().filePath("SDK/cpp/generated");
+    QString genDirPath = QDir::current().filePath("logos-cpp-sdk/cpp/generated");
     QDir().mkpath(genDirPath);
     if (!ensureCoreManagerWrapper(genDirPath, err)) {
         return 9;
@@ -689,7 +689,7 @@ static int generateFromPlugin(const QString& pluginInputPath, QTextStream& out, 
 
     QJsonDocument doc(methods);
     // out << doc.toJson(QJsonDocument::Indented) << "\n";
-    out << "Generated: SDK/cpp/generated/" << headerRel << " and SDK/cpp/generated/" << sourceRel << "\n";
+    out << "Generated: logos-cpp-sdk/cpp/generated/" << headerRel << " and logos-cpp-sdk/cpp/generated/" << sourceRel << "\n";
     out.flush();
 
     loader.unload();
@@ -758,7 +758,7 @@ int main(int argc, char* argv[])
                     return 2;
                 }
 
-                QString genDirPath = QDir::current().filePath("SDK/cpp/generated");
+                QString genDirPath = QDir::current().filePath("logos-cpp-sdk/cpp/generated");
                 QDir().mkpath(genDirPath);
                 if (!ensureCoreManagerWrapper(genDirPath, err)) {
                     return 9;

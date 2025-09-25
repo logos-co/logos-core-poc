@@ -3,8 +3,8 @@
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include "capability_module_interface.h"
-#include "../../SDK/cpp/logos_api.h"
-#include "../../SDK/cpp/logos_api_client.h"
+#include "../../logos-cpp-sdk/cpp/logos_api.h"
+#include "../../logos-cpp-sdk/cpp/logos_api_client.h"
 
 class CapabilityModulePlugin : public QObject, public CapabilityModuleInterface
 {

@@ -5,7 +5,7 @@
 #include <QDateTime>
 #include <QJsonArray>
 #include <QJsonObject>
-#include "../../SDK/cpp/token_manager.h"
+#include "../../logos-cpp-sdk/cpp/token_manager.h"
 
 TemplateModulePlugin::TemplateModulePlugin()
 {

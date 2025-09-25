@@ -3,7 +3,7 @@
 #include <QDateTime>
 #include <QDebug>
 #include <QString>
-#include "../../SDK/cpp/logos_api_client.h"
+#include "../../logos-cpp-sdk/cpp/logos_api_client.h"
 
 ChatPlugin::ChatPlugin() : currentRelayTopic("/waku/2/rs/16/32") {
 }

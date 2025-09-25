@@ -4,8 +4,8 @@
 #include <QtCore/QJsonArray>
 #include <QtCore/QStringList>
 #include "template_module_interface.h"
-#include "../../SDK/cpp/logos_api.h"
-#include "../../SDK/cpp/logos_api_client.h"
+#include "../../logos-cpp-sdk/cpp/logos_api.h"
+#include "../../logos-cpp-sdk/cpp/logos_api_client.h"
 
 class TemplateModulePlugin : public QObject, public TemplateModuleInterface
 {

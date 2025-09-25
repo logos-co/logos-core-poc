@@ -37,7 +37,7 @@ Once registered, other modules can use the generated `Chat` proxy to call `initi
 
 ### Generated Module Wrappers
 
-Each header under `SDK/cpp/generated/` corresponds to a Logos module (for example `chat_api.h`, `core_manager_api.h`, `package_manager_api.h`, `waku_module_api.h`). Wrappers:
+Each header under `logos-cpp-sdk/cpp/generated/` corresponds to a Logos module (for example `chat_api.h`, `core_manager_api.h`, `package_manager_api.h`, `waku_module_api.h`). Wrappers:
 - Provide typed C++ member functions that forward to `invokeRemoteMethod` with the correct module name.
 - Offer `on` helpers for connecting lambdas to remote `eventResponse` signals, and `trigger` helpers for emitting events from your module back to clients.
 - Cache remote replicas for event wiring, reducing boilerplate around `requestObject` and Qt signal signatures.

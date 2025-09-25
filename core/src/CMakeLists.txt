@@ -1,7 +1,7 @@
 set(CMAKE_AUTOMOC ON)
 
 # Add SDK subdirectory to build the logos_sdk library
-add_subdirectory(../../SDK/cpp ${CMAKE_BINARY_DIR}/sdk)
+add_subdirectory(../../logos-cpp-sdk/cpp ${CMAKE_BINARY_DIR}/sdk)
 
 # Define the library sources
 set(LOGOS_CORE_SOURCES
@@ -41,7 +41,7 @@ target_link_libraries(logos_core PRIVATE
 target_include_directories(logos_core PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/..
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp
     ${Qt${QT_VERSION_MAJOR}_INCLUDE_DIRS}
 )
 
@@ -85,7 +85,7 @@ target_link_libraries(logos_host PRIVATE
 target_include_directories(logos_host PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/..
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp
     ${Qt${QT_VERSION_MAJOR}_INCLUDE_DIRS}
 )
 

@@ -5,7 +5,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 BUILD_DIR="$REPO_ROOT/build/cpp-generator"
-SRC_DIR="$REPO_ROOT/SDK/cpp-generator"
+SRC_DIR="$REPO_ROOT/logos-cpp-sdk/cpp-generator"
 
 BUILD_TYPE="Release"
 CMAKE_PREFIX_ARG=""

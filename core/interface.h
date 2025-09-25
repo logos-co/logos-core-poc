@@ -3,7 +3,7 @@
 
 #include <QtPlugin>
 #include <QString>
-#include "../SDK/cpp/logos_api.h"
+#include "../logos-cpp-sdk/cpp/logos_api.h"
 
 // Define the common base interface for all modules
 class PluginInterface

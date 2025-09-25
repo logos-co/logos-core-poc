@@ -20,10 +20,10 @@
 #include <QThread>
 #include "../interface.h"
 #include "core_manager/core_manager.h"
-#include "../../SDK/cpp/logos_api.h"
-#include "../../SDK/cpp/logos_api_provider.h"
-#include "../../SDK/cpp/logos_api_client.h"
-#include "../../SDK/cpp/token_manager.h"
+#include "../../logos-cpp-sdk/cpp/logos_api.h"
+#include "../../logos-cpp-sdk/cpp/logos_api_provider.h"
+#include "../../logos-cpp-sdk/cpp/logos_api_client.h"
+#include "../../logos-cpp-sdk/cpp/token_manager.h"
 
 // Declare QObject* as a metatype so it can be stored in QVariant
 Q_DECLARE_METATYPE(QObject*)

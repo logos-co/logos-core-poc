@@ -4,7 +4,7 @@
 #include <functional>
 #include "chat_interface.h"
 #include "src/chat_api.h"
-#include "../../SDK/cpp/logos_api.h"
+#include "../../logos-cpp-sdk/cpp/logos_api.h"
 #include "logos_sdk.h"
 
 class ChatPlugin : public QObject, public ChatInterface {

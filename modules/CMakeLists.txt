@@ -15,11 +15,11 @@ else()
 endif()
 
 # Ensure cpp-generator is built before building modules
-set(CPP_GENERATOR_COMPILE_SCRIPT "${CMAKE_SOURCE_DIR}/../SDK/cpp-generator/compile.sh")
+set(CPP_GENERATOR_COMPILE_SCRIPT "${CMAKE_SOURCE_DIR}/../logos-cpp-sdk/cpp-generator/compile.sh")
 add_custom_target(cpp_generator_build
     COMMAND bash "${CPP_GENERATOR_COMPILE_SCRIPT}"
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/.."
-    COMMENT "Building logos-cpp-generator via SDK/cpp-generator/compile.sh"
+    COMMENT "Building logos-cpp-generator via logos-cpp-sdk/cpp-generator/compile.sh"
     VERBATIM
 )
 
