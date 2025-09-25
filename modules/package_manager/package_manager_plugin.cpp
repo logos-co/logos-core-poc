@@ -11,7 +11,7 @@
 #include <QRemoteObjectNode>
 #include <QRemoteObjectReplica>
 #include <QRemoteObjectPendingCall>
-#include "../../SDK/cpp/logos_api_client.h"
+#include "../../logos-cpp-sdk/cpp/logos_api_client.h"
 #include "logos_sdk.h"
 
 PackageManagerPlugin::PackageManagerPlugin()

@@ -70,8 +70,8 @@ Header: `your_module_plugin.h`
 #pragma once
 #include <QtCore/QObject>
 #include "your_module_interface.h"
-#include "../../SDK/cpp/logos_api.h"
-#include "../../SDK/cpp/generated/logos_sdk.h"
+#include "../../logos-cpp-sdk/cpp/logos_api.h"
+#include "../../logos-cpp-sdk/cpp/generated/logos_sdk.h"
 
 class YourModulePlugin : public QObject, public YourModuleInterface {
     Q_OBJECT
@@ -188,19 +188,19 @@ set(PLUGIN_SOURCES
   your_module_plugin.h
   your_module_interface.h
   ${CMAKE_SOURCE_DIR}/../core/interface.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/generated/logos_sdk.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api_client.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api_client.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api_consumer.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api_consumer.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api_provider.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api_provider.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/token_manager.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/token_manager.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/module_proxy.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/module_proxy.h)
+  ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/generated/logos_sdk.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/logos_api.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/logos_api.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/logos_api_client.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/logos_api_client.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/logos_api_consumer.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/logos_api_consumer.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/logos_api_provider.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/logos_api_provider.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/token_manager.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/token_manager.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/module_proxy.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/module_proxy.h)
 
 add_library(your_module_plugin SHARED ${PLUGIN_SOURCES})
 add_dependencies(your_module_plugin run_cpp_generator_your_module)
@@ -210,8 +210,8 @@ target_link_libraries(your_module_plugin PRIVATE Qt${QT_VERSION_MAJOR}::Core Qt$
 target_include_directories(your_module_plugin PRIVATE 
   ${CMAKE_CURRENT_SOURCE_DIR} 
   ${CMAKE_SOURCE_DIR}/../core 
-  ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp 
-  ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/generated)
+  ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp 
+  ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/generated)
 
 set_target_properties(your_module_plugin PROPERTIES
   LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/modules"

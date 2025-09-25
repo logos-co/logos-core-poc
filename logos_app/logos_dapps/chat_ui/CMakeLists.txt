@@ -30,22 +30,22 @@ find_library(LOGOS_CORE_LIB logos_core PATHS ${CMAKE_BINARY_DIR}/../core/lib)
 set(SOURCES
     ChatUIComponent.cpp
     src/ChatWidget.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp/logos_api.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp/logos_api.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp/logos_api_client.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp/logos_api_client.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp/logos_api_consumer.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp/logos_api_consumer.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp/logos_api_provider.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp/logos_api_provider.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp/token_manager.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp/token_manager.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp/module_proxy.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp/module_proxy.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../logos-cpp-sdk/cpp/logos_api.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../logos-cpp-sdk/cpp/logos_api.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../logos-cpp-sdk/cpp/logos_api_client.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../logos-cpp-sdk/cpp/logos_api_client.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../logos-cpp-sdk/cpp/logos_api_consumer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../logos-cpp-sdk/cpp/logos_api_consumer.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../logos-cpp-sdk/cpp/logos_api_provider.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../logos-cpp-sdk/cpp/logos_api_provider.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../logos-cpp-sdk/cpp/token_manager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../logos-cpp-sdk/cpp/token_manager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../logos-cpp-sdk/cpp/module_proxy.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../logos-cpp-sdk/cpp/module_proxy.h
 )
 
 # Use umbrella source that includes all generated wrappers to avoid duplicate symbols
-set(GENERATED_LOGOS_SDK_CPP ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp/generated/logos_sdk.cpp)
+set(GENERATED_LOGOS_SDK_CPP ${CMAKE_CURRENT_SOURCE_DIR}/../../../logos-cpp-sdk/cpp/generated/logos_sdk.cpp)
 set_source_files_properties(${GENERATED_LOGOS_SDK_CPP} PROPERTIES GENERATED TRUE)
 list(APPEND SOURCES ${GENERATED_LOGOS_SDK_CPP})
 
@@ -88,8 +88,8 @@ add_dependencies(chat_ui run_cpp_generator_chat_ui)
 
 ## Include directories
 target_include_directories(chat_ui PRIVATE 
-   ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp/generated
+   ${CMAKE_CURRENT_SOURCE_DIR}/../../../logos-cpp-sdk/cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/../../../logos-cpp-sdk/cpp/generated
 )
 
 # Link libraries

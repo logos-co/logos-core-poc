@@ -7,8 +7,8 @@
 #include <QJsonObject>
 #include <QStringList>
 #include "../../core/interface.h"
-#include "../../SDK/cpp/logos_api.h"
-#include "../../SDK/cpp/token_manager.h"
+#include "../../logos-cpp-sdk/cpp/logos_api.h"
+#include "../../logos-cpp-sdk/cpp/token_manager.h"
 
 // Helper macro to simplify method invocation with return types
 #define INVOKE_METHOD_WITH_RETURN(returnType, castType) \

@@ -30,7 +30,7 @@ set(REPO_ROOT "${CMAKE_SOURCE_DIR}/..")
 set(PLUGINS_OUTPUT_DIR "${CMAKE_BINARY_DIR}/modules")
 set(METADATA_JSON "${CMAKE_CURRENT_SOURCE_DIR}/metadata.json")
 
-set(GENERATED_LOGOS_SDK_CPP ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/generated/logos_sdk.cpp)
+set(GENERATED_LOGOS_SDK_CPP ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/generated/logos_sdk.cpp)
 set_source_files_properties(${GENERATED_LOGOS_SDK_CPP} PROPERTIES GENERATED TRUE)
 if(APPLE)
     set(PLUGIN_SUFFIX ".dylib")
@@ -78,18 +78,18 @@ set(PLUGIN_SOURCES
     ircclient.cpp
     ircclient.h
     ${CMAKE_SOURCE_DIR}/../core/interface.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api_client.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api_client.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api_consumer.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api_consumer.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api_provider.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api_provider.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/token_manager.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/token_manager.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/module_proxy.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/module_proxy.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/logos_api.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/logos_api.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/logos_api_client.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/logos_api_client.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/logos_api_consumer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/logos_api_consumer.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/logos_api_provider.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/logos_api_provider.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/token_manager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/token_manager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/module_proxy.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/module_proxy.h
 )
 
 # Create the plugin library
@@ -116,8 +116,8 @@ target_link_libraries(logos_irc_plugin PRIVATE
 target_include_directories(logos_irc_plugin PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/../core
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/generated
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/generated
 )
 
 # Set common properties for both platforms

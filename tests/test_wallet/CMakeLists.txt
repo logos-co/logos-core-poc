@@ -12,10 +12,10 @@ add_custom_command(
     COMMAND "${CPP_GENERATOR}" --metadata "${METADATA_JSON}" --module-dir "${PLUGINS_OUTPUT_DIR}"
     COMMAND ${CMAKE_COMMAND} -E touch ${GENERATED_STAMP}
     BYPRODUCTS
-        "${REPO_ROOT}/SDK/cpp/generated/logos_sdk.h"
-        "${REPO_ROOT}/SDK/cpp/generated/logos_sdk.cpp"
-        "${REPO_ROOT}/SDK/cpp/generated/wallet_module_api.h"
-        "${REPO_ROOT}/SDK/cpp/generated/wallet_module_api.cpp"
+        "${REPO_ROOT}/logos-cpp-sdk/cpp/generated/logos_sdk.h"
+        "${REPO_ROOT}/logos-cpp-sdk/cpp/generated/logos_sdk.cpp"
+        "${REPO_ROOT}/logos-cpp-sdk/cpp/generated/wallet_module_api.h"
+        "${REPO_ROOT}/logos-cpp-sdk/cpp/generated/wallet_module_api.cpp"
     WORKING_DIRECTORY "${REPO_ROOT}"
     COMMENT "Running logos-cpp-generator for test_wallet"
     VERBATIM
@@ -32,18 +32,18 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core RemoteObjects)
 # Define the test_wallet application sources
 set(TEST_WALLET_SOURCES
     main.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/generated/logos_sdk.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api_client.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api_client.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api_consumer.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api_consumer.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/module_proxy.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/module_proxy.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/generated/logos_sdk.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/logos_api.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/logos_api.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/logos_api_client.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/logos_api_client.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/logos_api_consumer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/logos_api_consumer.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/module_proxy.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/module_proxy.h
 )
 
-set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/generated/logos_sdk.cpp PROPERTIES GENERATED TRUE)
+set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/generated/logos_sdk.cpp PROPERTIES GENERATED TRUE)
 
 # Create the test_wallet application
 add_executable(test_wallet ${TEST_WALLET_SOURCES})
@@ -62,8 +62,8 @@ target_include_directories(test_wallet PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../core/src
     ${CMAKE_CURRENT_SOURCE_DIR}/../../core
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/generated
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/generated
     ${Qt${QT_VERSION_MAJOR}_INCLUDE_DIRS}
 )
 

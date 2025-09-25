@@ -1,6 +1,6 @@
 #include "window.h"
-#include "../../SDK/cpp/logos_api.h"
-#include "../../SDK/cpp/token_manager.h"
+#include "../../logos-cpp-sdk/cpp/logos_api.h"
+#include "../../logos-cpp-sdk/cpp/token_manager.h"
 #include <QApplication>
 #include <QIcon>
 #include <QDir>

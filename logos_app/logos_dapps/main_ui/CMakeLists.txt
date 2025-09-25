@@ -36,22 +36,22 @@ set(SOURCES
     src/pluginmethodsview.cpp
     src/packagemanagerview.cpp
     src/main_ui_resources.qrc
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp/logos_api.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp/logos_api.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp/logos_api_client.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp/logos_api_client.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp/logos_api_consumer.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp/logos_api_consumer.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp/logos_api_provider.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp/logos_api_provider.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp/token_manager.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp/token_manager.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp/module_proxy.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp/module_proxy.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../logos-cpp-sdk/cpp/logos_api.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../logos-cpp-sdk/cpp/logos_api.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../logos-cpp-sdk/cpp/logos_api_client.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../logos-cpp-sdk/cpp/logos_api_client.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../logos-cpp-sdk/cpp/logos_api_consumer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../logos-cpp-sdk/cpp/logos_api_consumer.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../logos-cpp-sdk/cpp/logos_api_provider.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../logos-cpp-sdk/cpp/logos_api_provider.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../logos-cpp-sdk/cpp/token_manager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../logos-cpp-sdk/cpp/token_manager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../logos-cpp-sdk/cpp/module_proxy.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../logos-cpp-sdk/cpp/module_proxy.h
 )
 
 # Use umbrella source that includes all generated wrappers to avoid duplicate symbols
-set(GENERATED_LOGOS_SDK_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp/generated)
+set(GENERATED_LOGOS_SDK_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../logos-cpp-sdk/cpp/generated)
 set(GENERATED_LOGOS_SDK_CPP ${GENERATED_LOGOS_SDK_DIR}/logos_sdk.cpp)
 set(GENERATED_LOGOS_SDK_H   ${GENERATED_LOGOS_SDK_DIR}/logos_sdk.h)
 set_source_files_properties(${GENERATED_LOGOS_SDK_CPP} PROPERTIES GENERATED TRUE)
@@ -88,8 +88,8 @@ add_dependencies(main_ui run_cpp_generator_main_ui)
 # Add include directories before target_link_libraries
 target_include_directories(main_ui PRIVATE 
     ${CMAKE_CURRENT_SOURCE_DIR}/src
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../SDK/cpp/generated
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../logos-cpp-sdk/cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../logos-cpp-sdk/cpp/generated
 )
 
 # Add Qt definitions

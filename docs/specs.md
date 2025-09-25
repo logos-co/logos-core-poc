@@ -73,7 +73,7 @@ note: This document is a living document and it explains the project's current s
 
 ## 1. Overview and Goals
 
-Logos Core is a modular platform designed to host and interact with independently developed modules (plugins). The core library (`core/src`) and accompanying C++ SDK (`SDK/cpp`) provide a modular, plug-in-based runtime for decentralised applications. Each module implements a common interface and is launched in its own process for isolation. A software development kit (SDK) exposes a remote-procedure-call (RPC) mechanism so that modules, the core and external modules can call methods on each other or listen for events.
+Logos Core is a modular platform designed to host and interact with independently developed modules (plugins). The core library (`core/src`) and accompanying C++ SDK (`logos-cpp-sdk/cpp`) provide a modular, plug-in-based runtime for decentralised applications. Each module implements a common interface and is launched in its own process for isolation. A software development kit (SDK) exposes a remote-procedure-call (RPC) mechanism so that modules, the core and external modules can call methods on each other or listen for events.
 
 The core exposes an extensible API to load, start, stop and introspect plug-ins, and it wraps Qt Remote Objects to allow modules to call each other's methods asynchronously. The SDK supplies client and provider classes that abstract away remote-object registry and token management, enabling modules to perform RPC-like calls without needing to understand the underlying IPC mechanism
 
@@ -82,7 +82,7 @@ The core exposes an extensible API to load, start, stop and introspect plug-ins,
 | Component | Purpose |
 |-----------|---------|
 | `core/src` | C/C++ implementation of the core library: discovers, loads and manages modules, provides an API to list modules, load/unload them and call methods on them. |
-| `SDK/cpp` | Client-side SDK that wraps RPC functionality. Modules link against this SDK to call the core and other modules. |
+| `logos-cpp-sdk/cpp` | Client-side SDK that wraps RPC functionality. Modules link against this SDK to call the core and other modules. |
 | `modules/` | Various Modules that can be loaded by the Core (e.g Waku) |
 | `logos_app/app` | Example application that uses the core and modules. |
 | `logos_app/logos_dapps` | UI Plugins for the example application |
@@ -152,7 +152,7 @@ These are experimental APIs and currently being used by the examples that use No
 
 ### 3.2 SDK
 
-The C++ SDK (SDK/cpp) wraps Qt Remote Objects and token management so that modules can register themselves and call other modules without dealing with sockets or the remote registry. The SDK exposes `LogosAPI` that owns a provider (`LogosAPIProvider`) and a cache of clients (`LogosAPIClient`) for different target modules. Internally it relies on a TokenManager to authenticate remote calls. The SDK is asynchronous: calls return immediately and results are delivered via callbacks/signals.
+The C++ SDK (logos-cpp-sdk/cpp) wraps Qt Remote Objects and token management so that modules can register themselves and call other modules without dealing with sockets or the remote registry. The SDK exposes `LogosAPI` that owns a provider (`LogosAPIProvider`) and a cache of clients (`LogosAPIClient`) for different target modules. Internally it relies on a TokenManager to authenticate remote calls. The SDK is asynchronous: calls return immediately and results are delivered via callbacks/signals.
 
 #### 3.2.0 Basic Interaction
 
@@ -400,7 +400,7 @@ logos.chat.trigger("chatMessage", data);
 
 #### 3.2.4 Generated C++ wrappers (logos_sdk)
 
-To simplify calling methods across modules with proper C++ types, a generator produces typed wrappers into `SDK/cpp/generated/` and an umbrella pair `logos_sdk.h`/`logos_sdk.cpp`. The umbrella aggregates one wrapper class per module and exposes them via a convenience struct `LogosModules`.
+To simplify calling methods across modules with proper C++ types, a generator produces typed wrappers into `logos-cpp-sdk/cpp/generated/` and an umbrella pair `logos_sdk.h`/`logos_sdk.cpp`. The umbrella aggregates one wrapper class per module and exposes them via a convenience struct `LogosModules`.
 
 Usage:
 
@@ -423,21 +423,21 @@ logos.chat.trigger("chatMessage", QVariantList{QDateTime::currentDateTime().toSt
 `setEventSource()` stores the QObject that actually declares the `eventResponse(QString, QVariantList)` signal—typically the plugin instance itself. The wrapper uses that cached pointer when you call the shorthand `trigger(eventName, data)` so it can emit the signal on the correct sender. If you skip `setEventSource()`, use the explicit overload `trigger(eventName, QObject* source, ...)` to provide the emitting object each time.
 
 Build integration (consumers of wrappers):
-- Compile the umbrella source once per binary to avoid duplicate symbols: add `SDK/cpp/generated/logos_sdk.cpp` to your target sources.
-- Add `SDK/cpp/generated` to your include paths.
+- Compile the umbrella source once per binary to avoid duplicate symbols: add `logos-cpp-sdk/cpp/generated/logos_sdk.cpp` to your target sources.
+- Add `logos-cpp-sdk/cpp/generated` to your include paths.
 - Wrappers are generated during the modules/app build by a custom step; see below.
 
 CMake example (abbreviated):
 
 ```cmake
-set(GENERATED_LOGOS_SDK_CPP ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/generated/logos_sdk.cpp)
+set(GENERATED_LOGOS_SDK_CPP ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/generated/logos_sdk.cpp)
 set_source_files_properties(${GENERATED_LOGOS_SDK_CPP} PROPERTIES GENERATED TRUE)
 target_sources(<your_target> PRIVATE ${GENERATED_LOGOS_SDK_CPP})
-target_include_directories(<your_target> PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/generated)
+target_include_directories(<your_target> PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/generated)
 ```
 
 Generator:
-- Binary: `build/cpp-generator/bin/logos-cpp-generator` (built via `SDK/cpp-generator/compile.sh`).
+- Binary: `build/cpp-generator/bin/logos-cpp-generator` (built via `logos-cpp-sdk/cpp-generator/compile.sh`).
 - Typical invocation from CMake custom targets:
   - `logos-cpp-generator --metadata <path>/metadata.json --module-dir <path>/modules/build/modules`
 - Outputs for each dependency module: `<module>_api.h/.cpp`, plus umbrella `logos_sdk.h/.cpp`.
@@ -448,7 +448,7 @@ CLI flags and behavior:
 - **--metadata <file>**: Path to a module's `metadata.json`. The generator parses the `dependencies` array to determine which modules to emit wrappers for.
 - **--module-dir <dir>**: Directory containing built module plugins (e.g., `chat_plugin.so/.dylib`, `waku_module_plugin.*`). For each dependency, the generator loads the corresponding plugin to introspect its interface and generate wrappers.
 - If only a plugin path is provided (without `--metadata`), the generator produces wrappers for that single plugin.
-- Artifacts are written under the repository root’s `SDK/cpp/generated` directory and include: one `<module>_api.h/.cpp` per dependency and the umbrella `logos_sdk.h/.cpp` that aggregates them into `LogosModules`.
+- Artifacts are written under the repository root’s `logos-cpp-sdk/cpp/generated` directory and include: one `<module>_api.h/.cpp` per dependency and the umbrella `logos_sdk.h/.cpp` that aggregates them into `LogosModules`.
 
 What it does under the hood:
 - Loads each dependency plugin via `QPluginLoader`, creates an instance and enumerates its invokable methods using Qt meta‑object reflection.
@@ -476,7 +476,7 @@ How code generation works (step‑by‑step):
    - `logos_sdk.cpp` includes all generated `*_api.cpp` sources.
    - Consumers compile `logos_sdk.cpp` exactly once per binary and include `logos_sdk.h` to access `logos.<module>.<method>(...)` across modules.
 5. Build integration and idempotency
-   - CMake custom targets call the generator before compiling modules/apps so `SDK/cpp/generated` is always up‑to‑date.
+   - CMake custom targets call the generator before compiling modules/apps so `logos-cpp-sdk/cpp/generated` is always up‑to‑date.
    - The `scripts/clean.sh` script deletes generated files (`*_api.h/.cpp`, `logos_sdk.h/.cpp`) while leaving the directory in place.
 6. Scope and limitations
    - Wrapper method signatures use Qt types (`QString`, `QStringList`, `QJsonArray`, etc.). For unsupported/complex types, the return falls back to `QVariant`.
@@ -877,10 +877,10 @@ add_custom_target(run_cpp_generator_my_module
 )
 
 # If your module calls other modules via generated wrappers, include the umbrella once
-set(GENERATED_LOGOS_SDK_CPP ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/generated/logos_sdk.cpp)
+set(GENERATED_LOGOS_SDK_CPP ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/generated/logos_sdk.cpp)
 set_source_files_properties(${GENERATED_LOGOS_SDK_CPP} PROPERTIES GENERATED TRUE)
 target_sources(my_module PRIVATE ${GENERATED_LOGOS_SDK_CPP})
-target_include_directories(my_module PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/generated)
+target_include_directories(my_module PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/generated)
 add_dependencies(my_module run_cpp_generator_my_module)
 
 # Link Qt libraries
@@ -1545,9 +1545,9 @@ Notes:
 
 Implemented: a Qt-based C++ generator emits typed wrappers for module methods and an umbrella aggregator for convenient usage.
 
-- Location: `build/cpp-generator/bin/logos-cpp-generator` (built via `SDK/cpp-generator/compile.sh`).
+- Location: `build/cpp-generator/bin/logos-cpp-generator` (built via `logos-cpp-sdk/cpp-generator/compile.sh`).
 - Inputs: either a single plugin path, or `--metadata <metadata.json>` with `--module-dir <modules_output_dir>` to generate wrappers for all listed dependencies.
-- Outputs: `SDK/cpp/generated/<module>_api.h/.cpp` per module, plus `SDK/cpp/generated/logos_sdk.h` and `SDK/cpp/generated/logos_sdk.cpp`.
+- Outputs: `logos-cpp-sdk/cpp/generated/<module>_api.h/.cpp` per module, plus `logos-cpp-sdk/cpp/generated/logos_sdk.h` and `logos-cpp-sdk/cpp/generated/logos_sdk.cpp`.
 - Aggregator: `LogosModules` holds one member per module wrapper (e.g., `logos.chat`), constructed from a shared `LogosAPI*`.
 
 Example usage:
@@ -1565,7 +1565,7 @@ The pattern generally becomes:
 `logos`.`<module_name>`.`<method_name>(params)`
 
 Build notes:
-- Consumer targets must compile the umbrella source exactly once and add `SDK/cpp/generated` to includes.
+- Consumer targets must compile the umbrella source exactly once and add `logos-cpp-sdk/cpp/generated` to includes.
 - The build integrates generator execution as custom targets so wrappers are produced before compilation.
 
 ## 9. Build and Run Scripts
@@ -1591,7 +1591,7 @@ The simplest is to run:
 
 This will ensure there are not leftover artifacts and all the changes really take effect.
 
-Note: The clean script also removes generated SDK wrapper files in `SDK/cpp/generated` (it preserves the directory).
+Note: The clean script also removes generated SDK wrapper files in `logos-cpp-sdk/cpp/generated` (it preserves the directory).
 
 If the app is already compiled, it can be found at `./logos_app/app/build/LogosApp`
 

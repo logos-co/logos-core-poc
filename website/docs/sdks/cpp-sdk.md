@@ -88,4 +88,4 @@ private:
 - **Cannot connect to registry**: Ensure the target module is running and has registered its provider. The client will connect to `local:logos_<module>`; verify that socket exists and that `LOGOS_HOST_PATH` points to a built `logos_host` binary.
 - **Plugin methods return invalid QVariant**: The core must be started (`core_manager.start()`) and the module must be fully loaded. Missing capability tokens also cause silent failures—check the capability module logs.
 - **Events never arrive**: Confirm you called `on(...)` after the remote module published its object, and keep the Qt event loop alive (`QCoreApplication::exec()` or `logos_core_process_events()` in embedding scenarios).
-- **Generated headers missing**: Re-run the build from the repository root; the generated wrappers in `SDK/cpp/generated/` are committed but expect CMake to add the directory to include paths.
+- **Generated headers missing**: Re-run the build from the repository root; the generated wrappers in `logos-cpp-sdk/cpp/generated/` are committed but expect CMake to add the directory to include paths.

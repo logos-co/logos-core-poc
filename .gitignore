@@ -13,4 +13,4 @@ website/node_modules
 examples/node_app_using_lib/plugins/*
 SDK/js/logos-api/lib/*
 .cache
-SDK/cpp/generated/*
+logos-cpp-sdk/cpp/generated/*

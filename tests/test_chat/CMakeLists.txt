@@ -12,12 +12,12 @@ add_custom_command(
     COMMAND "${CPP_GENERATOR}" --metadata "${METADATA_JSON}" --module-dir "${PLUGINS_OUTPUT_DIR}"
     COMMAND ${CMAKE_COMMAND} -E touch ${GENERATED_STAMP}
     BYPRODUCTS
-        "${REPO_ROOT}/SDK/cpp/generated/logos_sdk.h"
-        "${REPO_ROOT}/SDK/cpp/generated/logos_sdk.cpp"
-        "${REPO_ROOT}/SDK/cpp/generated/chat_api.h"
-        "${REPO_ROOT}/SDK/cpp/generated/chat_api.cpp"
-        "${REPO_ROOT}/SDK/cpp/generated/waku_module_api.h"
-        "${REPO_ROOT}/SDK/cpp/generated/waku_module_api.cpp"
+        "${REPO_ROOT}/logos-cpp-sdk/cpp/generated/logos_sdk.h"
+        "${REPO_ROOT}/logos-cpp-sdk/cpp/generated/logos_sdk.cpp"
+        "${REPO_ROOT}/logos-cpp-sdk/cpp/generated/chat_api.h"
+        "${REPO_ROOT}/logos-cpp-sdk/cpp/generated/chat_api.cpp"
+        "${REPO_ROOT}/logos-cpp-sdk/cpp/generated/waku_module_api.h"
+        "${REPO_ROOT}/logos-cpp-sdk/cpp/generated/waku_module_api.cpp"
     WORKING_DIRECTORY "${REPO_ROOT}"
     COMMENT "Running logos-cpp-generator for test_chat"
     VERBATIM
@@ -34,16 +34,16 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core RemoteObjects)
 # Define the test_chat application sources
 set(TEST_CHAT_SOURCES
     main.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api_client.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api_client.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api_consumer.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/logos_api_consumer.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/module_proxy.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/module_proxy.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/generated/logos_sdk.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/logos_api_client.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/logos_api_client.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/logos_api_consumer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/logos_api_consumer.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/module_proxy.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/module_proxy.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/generated/logos_sdk.cpp
 )
 
-set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/generated/logos_sdk.cpp PROPERTIES GENERATED TRUE)
+set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/generated/logos_sdk.cpp PROPERTIES GENERATED TRUE)
 
 # Create the test_chat application
 add_executable(test_chat ${TEST_CHAT_SOURCES})
@@ -61,7 +61,7 @@ target_include_directories(test_chat PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../core/src
     ${CMAKE_CURRENT_SOURCE_DIR}/../../core
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../SDK/cpp/generated
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/generated
     ${Qt${QT_VERSION_MAJOR}_INCLUDE_DIRS}
 ) 
