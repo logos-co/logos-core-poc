@@ -22,10 +22,10 @@ PackageManagerPlugin::PackageManagerPlugin()
 
 PackageManagerPlugin::~PackageManagerPlugin() 
 {
-    if (logosAPI) {
-        delete logosAPI;
-        logosAPI = nullptr;
-    }
+    //if (logosAPI) {
+    //    delete logosAPI;
+    //    logosAPI = nullptr;
+    //}
 }
 
 bool PackageManagerPlugin::installPlugin(const QString& pluginPath)

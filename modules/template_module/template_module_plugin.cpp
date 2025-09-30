@@ -16,10 +16,10 @@ TemplateModulePlugin::TemplateModulePlugin()
 TemplateModulePlugin::~TemplateModulePlugin() 
 {
     // Clean up resources
-    if (logosAPI) {
-        delete logosAPI;
-        logosAPI = nullptr;
-    }
+    //if (logosAPI) {
+    //    delete logosAPI;
+    //    logosAPI = nullptr;
+    //}
 }
 
 bool TemplateModulePlugin::foo(const QString &bar)

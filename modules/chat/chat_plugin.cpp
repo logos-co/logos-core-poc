@@ -9,14 +9,14 @@ ChatPlugin::ChatPlugin() : currentRelayTopic("/waku/2/rs/16/32") {
 }
 
 ChatPlugin::~ChatPlugin() {
-    if (logos) {
-        delete logos;
-        logos = nullptr;
-    }
-    if (logosAPI) {
-        delete logosAPI;
-        logosAPI = nullptr;
-    }
+    //if (logos) {
+    //    delete logos;
+    //    logos = nullptr;
+    //}
+    //if (logosAPI) {
+    //    delete logosAPI;
+    //    logosAPI = nullptr;
+    //}
 }
 
 bool ChatPlugin::ensureLogosContext(const char* caller) const {
@@ -90,14 +90,14 @@ bool ChatPlugin::retrieveHistory(const QString& channelName) {
 }
 
 void ChatPlugin::initLogos(LogosAPI* logosAPIInstance) {
-    if (logos) {
-        delete logos;
-        logos = nullptr;
-    }
-    if (logosAPI) {
-        delete logosAPI;
-        logosAPI = nullptr;
-    }
+    //if (logos) {
+    //    delete logos;
+    //    logos = nullptr;
+    //}
+    //if (logosAPI) {
+    //    delete logosAPI;
+    //    logosAPI = nullptr;
+    //}
     logosAPI = logosAPIInstance;
     if (logosAPI) {
         logos = new LogosModules(logosAPI);

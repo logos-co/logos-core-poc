@@ -15,10 +15,10 @@ CapabilityModulePlugin::CapabilityModulePlugin()
 CapabilityModulePlugin::~CapabilityModulePlugin() 
 {
     // Clean up resources
-    if (logosAPI) {
-        delete logosAPI;
-        logosAPI = nullptr;
-    }
+    //if (logosAPI) {
+    //    delete logosAPI;
+    //    logosAPI = nullptr;
+    //}
 }
 
 QString CapabilityModulePlugin::requestModule(const QString &fromModuleName, const QString &moduleName)
@@ -61,8 +61,8 @@ QString CapabilityModulePlugin::requestModule(const QString &fromModuleName, con
 }
 
 void CapabilityModulePlugin::initLogos(LogosAPI* logosAPIInstance) {
-    if (logosAPI) {
-        delete logosAPI;
-    }
+    //if (logosAPI) {
+    //    delete logosAPI;
+    //}
     logosAPI = logosAPIInstance;
 }

@@ -16,10 +16,10 @@ SimpleModulePlugin::SimpleModulePlugin()
 SimpleModulePlugin::~SimpleModulePlugin() 
 {
     // Clean up resources
-    if (logosAPI) {
-        delete logosAPI;
-        logosAPI = nullptr;
-    }
+    //if (logosAPI) {
+    //    delete logosAPI;
+    //    logosAPI = nullptr;
+    //}
 }
 
 bool SimpleModulePlugin::foo(const QString &bar)

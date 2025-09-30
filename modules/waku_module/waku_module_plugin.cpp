@@ -12,17 +12,19 @@ WakuModulePlugin::WakuModulePlugin() : wakuCtx(nullptr)
 
 WakuModulePlugin::~WakuModulePlugin() 
 {
+    // TODO: fix me, currently this crashes on linux, needs review
     // Clean up resources
-    if (logosAPI) {
-        delete logosAPI;
-        logosAPI = nullptr;
-    }
-    
+    // if (logosAPI) {
+    //     delete logosAPI;
+    //     logosAPI = nullptr;
+    // }
+
     // Clean up Waku context if it exists
-    if (wakuCtx) {
-        // TODO: Call waku_destroy when needed
-        wakuCtx = nullptr;
-    }
+    //if (wakuCtx) {
+    //    // TODO: Call waku_destroy when needed
+    //    waku_destroy(wakuCtx, nullptr, nullptr);
+    //    wakuCtx = nullptr;
+    //}
 }
 
 bool WakuModulePlugin::foo(const QString &bar)
@@ -154,9 +156,9 @@ void WakuModulePlugin::store_query_callback(int callerRet, const char* msg, size
 }
 
 void WakuModulePlugin::initLogos(LogosAPI* logosAPIInstance) {
-    if (logosAPI) {
-        delete logosAPI;
-    }
+    //if (logosAPI) {
+    //    delete logosAPI;
+    //}
     logosAPI = logosAPIInstance;
 }
 
