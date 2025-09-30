@@ -9,7 +9,7 @@ echo "Cleaning all build directories..."
 directories=(
   "./build"
   "./logos_app/app/build"
-  "./core/build"
+  "./logos-liblogos/build"
   "./modules/build"
   "./logos_app/logos_dapps/build"
   "./examples/build"

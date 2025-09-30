@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../core/interface.h"
+#include "../../logos-liblogos/interface.h"
 
 class PackageManagerInterface : public PluginInterface
 {

@@ -2,7 +2,7 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QString>
-#include "../../core/interface.h"
+#include "../../logos-liblogos/interface.h"
 
 class CapabilityModuleInterface : public PluginInterface
 {

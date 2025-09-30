@@ -59,8 +59,8 @@ target_link_libraries(test_simple PRIVATE
 # Include directories for the test_simple application
 target_include_directories(test_simple PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../core/src
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../core
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-liblogos/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-liblogos
     ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/generated
     ${Qt${QT_VERSION_MAJOR}_INCLUDE_DIRS}

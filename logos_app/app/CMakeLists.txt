@@ -23,7 +23,7 @@ find_package(Qt6 COMPONENTS Widgets REQUIRED)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 # Add logos_core include directories - use a variable for the core path
-set(LOGOS_CORE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../core)
+set(LOGOS_CORE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-liblogos)
 include_directories(
     ${LOGOS_CORE_DIR}/host
     ${LOGOS_CORE_DIR}

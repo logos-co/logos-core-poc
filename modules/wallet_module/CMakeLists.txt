@@ -35,7 +35,7 @@ set(PLUGIN_SOURCES
     wallet_module_plugin.cpp
     wallet_module_plugin.h
     wallet_module_interface.h
-    ${CMAKE_SOURCE_DIR}/../core/interface.h
+    ${CMAKE_SOURCE_DIR}/../logos-liblogos/interface.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/logos_api.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/logos_api.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/logos_api_client.cpp
@@ -74,7 +74,7 @@ endif()
 target_include_directories(wallet_module_plugin PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/lib
-    ${CMAKE_SOURCE_DIR}/../core
+    ${CMAKE_SOURCE_DIR}/../logos-liblogos
     ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/generated
 )

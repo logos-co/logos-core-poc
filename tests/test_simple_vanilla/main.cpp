@@ -7,7 +7,7 @@
 #include <QVariantList>
 #include <QJsonArray>
 #include <QJsonObject>
-#include "../../core/src/logos_core.h"
+#include "../../logos-liblogos/src/logos_core.h"
 #include "../../logos-cpp-sdk/cpp/logos_api.h"
 #include "../../logos-cpp-sdk/cpp/logos_api_client.h"
 

@@ -24,7 +24,7 @@ if(NOT component-interfaces_FOUND)
 endif()
 
 # Check for logos_core library
-find_library(LOGOS_CORE_LIB logos_core PATHS ${CMAKE_BINARY_DIR}/../core/lib)
+find_library(LOGOS_CORE_LIB logos_core PATHS ${CMAKE_BINARY_DIR}/../logos-liblogos/lib)
 
 # Source files
 set(SOURCES

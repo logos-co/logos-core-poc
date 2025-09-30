@@ -16,8 +16,8 @@ endif()
 
 # Include directories for the project
 include_directories(
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../core
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../core/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-liblogos
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-liblogos/src
     ${CMAKE_CURRENT_SOURCE_DIR}/../../logos_app/app/interfaces
 )
 
@@ -46,16 +46,16 @@ else()
 endif()
 
 # Set the path to the logos_core library
-set(LOGOS_CORE_LIB "${CMAKE_CURRENT_SOURCE_DIR}/../../core/build/lib/liblogos_core.${LIB_EXTENSION}")
+set(LOGOS_CORE_LIB "${CMAKE_CURRENT_SOURCE_DIR}/../../logos-liblogos/build/lib/liblogos_core.${LIB_EXTENSION}")
 
 # Check if the library exists
 if(NOT EXISTS ${LOGOS_CORE_LIB})
     message(WARNING "LogosCore library not found at ${LOGOS_CORE_LIB}")
     # Try the alternative extension as fallback
     if(APPLE)
-        set(LOGOS_CORE_LIB "${CMAKE_CURRENT_SOURCE_DIR}/../../core/build/lib/liblogos_core.so")
+        set(LOGOS_CORE_LIB "${CMAKE_CURRENT_SOURCE_DIR}/../../logos-liblogos/build/lib/liblogos_core.so")
     else()
-        set(LOGOS_CORE_LIB "${CMAKE_CURRENT_SOURCE_DIR}/../../core/build/lib/liblogos_core.dylib")
+        set(LOGOS_CORE_LIB "${CMAKE_CURRENT_SOURCE_DIR}/../../logos-liblogos/build/lib/liblogos_core.dylib")
     endif()
     if(NOT EXISTS ${LOGOS_CORE_LIB})
         message(FATAL_ERROR "LogosCore library not found with either extension")
@@ -79,15 +79,15 @@ foreach(PLUGIN_NAME "chat_plugin" "libwaku" "waku_plugin")
         set(PLUGIN_EXT "so")
     endif()
     
-    set(PLUGIN_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../core/build/modules/${PLUGIN_NAME}.${PLUGIN_EXT}")
+    set(PLUGIN_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../logos-liblogos/build/modules/${PLUGIN_NAME}.${PLUGIN_EXT}")
     
     # Check if plugin exists with primary extension
     if(NOT EXISTS ${PLUGIN_PATH})
         # Try alternative extension
         if(APPLE)
-            set(PLUGIN_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../core/build/modules/${PLUGIN_NAME}.so")
+            set(PLUGIN_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../logos-liblogos/build/modules/${PLUGIN_NAME}.so")
         else()
-            set(PLUGIN_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../core/build/modules/${PLUGIN_NAME}.dylib")
+            set(PLUGIN_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../logos-liblogos/build/modules/${PLUGIN_NAME}.dylib")
         endif()
     endif()
     

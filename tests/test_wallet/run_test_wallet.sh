@@ -56,13 +56,13 @@ if [[ -f "$ROOT_DIR/modules/build/modules/libgowalletsdk.$LIB_EXT" ]]; then
 fi
 
 # Copy logos_host for plugin loading
-cp "$ROOT_DIR/core/build/bin/logos_host" bin/
+cp "$ROOT_DIR/logos-liblogos/build/bin/logos_host" bin/
 
 # Setup library path for core runtime
 if [[ "$(uname)" == "Darwin" ]]; then
-  export DYLD_LIBRARY_PATH="${DYLD_LIBRARY_PATH:-}:$ROOT_DIR/core/build/lib"
+  export DYLD_LIBRARY_PATH="${DYLD_LIBRARY_PATH:-}:$ROOT_DIR/logos-liblogos/build/lib"
 else
-  export LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-}:$ROOT_DIR/core/build/lib"
+  export LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-}:$ROOT_DIR/logos-liblogos/build/lib"
 fi
 
 echo "Running test_wallet..."

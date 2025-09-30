@@ -53,7 +53,7 @@ function main() {
   console.log('🔌 Copying plugins to application...');
   
   const appDir = path.resolve(__dirname, '..');
-  const coreDir = path.resolve(appDir, '../../core/build');
+  const coreDir = path.resolve(appDir, '../../logos-liblogos/build');
   
   // Define paths
   const pluginsSrc = path.join(coreDir, 'modules');

@@ -30,7 +30,7 @@ Use `modules/template_module` as a starting point.
 
 ## 2) Define the Interface
 
-Your interface inherits from `PluginInterface` (from `core/interface.h`). Declare methods as `Q_INVOKABLE` so other modules can call them remotely, and keep the standard `eventResponse` signal for events.
+Your interface inherits from `PluginInterface` (from `logos-liblogos/interface.h`). Declare methods as `Q_INVOKABLE` so other modules can call them remotely, and keep the standard `eventResponse` signal for events.
 
 Example: `your_module_interface.h`
 
@@ -38,7 +38,7 @@ Example: `your_module_interface.h`
 #pragma once
 #include <QtCore/QObject>
 #include <QtCore/QVariant>
-#include "../../core/interface.h"
+#include "../../logos-liblogos/interface.h"
 
 class YourModuleInterface : public PluginInterface {
 public:
@@ -187,7 +187,7 @@ set(PLUGIN_SOURCES
   your_module_plugin.cpp
   your_module_plugin.h
   your_module_interface.h
-  ${CMAKE_SOURCE_DIR}/../core/interface.h
+  ${CMAKE_SOURCE_DIR}/../logos-liblogos/interface.h
   ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/generated/logos_sdk.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/logos_api.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/logos_api.h
@@ -209,7 +209,7 @@ set_target_properties(your_module_plugin PROPERTIES PREFIX "")
 target_link_libraries(your_module_plugin PRIVATE Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::RemoteObjects)
 target_include_directories(your_module_plugin PRIVATE 
   ${CMAKE_CURRENT_SOURCE_DIR} 
-  ${CMAKE_SOURCE_DIR}/../core 
+  ${CMAKE_SOURCE_DIR}/../logos-liblogos 
   ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp 
   ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/generated)
 
@@ -228,7 +228,7 @@ For a full example, see `modules/template_module/CMakeLists.txt`.
 
 Artifacts
 
-- Built plugins are placed under `modules/build/modules` and copied to `core/build/modules`. The core/FFI loaders look in `core/build/modules` by default.
+- Built plugins are placed under `modules/build/modules` and copied to `logos-liblogos/build/modules`. The logos-liblogos/FFI loaders look in `logos-liblogos/build/modules` by default.
 
 ## 7) Expose Methods and Events (using wrappers)
 
@@ -252,6 +252,6 @@ logos->chat.on("chatMessage", [this](const QVariantList& data) {
 
 ## Troubleshooting
 
-- Module not discovered: ensure your library ends up in `core/build/modules` and `metadata.json` is valid.
+- Module not discovered: ensure your library ends up in `logos-liblogos/build/modules` and `metadata.json` is valid.
 - Methods not callable: check `Q_INVOKABLE` on interface methods and that the plugin implements `Q_INTERFACES(YourModuleInterface PluginInterface)`.
 - No events received: verify you call `onEventResponse(...)` and that clients are processing Qt events.

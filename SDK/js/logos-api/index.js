@@ -90,7 +90,7 @@ class LogosAPI {
       
       // Fall back to the original location if not found
       if (!fs.existsSync(libPath)) {
-        libPath = path.resolve(__dirname, '../../../core/build/lib', `liblogos_core${libExtension}`);
+        libPath = path.resolve(__dirname, '../../../logos-liblogos/build/lib', `liblogos_core${libExtension}`);
       }
     }
     
@@ -164,7 +164,7 @@ class LogosAPI {
       
       // Fall back to the original core location if not found
       if (!fs.existsSync(pluginsDir)) {
-        pluginsDir = path.resolve(__dirname, '../../../core/build/modules');
+        pluginsDir = path.resolve(__dirname, '../../../logos-liblogos/build/modules');
       }
     }
     
@@ -248,7 +248,7 @@ class LogosAPI {
       
       // Fall back to the original core location if not found
       if (!fs.existsSync(pluginsDir)) {
-        pluginsDir = path.resolve(__dirname, '../../../core/build/modules');
+        pluginsDir = path.resolve(__dirname, '../../../logos-liblogos/build/modules');
       }
     }
     const pluginPath = path.join(pluginsDir, `${pluginName}_plugin${pluginExtension}`);

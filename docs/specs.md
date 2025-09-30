@@ -73,7 +73,7 @@ note: This document is a living document and it explains the project's current s
 
 ## 1. Overview and Goals
 
-Logos Core is a modular platform designed to host and interact with independently developed modules (plugins). The core library (`core/src`) and accompanying C++ SDK (`logos-cpp-sdk/cpp`) provide a modular, plug-in-based runtime for decentralised applications. Each module implements a common interface and is launched in its own process for isolation. A software development kit (SDK) exposes a remote-procedure-call (RPC) mechanism so that modules, the core and external modules can call methods on each other or listen for events.
+Logos Core is a modular platform designed to host and interact with independently developed modules (plugins). The core library (`logos-liblogos/src`) and accompanying C++ SDK (`logos-cpp-sdk/cpp`) provide a modular, plug-in-based runtime for decentralised applications. Each module implements a common interface and is launched in its own process for isolation. A software development kit (SDK) exposes a remote-procedure-call (RPC) mechanism so that modules, the core and external modules can call methods on each other or listen for events.
 
 The core exposes an extensible API to load, start, stop and introspect plug-ins, and it wraps Qt Remote Objects to allow modules to call each other's methods asynchronously. The SDK supplies client and provider classes that abstract away remote-object registry and token management, enabling modules to perform RPC-like calls without needing to understand the underlying IPC mechanism
 
@@ -81,7 +81,7 @@ The core exposes an extensible API to load, start, stop and introspect plug-ins,
 
 | Component | Purpose |
 |-----------|---------|
-| `core/src` | C/C++ implementation of the core library: discovers, loads and manages modules, provides an API to list modules, load/unload them and call methods on them. |
+| `logos-liblogos/src` | C/C++ implementation of the core library: discovers, loads and manages modules, provides an API to list modules, load/unload them and call methods on them. |
 | `logos-cpp-sdk/cpp` | Client-side SDK that wraps RPC functionality. Modules link against this SDK to call the core and other modules. |
 | `modules/` | Various Modules that can be loaded by the Core (e.g Waku) |
 | `logos_app/app` | Example application that uses the core and modules. |
@@ -681,7 +681,7 @@ A complete module consists of four essential components:
 3. **Metadata File** - Describes module properties and dependencies
 4. **Build Configuration** - CMakeLists.txt for compilation
 
-All modules must inherit from `PluginInterface` (found at `core/interface.h`) and implement the required lifecycle methods (`name()`, `version()`, `initLogos()`) and include the `eventResponse` signal for events. Methods exposed to other modules must be marked with `Q_INVOKABLE` to enable Qt's meta-object system to invoke them across process boundaries.
+All modules must inherit from `PluginInterface` (found at `logos-liblogos/interface.h`) and implement the required lifecycle methods (`name()`, `version()`, `initLogos()`) and include the `eventResponse` signal for events. Methods exposed to other modules must be marked with `Q_INVOKABLE` to enable Qt's meta-object system to invoke them across process boundaries.
 
 ### 4.2 Required Files
     
@@ -1153,7 +1153,7 @@ Prerequisites
 - **Build the core** (and, optionally, the modules):
   - Build core only: `./scripts/run_core.sh build`
   - Or build core and modules: `./scripts/run_core.sh all`
-- Ensure the shared library exists at `./core/build/lib/liblogos_core.dylib` on macOS or `liblogos_core.so` on Linux.
+- Ensure the shared library exists at `./logos-liblogos/build/lib/liblogos_core.dylib` on macOS or `liblogos_core.so` on Linux.
 
 Run the Electron app
 1. Navigate to the example folder: `cd examples/electron_app`
@@ -1162,7 +1162,7 @@ Run the Electron app
 3. Start the Electron app: `npm start`
 
 Notes
-- The app sets `process.env.LOGOS_HOST_PATH` automatically to `./core/build/bin/logos_host` relative to the repo, so no symlink is needed as long as you built the core.
+- The app sets `process.env.LOGOS_HOST_PATH` automatically to `./logos-liblogos/build/bin/logos_host` relative to the repo, so no symlink is needed as long as you built the core.
 - On first launch the app will initialize the core, process and load the `capability_module`, `waku_module`, and `chat` modules, then auto-join the default channel and stream chat/history events.
 
 ### 5.5 Electron Wallet Example
@@ -1173,7 +1173,7 @@ Prerequisites
 - **Build the core** (and, optionally, the modules):
   - Build core only: `./scripts/run_core.sh build`
   - Or build core and modules: `./scripts/run_core.sh all`
-- Ensure the shared library exists at `./core/build/lib/liblogos_core.dylib` on macOS or `liblogos_core.so` on Linux.
+- Ensure the shared library exists at `./logos-liblogos/build/lib/liblogos_core.dylib` on macOS or `liblogos_core.so` on Linux.
 
 Run the Electron wallet app
 1. Navigate to the example folder: `cd examples/wallet_app`
@@ -1201,7 +1201,7 @@ examples/wallet_app/
 ```
 
 Implementation details
-- Uses the Logos JS SDK (`logos-api`) to locate `liblogos_core` and the plugins directory under `./core/build`.
+- Uses the Logos JS SDK (`logos-api`) to locate `liblogos_core` and the plugins directory under `./logos-liblogos/build`.
 - Loads `capability_module` and `wallet_module` via `processAndLoadPlugins`.
 - Exposes wallet actions via IPC in the preload script under `window.walletAPI`.
 
@@ -1284,7 +1284,7 @@ Before initializing the core, applications should set the `LOGOS_HOST_PATH` envi
 ```javascript
 const path = require('path');
 // Point to the logos_host executable built alongside the core
-process.env.LOGOS_HOST_PATH = path.resolve(__dirname, '../../core/build/bin/logos_host');
+process.env.LOGOS_HOST_PATH = path.resolve(__dirname, '../../logos-liblogos/build/bin/logos_host');
 ```
 
 We first must load the library with FFI and define the expected interface
@@ -1531,7 +1531,7 @@ while true:
 
 Notes:
 
-- The SDK resolves default paths to `liblogos_core` and the plugins directory relative to `core/build` and sets `LOGOS_HOST_PATH` automatically to the built `logos_host` binary. Custom paths can be supplied to `newLogosAPI(libPath=..., pluginsDir=...)` if needed.
+- The SDK resolves default paths to `liblogos_core` and the plugins directory relative to `logos-liblogos/build` and sets `LOGOS_HOST_PATH` automatically to the built `logos_host` binary. Custom paths can be supplied to `newLogosAPI(libPath=..., pluginsDir=...)` if needed.
 - Because Nim apps do not run the Qt event loop, periodically call `processEventsTick()` to dispatch results and events.
 
 - The `eventResponse` signal and `initLogos` can be defined in the LogosInterface, so the developer doesn't have to define these each time

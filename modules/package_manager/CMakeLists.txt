@@ -22,7 +22,7 @@ set(PLUGIN_SOURCES
     package_manager_plugin.cpp
     package_manager_plugin.h
     package_manager_interface.h
-    ${CMAKE_SOURCE_DIR}/../core/interface.h
+    ${CMAKE_SOURCE_DIR}/../logos-liblogos/interface.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/generated/logos_sdk.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/logos_api.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/logos_api.h
@@ -60,7 +60,7 @@ target_link_libraries(package_manager_plugin PRIVATE Qt${QT_VERSION_MAJOR}::Core
 # Include directories
 target_include_directories(package_manager_plugin PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_SOURCE_DIR}/../core
+    ${CMAKE_SOURCE_DIR}/../logos-liblogos
     ${CMAKE_SOURCE_DIR}/../logos-cpp-sdk/cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/generated
 )
