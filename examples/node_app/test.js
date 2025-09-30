@@ -6,7 +6,7 @@ console.log('Testing FFI setup for Logos Core...\n');
 
 // Check if the library exists
 const libExtension = process.platform === 'darwin' ? '.dylib' : '.so';
-const libPath = path.resolve(__dirname, '../../core/build/lib', `liblogos_core${libExtension}`);
+const libPath = path.resolve(__dirname, '../../logos-liblogos/build/lib', `liblogos_core${libExtension}`);
 
 console.log(`Platform: ${process.platform}`);
 console.log(`Library extension: ${libExtension}`);

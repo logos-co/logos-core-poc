@@ -31,7 +31,7 @@ if [ ! -d "node_modules" ]; then
 fi
 
 # Check if the core library is built
-CORE_LIB_PATH="../../core/build/lib"
+CORE_LIB_PATH="../../logos-liblogos/build/lib"
 if [ ! -d "$CORE_LIB_PATH" ]; then
     echo "Warning: Core library not found at $CORE_LIB_PATH"
     echo "Building core library first..."

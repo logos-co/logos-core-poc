@@ -60,8 +60,8 @@ target_link_libraries(test_wallet PRIVATE
 # Add SDK includes to make RE client build
 target_include_directories(test_wallet PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../core/src
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../core
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-liblogos/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-liblogos
     ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-cpp-sdk/cpp/generated
     ${Qt${QT_VERSION_MAJOR}_INCLUDE_DIRS}

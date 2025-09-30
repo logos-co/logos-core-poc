@@ -20,13 +20,13 @@ mkdir -p bin/plugins
 # For macOS, use DYLD_LIBRARY_PATH
 if [[ "$(uname)" == "Darwin" ]]; then
     echo "Setting up library paths for macOS..."
-    export DYLD_LIBRARY_PATH="$DYLD_LIBRARY_PATH:$(pwd)/../../core/build/lib"
+    export DYLD_LIBRARY_PATH="$DYLD_LIBRARY_PATH:$(pwd)/../../logos-liblogos/build/lib"
     echo "DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH"
     LIB_EXT="dylib"
 else
     # For Linux, use LD_LIBRARY_PATH
     echo "Setting up library paths for Linux..."
-    export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$(pwd)/../../core/build/lib"
+    export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$(pwd)/../../logos-liblogos/build/lib"
     echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
     LIB_EXT="so"
 fi
@@ -34,7 +34,7 @@ fi
 # Manually copy specific modules as a fallback
 echo "Copying specific modules..."
 MODULES=("chat_plugin" "libwaku" "waku_plugin")
-CORE_MODULES_DIR="../../core/build/modules"
+CORE_MODULES_DIR="../../logos-liblogos/build/modules"
 
 for PLUGIN in "${PLUGINS[@]}"; do
     # Try with the platform-specific extension first

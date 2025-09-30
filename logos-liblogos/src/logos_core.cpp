@@ -156,7 +156,7 @@ static bool loadPlugin(const QString &pluginName)
     }
 #endif
 
-    // 3) Fallback relative to plugins directory (../../core/build/bin/logos_host)
+    // 3) Fallback relative to plugins directory (../../logos-liblogos/build/bin/logos_host)
     if (!QFile::exists(logosHostPath)) {
         if (!g_plugins_dir.isEmpty()) {
             QDir pluginsDirCandidate(g_plugins_dir);

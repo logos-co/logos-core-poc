@@ -31,7 +31,7 @@ cd build
 
 # Run CMake for modules and point to the core library
 echo "Running CMake for modules..."
-cmake .. -DCMAKE_PREFIX_PATH=../../core/build
+cmake .. -DCMAKE_PREFIX_PATH=../../logos-liblogos/build
 
 # Build the modules
 echo "Building modules..."
@@ -62,7 +62,7 @@ cd ../../
 echo "Copying plugin libraries to build modules directory..."
 
 # Create modules directory in core build if it doesn't exist
-mkdir -p core/build/modules
+mkdir -p logos-liblogos/build/modules
 mkdir -p logos_app/app/build/bin/modules
 # Create packages directory for the package manager
 mkdir -p logos_app/app/build/packages
@@ -71,7 +71,7 @@ mkdir -p logos_app/app/build/packages
 echo "Looking for plugin libraries in modules/build/modules directory..."
 find modules/build/modules -type f \( -name "*.dylib" -o -name "*.so" -o -name "*.dll" \) | while read plugin; do
     echo "Copying plugin: $plugin"
-    cp "$plugin" "core/build/modules/"
+    cp "$plugin" "logos-liblogos/build/modules/"
     # cp "$plugin" "logos_app/app/build/bin/modules/"
     # Also copy to packages directory for the package manager
     cp "$plugin" "logos_app/app/build/packages/"

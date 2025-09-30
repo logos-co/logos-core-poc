@@ -9,7 +9,7 @@ The Logos Core library (`liblogos_core`) exposes a small C API for initializing 
 
 ## C API
 
-Include header: `core/src/logos_core.h`
+Include header: `logos-liblogos/src/logos_core.h`
 
 Lifecycle
 

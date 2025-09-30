@@ -25,7 +25,7 @@ add_custom_target(cpp_generator_build
 
 # Look for the logos_core library
 find_library(LOGOS_CORE_LIB logos_core PATHS 
-    ${CMAKE_BINARY_DIR}/../core/build/lib 
+    ${CMAKE_BINARY_DIR}/../logos-liblogos/build/lib 
     ${CMAKE_BINARY_DIR}/lib
 )
 

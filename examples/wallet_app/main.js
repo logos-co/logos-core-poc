@@ -48,14 +48,14 @@ ipcMain.handle('initialize-wallet-app', async () => {
   try {
     const logosHostPath = path.resolve(
       __dirname,
-      '../../core/build/bin',
+      '../../logos-liblogos/build/bin',
       process.platform === 'win32' ? 'logos_host.exe' : 'logos_host'
     );
     process.env.LOGOS_HOST_PATH = logosHostPath;
 
     const libExtension = process.platform === 'darwin' ? '.dylib' : (process.platform === 'win32' ? '.dll' : '.so');
-    const libPath = path.resolve(__dirname, '../../core/build/lib', `liblogos_core${libExtension}`);
-    const pluginsDir = path.resolve(__dirname, '../../core/build/modules');
+    const libPath = path.resolve(__dirname, '../../logos-liblogos/build/lib', `liblogos_core${libExtension}`);
+    const pluginsDir = path.resolve(__dirname, '../../logos-liblogos/build/modules');
 
     if (!fs.existsSync(libPath)) {
       throw new Error(`Library file not found at: ${libPath}. Please build the core library first by running: ./scripts/run_core.sh build`);

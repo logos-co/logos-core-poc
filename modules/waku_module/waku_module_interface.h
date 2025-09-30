@@ -1,7 +1,7 @@
 #pragma once
 
 #include <QtCore/QObject>
-#include "../../core/interface.h"
+#include "../../logos-liblogos/interface.h"
 
 class WakuModuleInterface : public PluginInterface
 {

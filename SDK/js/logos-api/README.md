@@ -117,4 +117,4 @@ Before using this SDK, ensure liblogos_core is built:
 ./scripts/run_core.sh build
 ```
 
-The library should be available at `core/build/lib/liblogos_core.{dylib|so|dll}` and plugins at `core/build/modules/`.
+The library should be available at `logos-liblogos/build/lib/liblogos_core.{dylib|so|dll}` and plugins at `logos-liblogos/build/modules/`.

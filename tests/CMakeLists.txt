@@ -14,12 +14,12 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 # Find the logos_core library
-find_library(LOGOS_CORE_LIBRARY logos_core PATHS ${CMAKE_SOURCE_DIR}/../core/build/lib REQUIRED)
+find_library(LOGOS_CORE_LIBRARY logos_core PATHS ${CMAKE_SOURCE_DIR}/../logos-liblogos/build/lib REQUIRED)
 message(STATUS "Found logos_core library: ${LOGOS_CORE_LIBRARY}")
 
 # Add include directories for logos_core
-include_directories(${CMAKE_SOURCE_DIR}/../core/src)
-include_directories(${CMAKE_SOURCE_DIR}/../core)
+include_directories(${CMAKE_SOURCE_DIR}/../logos-liblogos/src)
+include_directories(${CMAKE_SOURCE_DIR}/../logos-liblogos)
 
 # Add subdirectories
 add_subdirectory(test_simple)

@@ -202,7 +202,7 @@ ipcMain.handle('initialize-chat-app', async () => {
     // Ensure logos_host can be located by the core
     const logosHostPath = path.resolve(
       __dirname,
-      '../../core/build/bin',
+      '../../logos-liblogos/build/bin',
       process.platform === 'win32' ? 'logos_host.exe' : 'logos_host'
     );
     process.env.LOGOS_HOST_PATH = logosHostPath;
@@ -214,8 +214,8 @@ ipcMain.handle('initialize-chat-app', async () => {
 
     // Determine library extension based on platform
     const libExtension = process.platform === 'darwin' ? '.dylib' : (process.platform === 'win32' ? '.dll' : '.so');
-    const libPath = path.resolve(__dirname, '../../core/build/lib', `liblogos_core${libExtension}`);
-    const pluginsDir = path.resolve(__dirname, '../../core/build/modules');
+    const libPath = path.resolve(__dirname, '../../logos-liblogos/build/lib', `liblogos_core${libExtension}`);
+    const pluginsDir = path.resolve(__dirname, '../../logos-liblogos/build/modules');
 
     console.log(`Looking for library at: ${libPath}`);
     if (!fs.existsSync(libPath)) {

@@ -129,7 +129,7 @@ else
 fi
 
 # Copy the logos_host executable from the core build directory
-LOGOS_HOST_SOURCE="../../core/build/bin/logos_host"
+LOGOS_HOST_SOURCE="../../logos-liblogos/build/bin/logos_host"
 LOGOS_HOST_DEST="bin/logos_host"
 
 if [ -f "$LOGOS_HOST_SOURCE" ]; then
@@ -145,11 +145,11 @@ fi
 # Set up library paths for running the application
 if [[ "$(uname)" == "Darwin" ]]; then
     echo "Setting up library paths for macOS..."
-    export DYLD_LIBRARY_PATH="$DYLD_LIBRARY_PATH:$(pwd)/../../core/build/lib"
+    export DYLD_LIBRARY_PATH="$DYLD_LIBRARY_PATH:$(pwd)/../../logos-liblogos/build/lib"
     echo "DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH"
 else
     echo "Setting up library paths for Linux..."
-    export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$(pwd)/../../core/build/lib"
+    export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$(pwd)/../../logos-liblogos/build/lib"
     echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
 fi
 

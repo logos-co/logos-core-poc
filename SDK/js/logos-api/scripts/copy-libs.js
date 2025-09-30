@@ -64,7 +64,7 @@ function main() {
   console.log('📦 Copying liblogos library to SDK...');
   
   const sdkDir = path.resolve(__dirname, '..');
-  const coreDir = path.resolve(sdkDir, '../../../core/build');
+  const coreDir = path.resolve(sdkDir, '../../../logos-liblogos/build');
   
   // Define paths
   const libExtension = getLibraryExtension();

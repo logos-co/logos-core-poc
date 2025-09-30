@@ -3,7 +3,7 @@
 #include <QString>
 #include <QTimer>
 #include <QCoreApplication>
-#include "../../core/src/logos_core.h"
+#include "../../logos-liblogos/src/logos_core.h"
 
 // Helper function to print loaded plugins
 void printLoadedPlugins() {

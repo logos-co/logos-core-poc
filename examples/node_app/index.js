@@ -7,7 +7,7 @@ console.log('Hello from Node.js!');
 
 // Assuming the .so/.dylib is already built and available
 const libExtension = process.platform === 'darwin' ? '.dylib' : '.so';
-const libPath = path.resolve(__dirname, '../../core/build/lib', `liblogos_core${libExtension}`);
+const libPath = path.resolve(__dirname, '../../logos-liblogos/build/lib', `liblogos_core${libExtension}`);
 
 console.log(`Looking for library at: ${libPath}`);
 
@@ -95,7 +95,7 @@ console.log('Initializing logos_core...');
 LogosCore.logos_core_init(0, null);
 
 // Set plugins directory
-const pluginsDir = path.resolve(__dirname, '../../core/build/modules');
+const pluginsDir = path.resolve(__dirname, '../../logos-liblogos/build/modules');
 console.log(`Setting plugins directory to: ${pluginsDir}`);
 LogosCore.logos_core_set_plugins_dir(pluginsDir);
 

@@ -7,7 +7,7 @@ echo "Building and running Logos Core application..."
 
 # First, build the core
 echo "Building core application..."
-cd core
+cd logos-liblogos
 
 # remove build to ensure clean build
 if [ -d "build" ]; then
@@ -53,7 +53,7 @@ fi
 
 # Run the application
 echo "Starting logoscore application..."
-cd core/build/bin
+cd logos-liblogos/build/bin
 ./logoscore
 
 echo "Application closed." 
