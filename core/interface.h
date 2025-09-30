@@ -18,7 +18,7 @@ public:
     // TODO: this should be defined here and removed from the modules, but needs some work
     // Q_INVOKABLE void initLogos(LogosAPI* logosAPIInstance);
 
-    LogosAPI* logosAPI;
+    LogosAPI* logosAPI = nullptr;
 };
 
 // Define the interface ID used by Qt's plugin system
