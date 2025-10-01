@@ -9,3 +9,6 @@
 [submodule "logos-cpp-sdk"]
 	path = logos-cpp-sdk
 	url = git@github.com:logos-co/logos-cpp-sdk.git
+[submodule "logos-liblogos"]
+	path = logos-liblogos
+	url = git@github.com:logos-co/logos-liblogos.git
