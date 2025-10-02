@@ -21,7 +21,7 @@
     "electron-rebuild": "^3.2.9"
   },
   "dependencies": {
-    "logos-api": "file:../../SDK/js/logos-api"
+    "logos-api": "file:../../logos-js-sdk"
   }
 }
 

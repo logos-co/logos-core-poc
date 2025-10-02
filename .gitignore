@@ -11,6 +11,6 @@ website/build
 website/.cache
 website/node_modules
 examples/node_app_using_lib/plugins/*
-SDK/js/logos-api/lib/*
+logos-js-sdk/lib/*
 .cache
 logos-cpp-sdk/cpp/generated/*

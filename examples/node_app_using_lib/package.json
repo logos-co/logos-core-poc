@@ -10,7 +10,7 @@
     "postinstall": "npm run copy-plugins"
   },
   "dependencies": {
-    "logos-api": "file:../../SDK/js/logos-api",
+    "logos-api": "file:../../logos-js-sdk",
     "ffi-napi": "^4.0.3",
     "ref-napi": "^3.0.3"
   },
