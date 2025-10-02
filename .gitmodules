@@ -12,3 +12,7 @@
 [submodule "logos-liblogos"]
 	path = logos-liblogos
 	url = git@github.com:logos-co/logos-liblogos.git
+[submodule "modules/simple_module"]
+	path = modules/simple_module
+	url = git@github.com:logos-co/logos-simple-module.git
+	branch = master
