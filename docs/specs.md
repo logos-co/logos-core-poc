@@ -1193,7 +1193,7 @@ This is a super simple test app
 Project structure (simplified)
 ```
 examples/wallet_app/
-  ├─ package.json        # Electron app config, depends on local SDK `SDK/js/logos-api`
+  ├─ package.json        # Electron app config, depends on local SDK `./logos-js-sdk`
   ├─ main.js             # Initializes LogosAPI, loads modules, wires IPC
   ├─ preload.js          # Exposes wallet IPC to renderer: initialize, initWallet, chainId, ethBalance
   ├─ index.html          # Minimal UI with RPC URL + address inputs and action buttons
@@ -1380,7 +1380,7 @@ What it does
 
 _note: the JS SDK still needs to be updated to work with the new token authentication_
 
-An experimental JS SDK exists at `SDK/js/logos-api`. It essentially abstracts what is done in the previous section to provide a cleaner API.
+An experimental JS SDK exists at `./logos-js-sdk`. It essentially abstracts what is done in the previous section to provide a cleaner API.
 
 After installing the package (NPM) we simply import it nad initialize it
 

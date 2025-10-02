@@ -10,7 +10,7 @@ The Logos JavaScript SDK provides a convenient way to interact with the LogosCor
 
 ## Installation
 
-The experimental JavaScript SDK is located at `SDK/js/logos-api`. After installing the package via NPM, you can start using it immediately:
+The experimental JavaScript SDK is located at `./logos-js-sdk`. After installing the package via NPM, you can start using it immediately:
 
 ```bash
 npm install logos-api
