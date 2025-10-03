@@ -38,6 +38,18 @@ Run Container:
 docker run -it logos-core
 ```
 
+## Git Submodules
+
+This repository includes the following git submodules:
+
+| Directory | Repository | Description |
+|-----------|------------|-------------|
+| `logos-liblogos/` | [logos-co/logos-liblogos](https://github.com/logos-co/logos-liblogos) | Core library implementation |
+| `logos-cpp-sdk/` | [logos-co/logos-cpp-sdk](https://github.com/logos-co/logos-cpp-sdk) | C++ SDK for building modules |
+| `logos-js-sdk/` | [logos-co/logos-js-sdk](https://github.com/logos-co/logos-js-sdk) | JavaScript/Node.js SDK |
+| `logos-nim-sdk/` | [logos-co/logos-nim-sdk](https://github.com/logos-co/logos-nim-sdk) | Nim language SDK |
+| `modules/simple_module/` | [logos-co/logos-simple-module](https://github.com/logos-co/logos-simple-module) | Example module template |
+
 ## Requirements
 
 - QT 6.4
