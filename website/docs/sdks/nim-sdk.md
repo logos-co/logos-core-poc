@@ -9,7 +9,7 @@ The Nim SDK provides a thin wrapper over the experimental C API exposed by `libl
 
 ## Installation
 
-The Nim SDK is located at `SDK/nim/logos_api.nim`. To use it in your Nim application, simply import the module:
+The Nim SDK is located at `logos-nim-sdk/logos_api.nim`. To use it in your Nim application, simply import the module:
 
 ```nim
 import logos_api
