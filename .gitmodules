@@ -19,3 +19,6 @@
 [submodule "logos-js-sdk"]
 	path = logos-js-sdk
 	url = git@github.com:logos-co/logos-js-sdk.git
+[submodule "logos-nim-sdk"]
+	path = logos-nim-sdk
+	url = git@github.com:logos-co/logos-nim-sdk.git
