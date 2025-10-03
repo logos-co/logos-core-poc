@@ -2,10 +2,6 @@
 	path = modules/waku_module/vendor/nwaku
 	url = https://github.com/iurimatias/nwaku.git
 	branch = template_fix
-[submodule "modules/wallet_module/vendor/go-wallet-sdk"]
-	path = modules/wallet_module/vendor/go-wallet-sdk
-	url = https://github.com/status-im/go-wallet-sdk.git
-	branch = compile_c_lib
 [submodule "logos-cpp-sdk"]
 	path = logos-cpp-sdk
 	url = git@github.com:logos-co/logos-cpp-sdk.git
@@ -22,3 +18,6 @@
 [submodule "logos-nim-sdk"]
 	path = logos-nim-sdk
 	url = git@github.com:logos-co/logos-nim-sdk.git
+[submodule "modules/wallet_module"]
+	path = modules/wallet_module
+	url = git@github.com:logos-co/logos-wallet-module.git
