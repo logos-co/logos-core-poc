@@ -3,7 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    logos-liblogos.url = "path:/Users/iurimatias/Projects/Logos/LogosCore/logos-liblogos";
+    logos-liblogos.url = "github:logos-co/logos-liblogos";
   };
 
   outputs = { self, nixpkgs, logos-liblogos }:
@@ -20,30 +20,26 @@
           pname = "logos-js-sdk";
           version = "1.0.0";
           
-          src = pkgs.lib.cleanSourceWith {
-            src = ./.;
-            filter = path: type:
-              let
-                base = toString ./.;
-                pathStr = toString path;
-                relPath = pkgs.lib.removePrefix (base + "/") pathStr;
-                # Exclude node_modules and other build artifacts
-                excludeNodeModules = !(pkgs.lib.hasPrefix "node_modules" relPath);
-                excludeBuild = !(pkgs.lib.hasPrefix "build" relPath);
-                excludeResult = !(pkgs.lib.hasPrefix "result" relPath);
-              in
-                pkgs.lib.cleanSourceFilter path type && excludeNodeModules && excludeBuild && excludeResult;
-          };
+          src = ./.;
           
-          nativeBuildInputs = [ pkgs.nodejs pkgs.npm ];
+          nativeBuildInputs = [ 
+            pkgs.nodejs 
+            pkgs.python3
+            pkgs.gnumake
+            pkgs.gcc
+            pkgs.pkg-config
+          ];
           
-          # Install Node.js dependencies
-          preBuild = ''
-            # Install npm dependencies
-            npm ci --production
-          '';
+          # Skip npm install for now - we'll handle dependencies differently
+          dontBuild = true;
           
           installPhase = ''
+            # Debug: Show what's in the source directory
+            echo "Contents of source directory:"
+            ls -la
+            echo "Contents of lib directory (if exists):"
+            ls -la lib/ || echo "No lib directory found"
+            
             # Create the output directory
             mkdir -p $out
             
@@ -51,36 +47,42 @@
             cp -r index.js README.md package.json package-lock.json $out/
             cp -r scripts $out/
             
-            # Copy node_modules (production dependencies only)
+            # Copy node_modules if they exist (from local development)
             if [ -d "node_modules" ]; then
               cp -r node_modules $out/
+              echo "Copied existing node_modules"
+            else
+              echo "No node_modules found - dependencies will need to be installed separately"
             fi
             
             # Create lib directory and copy the built logos-liblogos library
             mkdir -p $out/lib
             
             # Copy the library from the built logos-liblogos package
-            # Handle different library extensions
-            for lib in ${logosLiblogos}/lib/liblogos_core.*; do
-              if [ -f "$lib" ]; then
-                cp "$lib" $out/lib/
-                echo "Copied library: $lib"
-              fi
-            done
+            echo "Using logos-liblogos package from GitHub: ${logosLiblogos}"
             
-            # Also copy any other libraries that might be needed
-            if [ -d "${logosLiblogos}/bin" ]; then
-              mkdir -p $out/bin
-              cp -r ${logosLiblogos}/bin/* $out/bin/
+            # Copy libraries from the built package
+            if [ -d "${logosLiblogos}/lib" ]; then
+              cp -r "${logosLiblogos}/lib"/* $out/lib/
+              echo "Copied libraries from ${logosLiblogos}/lib"
             fi
             
-            # Copy headers if needed
+            # Copy binaries if available
+            if [ -d "${logosLiblogos}/bin" ]; then
+              mkdir -p $out/bin
+              cp -r "${logosLiblogos}/bin"/* $out/bin/
+              echo "Copied binaries from ${logosLiblogos}/bin"
+            fi
+            
+            # Copy headers if available
             if [ -d "${logosLiblogos}/include" ]; then
               mkdir -p $out/include
-              cp -r ${logosLiblogos}/include/* $out/include/
+              cp -r "${logosLiblogos}/include"/* $out/include/
+              echo "Copied headers from ${logosLiblogos}/include"
             fi
             
             # Create a wrapper script for easy usage
+            mkdir -p $out/bin
             cat > $out/bin/logos-js-sdk << 'EOF'
 #!/usr/bin/env bash
 # Wrapper script for Logos JS SDK
@@ -102,7 +104,6 @@ EOF
         default = pkgs.mkShell {
           nativeBuildInputs = [
             pkgs.nodejs
-            pkgs.npm
           ];
           
           shellHook = ''
