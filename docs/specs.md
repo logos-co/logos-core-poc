@@ -1479,7 +1479,7 @@ logos->chat.on("chatMessage", callback);
 
 ### 7.3 Nim SDK (Nim LogosAPI)
 
-The Nim SDK provides a thin wrapper over the experimental C API exposed by `liblogos_core`, enabling Nim applications to initialise the core, load modules, invoke plugin methods, and subscribe to events using a simple, callback-based API. It lives at `SDK/nim/logos_api.nim` with an example app at `examples/nim_app/main.nim`.
+The Nim SDK provides a thin wrapper over the experimental C API exposed by `liblogos_core`, enabling Nim applications to initialise the core, load modules, invoke plugin methods, and subscribe to events using a simple, callback-based API. It lives at `logos-nim-sdk/logos_api.nim` with an example app at `examples/nim_app/main.nim`.
 
 Key types and helpers:
 
@@ -1498,7 +1498,7 @@ Improved parameter passing:
 Usage example (simplified from `examples/nim_app/main.nim`):
 
 ```nim
-import ../../SDK/nim/logos_api
+import ../../logos-nim-sdk/logos_api
 
 var api = newLogosAPI(autoInit = true)
 discard api.start()

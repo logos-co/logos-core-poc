@@ -1,5 +1,5 @@
 import os, strformat
-import ../../SDK/nim/logos_api
+import ../../logos-nim-sdk/logos_api
 
 # Use the Nim SDK LogosAPI wrapper
 
