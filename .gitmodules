@@ -16,3 +16,6 @@
 	path = modules/simple_module
 	url = git@github.com:logos-co/logos-simple-module.git
 	branch = master
+[submodule "logos-js-sdk"]
+	path = logos-js-sdk
+	url = git@github.com:logos-co/logos-js-sdk.git
