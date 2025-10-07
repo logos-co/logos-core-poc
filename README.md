@@ -50,6 +50,8 @@ This repository includes the following git submodules:
 | `logos-nim-sdk/` | [logos-co/logos-nim-sdk](https://github.com/logos-co/logos-nim-sdk) | Nim language SDK |
 | `modules/simple_module/` | [logos-co/logos-simple-module](https://github.com/logos-co/logos-simple-module) | Example module template |
 | `modules/wallet_module/` | [logos-co/logos-wallet-module](https://github.com/logos-co/logos-wallet-module) | Wallet module with go-wallet-sdk integration |
+| `modules/waku_module/` | [logos-co/logos-waku-module](https://github.com/logos-co/logos-waku-module) | Waku network protocol module |
+| `modules/chat/` | [logos-co/logos-chat-module](https://github.com/logos-co/logos-chat-module) | Chat module with Waku integration |
 
 ## Requirements
 

@@ -20,3 +20,6 @@
 [submodule "modules/waku_module"]
 	path = modules/waku_module
 	url = git@github.com:logos-co/logos-waku-module.git
+[submodule "modules/chat"]
+	path = modules/chat
+	url = git@github.com:logos-co/logos-chat-module.git
