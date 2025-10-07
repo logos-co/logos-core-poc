@@ -26,3 +26,6 @@
 [submodule "modules/logos_irc"]
 	path = modules/logos_irc
 	url = git@github.com:logos-co/logos-irc-module.git
+[submodule "website"]
+	path = website
+	url = git@github.com:logos-co/logos-website.git

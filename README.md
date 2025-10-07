@@ -53,6 +53,7 @@ This repository includes the following git submodules:
 | `modules/waku_module/` | [logos-co/logos-waku-module](https://github.com/logos-co/logos-waku-module) | Waku network protocol module |
 | `modules/chat/` | [logos-co/logos-chat-module](https://github.com/logos-co/logos-chat-module) | Chat module with Waku integration |
 | `modules/logos_irc/` | [logos-co/logos-irc-module](https://github.com/logos-co/logos-irc-module) | IRC protocol module |
+| `website/` | [logos-co/logos-website](https://github.com/logos-co/logos-website) | Documentation website |
 
 ## Requirements
 
