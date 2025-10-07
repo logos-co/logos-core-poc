@@ -23,3 +23,6 @@
 [submodule "modules/chat"]
 	path = modules/chat
 	url = git@github.com:logos-co/logos-chat-module.git
+[submodule "modules/logos_irc"]
+	path = modules/logos_irc
+	url = git@github.com:logos-co/logos-irc-module.git
