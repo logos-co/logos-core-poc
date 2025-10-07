@@ -1,7 +1,3 @@
-[submodule "modules/waku_module/vendor/nwaku"]
-	path = modules/waku_module/vendor/nwaku
-	url = https://github.com/iurimatias/nwaku.git
-	branch = template_fix
 [submodule "logos-cpp-sdk"]
 	path = logos-cpp-sdk
 	url = git@github.com:logos-co/logos-cpp-sdk.git
@@ -21,3 +17,6 @@
 [submodule "modules/wallet_module"]
 	path = modules/wallet_module
 	url = git@github.com:logos-co/logos-wallet-module.git
+[submodule "modules/waku_module"]
+	path = modules/waku_module
+	url = git@github.com:logos-co/logos-waku-module.git
