@@ -29,3 +29,6 @@
 [submodule "website"]
 	path = website
 	url = git@github.com:logos-co/logos-website.git
+[submodule "modules/capability_module"]
+	path = modules/capability_module
+	url = git@github.com:logos-co/logos-capability-module.git
