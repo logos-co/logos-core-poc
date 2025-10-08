@@ -45,6 +45,7 @@ This repository includes the following git submodules:
 | Directory | Repository | Description |
 |-----------|------------|-------------|
 | `logos-liblogos/` | [logos-co/logos-liblogos](https://github.com/logos-co/logos-liblogos) | Core library implementation |
+| `logos-app-poc/` | [logos-co/logos-app-poc](https://github.com/logos-co/logos-app-poc) | Logos App and example dApps |
 | `logos-cpp-sdk/` | [logos-co/logos-cpp-sdk](https://github.com/logos-co/logos-cpp-sdk) | C++ SDK for building modules |
 | `logos-js-sdk/` | [logos-co/logos-js-sdk](https://github.com/logos-co/logos-js-sdk) | JavaScript/Node.js SDK |
 | `logos-nim-sdk/` | [logos-co/logos-nim-sdk](https://github.com/logos-co/logos-nim-sdk) | Nim language SDK |
