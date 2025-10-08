@@ -54,6 +54,7 @@ This repository includes the following git submodules:
 | `modules/chat/` | [logos-co/logos-chat-module](https://github.com/logos-co/logos-chat-module) | Chat module with Waku integration |
 | `modules/logos_irc/` | [logos-co/logos-irc-module](https://github.com/logos-co/logos-irc-module) | IRC protocol module |
 | `modules/capability_module/` | [logos-co/logos-capability-module](https://github.com/logos-co/logos-capability-module) | Capability module for coordinating permissions between modules |
+| `modules/package_manager/` | [logos-co/logos-package-manager](https://github.com/logos-co/logos-package-manager) | Package manager module |
 | `website/` | [logos-co/logos-website](https://github.com/logos-co/logos-website) | Documentation website |
 
 ## Requirements

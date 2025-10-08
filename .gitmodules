@@ -32,3 +32,6 @@
 [submodule "modules/capability_module"]
 	path = modules/capability_module
 	url = git@github.com:logos-co/logos-capability-module.git
+[submodule "modules/package_manager"]
+	path = modules/package_manager
+	url = git@github.com:logos-co/logos-package-manager.git
