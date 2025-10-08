@@ -38,3 +38,6 @@
 [submodule "modules/template_module"]
 	path = modules/template_module
 	url = git@github.com:logos-co/logos-template-module.git
+[submodule "logos-app-poc"]
+	path = logos-app-poc
+	url = git@github.com:logos-co/logos-app-poc.git
