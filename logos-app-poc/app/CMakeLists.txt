@@ -97,4 +97,4 @@ add_custom_command(TARGET LogosApp POST_BUILD
 )
 
 # Add logos_dapps directory
-# add_subdirectory(${CMAKE_SOURCE_DIR}/logos_app/logos_dapps/main_ui)
+# add_subdirectory(${CMAKE_SOURCE_DIR}/logos-app-poc/logos_dapps/main_ui)

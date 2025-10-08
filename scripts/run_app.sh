@@ -9,10 +9,10 @@ echo "Building core..."
 echo "Building and running Logos Core POC application..."
 
 # Create build directory if it doesn't exist
-mkdir -p logos_app/app/build
+mkdir -p logos-app-poc/app/build
 
 # Navigate to build directory
-cd logos_app/app/build
+cd logos-app-poc/app/build
 
 # Run CMake if CMakeCache.txt doesn't exist (first time build)
 if [ ! -f "CMakeCache.txt" ]; then
@@ -35,7 +35,7 @@ if [ "$1" = "all" ]; then
     echo "Building modules first..."
     ./scripts/build_core_modules.sh
     ./scripts/build_app_plugins.sh
-    cd logos_app/app/build
+    cd logos-app-poc/app/build
 fi
 
 # Run the application

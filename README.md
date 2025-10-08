@@ -78,7 +78,7 @@ For some plugins
 📦 logos-core-poc
  ┣ 📂 logos-liblogos/                    # Logos Core Library
  ┃
- ┣ 📂 logos_app/               # Application Layer
+ ┣ 📂 logos-app-poc/           # Application Layer
  ┃ ┣ 📂 app/                   # Logos App POC
  ┃ ┣ 📂 logos_dapps/           # Applications for the Logos App
  ┃   ┗ 📂 chat_ui/             # Simple Chat App

@@ -8,10 +8,10 @@ echo "Cleaning all build directories..."
 # List of known build directories to remove
 directories=(
   "./build"
-  "./logos_app/app/build"
+  "./logos-app-poc/app/build"
   "./logos-liblogos/build"
   "./modules/build"
-  "./logos_app/logos_dapps/build"
+  "./logos-app-poc/logos_dapps/build"
   "./examples/build"
   "./modules/waku/build"
 )

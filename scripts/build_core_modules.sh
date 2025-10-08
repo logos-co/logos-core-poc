@@ -63,18 +63,18 @@ echo "Copying plugin libraries to build modules directory..."
 
 # Create modules directory in core build if it doesn't exist
 mkdir -p logos-liblogos/build/modules
-mkdir -p logos_app/app/build/bin/modules
+mkdir -p logos-app-poc/app/build/bin/modules
 # Create packages directory for the package manager
-mkdir -p logos_app/app/build/packages
+mkdir -p logos-app-poc/app/build/packages
 
 # Find all plugin libraries and copy them to the build modules directory
 echo "Looking for plugin libraries in modules/build/modules directory..."
 find modules/build/modules -type f \( -name "*.dylib" -o -name "*.so" -o -name "*.dll" \) | while read plugin; do
     echo "Copying plugin: $plugin"
     cp "$plugin" "logos-liblogos/build/modules/"
-    # cp "$plugin" "logos_app/app/build/bin/modules/"
+    # cp "$plugin" "logos-app-poc/app/build/bin/modules/"
     # Also copy to packages directory for the package manager
-    cp "$plugin" "logos_app/app/build/packages/"
+    cp "$plugin" "logos-app-poc/app/build/packages/"
 done
 
 # Copy package_manager plugin to the build modules directory
@@ -87,7 +87,7 @@ fi
 
 PACKAGE_MANAGER_LIB="modules/build/modules/package_manager_plugin.${OS_EXT}"
 CAPABILITY_MODULE_LIB="modules/build/modules/capability_module_plugin.${OS_EXT}"
-BUILD_MODULES_DIR="logos_app/app/build/bin/modules/"
+BUILD_MODULES_DIR="logos-app-poc/app/build/bin/modules/"
 
 echo "Copying package_manager plugin to the build modules directory..."
 cp "$PACKAGE_MANAGER_LIB" "$BUILD_MODULES_DIR"

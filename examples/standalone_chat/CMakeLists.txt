@@ -18,7 +18,7 @@ endif()
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-liblogos
     ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-liblogos/src
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../logos_app/app/interfaces
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../logos-app-poc/app/interfaces
 )
 
 # Set output directory for the executable
@@ -111,15 +111,15 @@ else()
     set(CHAT_UI_EXT "so")
 endif()
 
-set(CHAT_UI_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/../../logos_app/logos_dapps/chat_ui/build/chat_ui.${CHAT_UI_EXT}")
+set(CHAT_UI_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/../../logos-app-poc/logos_dapps/chat_ui/build/chat_ui.${CHAT_UI_EXT}")
 
 # Check if primary extension exists
 if(NOT EXISTS ${CHAT_UI_SOURCE})
     # Try alternative extension
     if(APPLE)
-        set(CHAT_UI_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/../../logos_app/logos_dapps/chat_ui/build/chat_ui.so")
+        set(CHAT_UI_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/../../logos-app-poc/logos_dapps/chat_ui/build/chat_ui.so")
     else()
-        set(CHAT_UI_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/../../logos_app/logos_dapps/chat_ui/build/chat_ui.dylib")
+        set(CHAT_UI_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/../../logos-app-poc/logos_dapps/chat_ui/build/chat_ui.dylib")
     endif()
 endif()
 

@@ -84,8 +84,8 @@ The core exposes an extensible API to load, start, stop and introspect plug-ins,
 | `logos-liblogos/src` | C/C++ implementation of the core library: discovers, loads and manages modules, provides an API to list modules, load/unload them and call methods on them. |
 | `logos-cpp-sdk/cpp` | Client-side SDK that wraps RPC functionality. Modules link against this SDK to call the core and other modules. |
 | `modules/` | Various Modules that can be loaded by the Core (e.g Waku) |
-| `logos_app/app` | Example application that uses the core and modules. |
-| `logos_app/logos_dapps` | UI Plugins for the example application |
+| `logos-app-poc/app` | Example application that uses the core and modules. |
+| `logos-app-poc/logos_dapps` | UI Plugins for the example application |
 
 ### Other Repository Components
 
@@ -1593,7 +1593,7 @@ This will ensure there are not leftover artifacts and all the changes really tak
 
 Note: The clean script also removes generated SDK wrapper files in `logos-cpp-sdk/cpp/generated` (it preserves the directory).
 
-If the app is already compiled, it can be found at `./logos_app/app/build/LogosApp`
+If the app is already compiled, it can be found at `./logos-app-poc/app/build/LogosApp`
 
 ### 9.3 Run tests
 
@@ -1678,7 +1678,7 @@ npm run start
 ### 10.4 Styling and Assets
 
 - Custom CSS lives in `website/src/css/custom.css`, which adjusts typography, layout spacing, and the landing page aesthetics.
-- Static assets (logos, illustrations, social cards) belong in `website/static/img/`. The navbar currently references `img/logos.png`, copied from `logos_app/app/icons/logos.png` for consistent branding.
+- Static assets (logos, illustrations, social cards) belong in `website/static/img/`. The navbar currently references `img/logos.png`, copied from `logos-app-poc/app/icons/logos.png` for consistent branding.
 - Additional pages can be added under `website/src/pages/`—a placeholder privacy policy exists at `website/src/pages/privacy.js` to satisfy footer links.
 
 ### 10.5 Deployment Notes
