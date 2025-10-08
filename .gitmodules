@@ -35,3 +35,6 @@
 [submodule "modules/package_manager"]
 	path = modules/package_manager
 	url = git@github.com:logos-co/logos-package-manager.git
+[submodule "modules/template_module"]
+	path = modules/template_module
+	url = git@github.com:logos-co/logos-template-module.git
